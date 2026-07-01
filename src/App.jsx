@@ -138,7 +138,7 @@ async function runCampaign(form) {
     },
     body: JSON.stringify({
       model: 'claude-sonnet-4-6',
-      max_tokens: 5000,
+      max_tokens: 8000,
       messages: [{ role: 'user', content: prompt }],
     }),
   })
@@ -149,7 +149,19 @@ async function runCampaign(form) {
   const data = await response.json()
   const raw = data.content.map((b) => b.text).join('')
   const stripped = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim()
-  return JSON.parse(stripped)
+
+  try {
+    return JSON.parse(stripped)
+  } catch {
+    // Response may be truncated — find the outermost balanced {...} block
+    const match = stripped.match(/\{[\s\S]*\}/)
+    if (match) {
+      try {
+        return JSON.parse(match[0])
+      } catch {}
+    }
+    throw new Error('The AI response was incomplete or malformed. Please try again.')
+  }
 }
 
 // ─── Rich text parsing ────────────────────────────────────────────────────────
