@@ -37,8 +37,8 @@ Vibes: ${form.vibes.join(', ')}
 Return ONLY valid JSON (no markdown, no fences) matching this exact shape:
 {
   "trendReport": {
-    "trendingStyles": ["brief phrase", "brief phrase", "brief phrase"],
-    "curatorBehaviors": ["brief phrase", "brief phrase"]
+    "trendingStyles": ["one concise sentence per style — specific, no fluff", "one concise sentence", "one concise sentence"],
+    "curatorBehaviors": ["one concise sentence on a real curator behavior right now", "one concise sentence"]
   },
   "artistIntelligence": [
     {
