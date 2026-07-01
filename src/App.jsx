@@ -25,7 +25,7 @@ const LOADING_MESSAGES = [
 ]
 
 function buildPrompt(form) {
-  return `You are a music industry promotion expert. Based on the artist info below, generate a campaign with realistic, detailed curator pitches.
+  return `You are a music industry promotion expert with deep knowledge of current Spotify algorithm behavior, playlist curation trends, and artist promotion strategy. Based on the artist info below, generate a campaign.
 
 Artist: ${form.artistName}
 Song: ${form.songTitle}
@@ -38,9 +38,31 @@ Return ONLY valid JSON (no markdown, no fences) matching this exact shape:
 {
   "trendReport": {
     "trendingStyles": ["string", "string", "string"],
-    "curatorBehaviors": ["string", "string"],
-    "proTip": "string"
+    "curatorBehaviors": ["string", "string"]
   },
+  "artistIntelligence": [
+    {
+      "id": "algorithm",
+      "title": "Algorithm Tips",
+      "summary": "1-2 sentence preview of the most actionable Spotify/playlist algorithm insight relevant right now — current platform behavior, not generic advice.",
+      "detail": "5-7 sentence detailed breakdown of current Spotify algorithm behavior. Reference specific metrics (save rate, skip rate, playlist add velocity), current editorial patterns, and what the algorithm is rewarding in 2025. Be specific and actionable.",
+      "actionSteps": ["specific action 1", "specific action 2", "specific action 3", "specific action 4"]
+    },
+    {
+      "id": "genre",
+      "title": "For Your Genre",
+      "summary": "1-2 sentence preview of the most important ${form.genre} trend or curator behavior happening this month.",
+      "detail": "5-7 sentence breakdown of what is working in ${form.genre} right now — which playlist types are growing, what sound textures curators are seeking, how listener behavior in this genre differs from the broader market, and what ${form.genre} artists with similar listener counts are doing successfully.",
+      "actionSteps": ["specific action 1", "specific action 2", "specific action 3", "specific action 4"]
+    },
+    {
+      "id": "song",
+      "title": "For Your Song",
+      "summary": "1-2 sentence preview of the most powerful tailored insight for ${form.artistName}'s specific song '${form.songTitle}' given its vibe and description.",
+      "detail": "5-7 sentence breakdown that references the actual song description, vibes, and genre to give hyper-specific advice. Mention which playlists this song would realistically fit, what the pitch angle should emphasize, which curator personality type is most likely to add it, and what release momentum patterns would help it gain traction.",
+      "actionSteps": ["specific action 1", "specific action 2", "specific action 3", "specific action 4"]
+    }
+  ],
   "pitches": [
     {
       "curatorName": "string",
@@ -56,7 +78,7 @@ Return ONLY valid JSON (no markdown, no fences) matching this exact shape:
   ]
 }
 
-Generate exactly 4 pitches. Make curator names, playlist names, and all details realistic and specific to the genre. Vary the submit methods (SubmitHub, Direct Email, Instagram DM, etc.).\n`
+Generate exactly 4 pitches. Make curator names, playlist names, and all details realistic and specific to the genre. Vary the submit methods. Make the artistIntelligence tips feel like real intel from an industry insider — reference current platform behavior, real patterns, and specific details from the song info.\n`
 }
 
 async function runCampaign(form) {
@@ -71,7 +93,7 @@ async function runCampaign(form) {
     },
     body: JSON.stringify({
       model: 'claude-sonnet-4-6',
-      max_tokens: 4000,
+      max_tokens: 5000,
       messages: [{ role: 'user', content: prompt }],
     }),
   })
@@ -190,7 +212,7 @@ function TrendReport({ report }) {
   const [open, setOpen] = useState(true)
 
   return (
-    <div className="mb-6">
+    <div className="mb-5">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -202,7 +224,7 @@ function TrendReport({ report }) {
       </button>
       {open && (
         <div className="bg-surface border border-border rounded-2xl p-5">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <p className="text-xs font-inter text-muted uppercase tracking-wider mb-2">Trending Styles</p>
               <ul className="space-y-1.5">
@@ -225,15 +247,119 @@ function TrendReport({ report }) {
                 ))}
               </ul>
             </div>
-            <div>
-              <p className="text-xs font-inter text-muted uppercase tracking-wider mb-2">Pro Tip</p>
-              <div className="bg-accent/10 border border-accent/20 rounded-xl p-3">
-                <p className="text-sm font-inter text-text/90 leading-relaxed">{report.proTip}</p>
-              </div>
-            </div>
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+const TIP_ICONS = {
+  algorithm: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+    </svg>
+  ),
+  genre: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 18V5l12-2v13" />
+      <circle cx="6" cy="18" r="3" />
+      <circle cx="18" cy="16" r="3" />
+    </svg>
+  ),
+  song: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+    </svg>
+  ),
+}
+
+function TipCard({ tip, onLearnMore }) {
+  return (
+    <div className="bg-surface border border-border rounded-2xl p-4 flex flex-col gap-3 hover:border-accent/30 transition-colors duration-200">
+      <div className="flex items-center gap-2">
+        <span className="text-accent">{TIP_ICONS[tip.id]}</span>
+        <span className="font-syne font-bold text-sm text-text">{tip.title}</span>
+      </div>
+      <p className="text-xs font-inter text-text/70 leading-relaxed flex-1">
+        {tip.summary}
+      </p>
+      <button
+        type="button"
+        onClick={() => onLearnMore(tip)}
+        className="self-start flex items-center gap-1.5 text-xs font-inter font-semibold text-accent hover:text-accent/80 transition-colors duration-150 group"
+      >
+        <span>Learn More</span>
+        <span className="transition-transform duration-150 group-hover:translate-x-0.5">→</span>
+      </button>
+    </div>
+  )
+}
+
+function TipDetailView({ tip, onBack }) {
+  return (
+    <div className="min-h-screen bg-bg font-inter">
+      <header className="sticky top-0 z-10 bg-bg/80 backdrop-blur-md border-b border-border">
+        <div className="max-w-3xl mx-auto px-4 py-4 flex items-center gap-4">
+          <button
+            type="button"
+            onClick={onBack}
+            className="flex items-center gap-2 text-sm font-inter text-muted hover:text-text transition-colors duration-150"
+          >
+            <span>←</span>
+            <span>Back to My Campaign</span>
+          </button>
+        </div>
+      </header>
+
+      <main className="max-w-3xl mx-auto px-4 py-10">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-8 h-8 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center text-accent">
+            {TIP_ICONS[tip.id]}
+          </div>
+          <div>
+            <p className="text-xs font-inter text-muted uppercase tracking-wider">Artist Intelligence</p>
+            <h1 className="font-syne font-black text-2xl text-text leading-tight">{tip.title}</h1>
+          </div>
+        </div>
+
+        <div className="bg-surface border border-border rounded-2xl p-6 mb-6">
+          <p className="text-sm font-inter text-text/80 leading-relaxed">{tip.detail}</p>
+        </div>
+
+        {tip.actionSteps && tip.actionSteps.length > 0 && (
+          <div className="bg-surface border border-border rounded-2xl p-6">
+            <p className="text-xs font-inter text-muted uppercase tracking-wider mb-4">Action Steps</p>
+            <ul className="space-y-3">
+              {tip.actionSteps.map((step, i) => (
+                <li key={i} className="flex items-start gap-3">
+                  <span className="flex-shrink-0 w-5 h-5 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center font-syne font-bold text-[10px] text-accent mt-0.5">
+                    {i + 1}
+                  </span>
+                  <span className="text-sm font-inter text-text/80 leading-relaxed">{step}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </main>
+    </div>
+  )
+}
+
+function ArtistIntelligence({ tips, onLearnMore }) {
+  if (!tips || tips.length === 0) return null
+  return (
+    <div className="mb-8">
+      <div className="flex items-center gap-2 mb-3">
+        <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+        <h2 className="font-syne font-bold text-base text-text">Artist Intelligence</h2>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {tips.map((tip) => (
+          <TipCard key={tip.id} tip={tip} onLearnMore={onLearnMore} />
+        ))}
+      </div>
     </div>
   )
 }
@@ -283,6 +409,7 @@ export default function App() {
   const [msgIndex, setMsgIndex] = useState(0)
   const [results, setResults] = useState(null)
   const [error, setError] = useState('')
+  const [selectedTip, setSelectedTip] = useState(null)
   const intervalRef = useRef(null)
 
   useEffect(() => {
@@ -330,6 +457,7 @@ export default function App() {
 
   const handleReset = () => {
     setResults(null)
+    setSelectedTip(null)
     setError('')
     setForm({
       artistName: '',
@@ -339,6 +467,15 @@ export default function App() {
       songDescription: '',
       vibes: [],
     })
+  }
+
+  if (results && selectedTip) {
+    return (
+      <TipDetailView
+        tip={selectedTip}
+        onBack={() => setSelectedTip(null)}
+      />
+    )
   }
 
   if (results) {
@@ -366,7 +503,14 @@ export default function App() {
         <main className="max-w-5xl mx-auto px-4 py-8">
           {results.trendReport && <TrendReport report={results.trendReport} />}
 
-          <div className="flex items-center justify-between mb-6">
+          {results.artistIntelligence && (
+            <ArtistIntelligence
+              tips={results.artistIntelligence}
+              onLearnMore={setSelectedTip}
+            />
+          )}
+
+          <div className="flex items-center justify-between mb-4">
             <h2 className="font-syne font-bold text-xl text-text">Your Pitch Pack</h2>
             <span className="text-xs font-inter text-muted">{results.pitches?.length ?? 0} curators targeted</span>
           </div>
