@@ -25,7 +25,7 @@ const LOADING_MESSAGES = [
 ]
 
 function buildPrompt(form) {
-  return `You are a music industry insider with deep knowledge of current Spotify algorithm behavior, playlist curation, and artist strategy. Generate a campaign based on the artist info below.
+  return `You are a music industry insider. Generate a campaign for the artist below. Be concise — short punchy sentences only, no fluff.
 
 Artist: ${form.artistName}
 Song: ${form.songTitle}
@@ -37,89 +37,74 @@ Vibes: ${form.vibes.join(', ')}
 Return ONLY valid JSON (no markdown, no fences) matching this exact shape:
 {
   "trendReport": {
-    "trendingStyles": ["string", "string", "string"],
-    "curatorBehaviors": ["string", "string"]
+    "trendingStyles": ["brief phrase", "brief phrase", "brief phrase"],
+    "curatorBehaviors": ["brief phrase", "brief phrase"]
   },
   "artistIntelligence": [
     {
       "id": "algorithm",
       "title": "Algorithm Tips",
-      "summary": "1-2 sentence preview of the single most actionable Spotify algorithm insight right now.",
-      "hook": "One gripping, bold opening sentence that immediately commands attention — like the lede of a Rolling Stone cover story. Make it feel urgent and insider.",
+      "summary": "One punchy sentence on the most actionable Spotify algorithm insight right now.",
+      "hook": "One bold, urgent opener — like a magazine lede. Max 20 words.",
       "sections": [
         {
           "label": "WHY THIS MATTERS",
-          "content": "2-3 sentences explaining the current platform mechanic at play. Use **bold** around key industry terms like **save rate**, **playlist add velocity**, **momentum score**. Include real numbers and percentages where relevant, e.g. 18% or 72 hours. Use __underline__ around phrases the artist should literally do, like __pitch within the first 72 hours of release__."
-        },
-        {
-          "label": "WHAT'S CHANGING",
-          "content": "2-3 sentences about how Spotify's algorithm has shifted recently. Bold key terms, include timeframes like 30 days or 6 weeks."
+          "content": "1-2 sentences. Use **bold** for key terms like **save rate**, **playlist add velocity**. Include a stat like 18% or 72 hours. Use __underline__ for actions like __pitch in the first 48 hours__."
         },
         {
           "label": "THE OPPORTUNITY",
-          "content": "2-3 sentences on the specific window of opportunity for an artist at this listener level and in this genre. Bold key terms, underline actionable phrases."
+          "content": "1-2 sentences on the window for an artist at this level. Bold key terms, underline actionable phrases."
         }
       ],
-      "pullQuote": "The single most powerful, quotable insight from this tip — 1-2 sentences that would make an artist stop scrolling. Make it feel like an insider secret.",
+      "pullQuote": "One quotable insider insight — max 20 words.",
       "actionSteps": [
-        { "title": "Short bold title for the action", "explanation": "2-3 sentence explanation of exactly how to execute this step. Be specific." },
-        { "title": "Short bold title for the action", "explanation": "2-3 sentence explanation." },
-        { "title": "Short bold title for the action", "explanation": "2-3 sentence explanation." },
-        { "title": "Short bold title for the action", "explanation": "2-3 sentence explanation." }
+        { "title": "3-5 word title", "explanation": "One sentence." },
+        { "title": "3-5 word title", "explanation": "One sentence." },
+        { "title": "3-5 word title", "explanation": "One sentence." }
       ]
     },
     {
       "id": "genre",
       "title": "For Your Genre",
-      "summary": "1-2 sentence preview of the most important ${form.genre} trend happening this month.",
-      "hook": "One gripping opening sentence specific to what is happening in ${form.genre} right now — urgent, insider-feeling, commanding.",
+      "summary": "One punchy sentence on the most important ${form.genre} trend right now.",
+      "hook": "One bold opener about ${form.genre} right now. Max 20 words.",
       "sections": [
         {
-          "label": "THE SHIFT HAPPENING NOW",
-          "content": "2-3 sentences about how the ${form.genre} playlist landscape has changed. Bold key terms, include real numbers."
+          "label": "WHAT'S SHIFTING",
+          "content": "1-2 sentences on the ${form.genre} playlist landscape. Bold key terms, include a number."
         },
         {
-          "label": "CURATOR PSYCHOLOGY",
-          "content": "2-3 sentences on what ${form.genre} curators are actually looking for right now — what gets a reply, what gets deleted. Bold key terms, underline actionable phrases."
-        },
-        {
-          "label": "WHERE THE MOMENTUM IS",
-          "content": "2-3 sentences on which sub-niches and playlist types in ${form.genre} are growing fastest and why. Bold key terms."
+          "label": "CURATOR MINDSET",
+          "content": "1-2 sentences on what ${form.genre} curators want right now. Bold terms, underline actions."
         }
       ],
-      "pullQuote": "The single most powerful, quotable insight about ${form.genre} curation or audience behavior right now.",
+      "pullQuote": "One quotable insight about ${form.genre} curation right now. Max 20 words.",
       "actionSteps": [
-        { "title": "Short bold title", "explanation": "Specific explanation." },
-        { "title": "Short bold title", "explanation": "Specific explanation." },
-        { "title": "Short bold title", "explanation": "Specific explanation." },
-        { "title": "Short bold title", "explanation": "Specific explanation." }
+        { "title": "3-5 word title", "explanation": "One sentence." },
+        { "title": "3-5 word title", "explanation": "One sentence." },
+        { "title": "3-5 word title", "explanation": "One sentence." }
       ]
     },
     {
       "id": "song",
       "title": "For Your Song",
-      "summary": "1-2 sentence preview of the most powerful tailored insight for ${form.artistName}'s song '${form.songTitle}'.",
-      "hook": "One gripping opening sentence that references something specific about this exact song — its vibe, description, or what makes it uniquely promotable right now.",
+      "summary": "One punchy sentence on what makes '${form.songTitle}' promotable right now.",
+      "hook": "One bold opener referencing this exact song's vibe. Max 20 words.",
       "sections": [
         {
-          "label": "YOUR STRONGEST ANGLE",
-          "content": "2-3 sentences identifying the specific pitching angle that gives this song the best shot. Reference the actual song vibes and description. Bold key terms, underline actionable phrases."
+          "label": "YOUR ANGLE",
+          "content": "1-2 sentences on the best pitch angle for this song. Bold terms, underline actions."
         },
         {
-          "label": "THE PLAYLIST FIT",
-          "content": "2-3 sentences on exactly which playlist types and curator personalities are most likely to add this song and why. Be specific. Bold key terms."
-        },
-        {
-          "label": "RELEASE MOMENTUM",
-          "content": "2-3 sentences on the timing and sequence that will maximize traction for this specific song at this listener level. Include timeframes. Bold key terms, underline actionable phrases."
+          "label": "PLAYLIST FIT",
+          "content": "1-2 sentences on the specific playlist types that will add this song. Bold key terms."
         }
       ],
-      "pullQuote": "The single most powerful, specific insight about what makes this song uniquely promotable.",
+      "pullQuote": "One quotable insight specific to this song. Max 20 words.",
       "actionSteps": [
-        { "title": "Short bold title", "explanation": "Specific explanation referencing the song." },
-        { "title": "Short bold title", "explanation": "Specific explanation." },
-        { "title": "Short bold title", "explanation": "Specific explanation." },
-        { "title": "Short bold title", "explanation": "Specific explanation." }
+        { "title": "3-5 word title", "explanation": "One sentence." },
+        { "title": "3-5 word title", "explanation": "One sentence." },
+        { "title": "3-5 word title", "explanation": "One sentence." }
       ]
     }
   ],
@@ -138,7 +123,7 @@ Return ONLY valid JSON (no markdown, no fences) matching this exact shape:
   ]
 }
 
-Generate exactly 4 pitches. Make everything realistic and specific. The artistIntelligence tips should feel like insider intel worth $500 — reference current platform behavior, real curator patterns, and the artist's specific song details.\n`
+Generate exactly 4 pitches. Keep tips short and punchy — every word must earn its place.\n`
 }
 
 async function runCampaign(form) {
@@ -153,7 +138,7 @@ async function runCampaign(form) {
     },
     body: JSON.stringify({
       model: 'claude-sonnet-4-6',
-      max_tokens: 7000,
+      max_tokens: 5000,
       messages: [{ role: 'user', content: prompt }],
     }),
   })
