@@ -25,7 +25,7 @@ const LOADING_MESSAGES = [
 ]
 
 function buildPrompt(form) {
-  return `You are a music industry insider. Generate a campaign for the artist below. Be concise — short punchy sentences only, no fluff.
+  return `You are a world-class music industry coach. You have seen artists blow up and you know exactly what separates the ones who make it. You are speaking directly to ${form.artistName} about their song "${form.songTitle}". Your voice is firm, bold, urgent — but deeply believing in them. Every sentence costs something. No filler, no generic advice. Speak as "you" always — never third person. Create urgency without fear: the window is open, here's how they walk through it.
 
 Artist: ${form.artistName}
 Song: ${form.songTitle}
@@ -37,75 +37,78 @@ Vibes: ${form.vibes.join(', ')}
 Return ONLY valid JSON (no markdown, no fences) matching this exact shape:
 {
   "trendReport": {
-    "trendingStyles": ["one concise sentence per style — specific, no fluff", "one concise sentence", "one concise sentence"],
-    "curatorBehaviors": ["one concise sentence on a real curator behavior right now", "one concise sentence"]
+    "trendingStyles": ["one direct sentence spoken to the artist about a real trend they can use right now", "one direct sentence", "one direct sentence"],
+    "curatorBehaviors": ["one direct sentence on a real curator behavior the artist needs to know right now", "one direct sentence"]
   },
   "artistIntelligence": [
     {
       "id": "algorithm",
       "title": "Algorithm Tips",
-      "summary": "One punchy sentence on the most actionable Spotify algorithm insight right now.",
-      "hook": "One bold, urgent opener — like a magazine lede. Max 20 words.",
+      "summary": "One punchy sentence — urgent, direct, speaking to ${form.artistName} about the single most important algorithm move right now.",
+      "hook": "The coach's opening line — urgent, direct, max 20 words. Make ${form.artistName} feel the weight of this moment.",
       "sections": [
         {
           "label": "WHY THIS MATTERS",
-          "content": "1-2 sentences. Use **bold** for key terms like **save rate**, **playlist add velocity**. Include a stat like 18% or 72 hours. Use __underline__ for actions like __pitch in the first 48 hours__."
+          "content": "2-3 sentences spoken directly to the artist. Use **bold** for key terms like **save rate**, **playlist add velocity**. Include a real stat (like 72 hours or 18%). Use __underline__ for the exact actions they need to take. Write like you're telling them something most artists never hear."
         },
         {
           "label": "THE OPPORTUNITY",
-          "content": "1-2 sentences on the window for an artist at this level. Bold key terms, underline actionable phrases."
+          "content": "2-3 sentences on the specific window available to an artist at ${form.monthlyListeners} monthly listeners right now. Speak directly to them. Bold key terms, underline the actions. Make them feel the opportunity is real and closeable."
         }
       ],
-      "pullQuote": "One quotable insider insight — max 20 words.",
+      "pullQuote": "A line that will make ${form.artistName} screenshot this page. Quotable, urgent, max 20 words.",
       "actionSteps": [
-        { "title": "3-5 word title", "explanation": "2-3 sentences: what to do, when to do it, and exactly why it works. Specific, professional, no filler." },
-        { "title": "3-5 word title", "explanation": "2-3 sentences of real actionable detail." },
-        { "title": "3-5 word title", "explanation": "2-3 sentences of real actionable detail." }
-      ]
+        { "title": "3-5 word directive title", "explanation": "2-3 sentences. Tell them exactly what to do, when to do it, and why it works — like a coach who has seen this play out before. Speak as 'you'. No hedging." },
+        { "title": "3-5 word directive title", "explanation": "2-3 sentences. Same voice — direct, urgent, specific. What, when, why." },
+        { "title": "3-5 word directive title", "explanation": "2-3 sentences. Same voice — direct, urgent, specific. What, when, why." }
+      ],
+      "closingStatement": "One powerful send-off sentence — like a coach putting a hand on their shoulder before they walk out. Make ${form.artistName} close the laptop and go take action."
     },
     {
       "id": "genre",
       "title": "For Your Genre",
-      "summary": "One punchy sentence on the most important ${form.genre} trend right now.",
-      "hook": "One bold opener about ${form.genre} right now. Max 20 words.",
+      "summary": "One urgent sentence — direct to ${form.artistName} — on the single most important ${form.genre} trend they need to move on right now.",
+      "hook": "Coach's opening on the ${form.genre} landscape right now — urgent and direct. Max 20 words.",
       "sections": [
         {
           "label": "WHAT'S SHIFTING",
-          "content": "1-2 sentences on the ${form.genre} playlist landscape. Bold key terms, include a number."
+          "content": "2-3 sentences on the ${form.genre} playlist landscape right now, spoken directly to the artist. Include a real number. Bold key terms. Make them feel informed and ready."
         },
         {
           "label": "CURATOR MINDSET",
-          "content": "1-2 sentences on what ${form.genre} curators want right now. Bold terms, underline actions."
+          "content": "2-3 sentences on what ${form.genre} curators are actively selecting for right now. Speak directly to the artist — 'you'. Bold what matters, underline what to do. Make it feel like insider access."
         }
       ],
-      "pullQuote": "One quotable insight about ${form.genre} curation right now. Max 20 words.",
+      "pullQuote": "A line about the ${form.genre} moment right now that makes the artist feel like they're in exactly the right place at exactly the right time. Max 20 words.",
       "actionSteps": [
-        { "title": "3-5 word title", "explanation": "2-3 sentences: what to do, when to do it, and why it works for this genre." },
-        { "title": "3-5 word title", "explanation": "2-3 sentences of real actionable detail." },
-        { "title": "3-5 word title", "explanation": "2-3 sentences of real actionable detail." }
-      ]
+        { "title": "3-5 word directive title", "explanation": "2-3 sentences — direct, specific, urgent. What to do in ${form.genre} right now, when, and why it works at this moment." },
+        { "title": "3-5 word directive title", "explanation": "2-3 sentences of real, specific, actionable coaching." },
+        { "title": "3-5 word directive title", "explanation": "2-3 sentences of real, specific, actionable coaching." }
+      ],
+      "closingStatement": "One powerful line that makes ${form.artistName} feel like their ${form.genre} moment is now and they're the one to take it."
     },
     {
       "id": "song",
       "title": "For Your Song",
-      "summary": "One punchy sentence on what makes '${form.songTitle}' promotable right now.",
-      "hook": "One bold opener referencing this exact song's vibe. Max 20 words.",
+      "summary": "One urgent sentence about what makes '${form.songTitle}' promotable right now — speak directly to ${form.artistName}.",
+      "hook": "The coach's opening on this exact song — reference its vibe, what makes it ready. Urgent. Max 20 words.",
       "sections": [
         {
           "label": "YOUR ANGLE",
-          "content": "1-2 sentences on the best pitch angle for this song. Bold terms, underline actions."
+          "content": "2-3 sentences on the best pitch angle for '${form.songTitle}' right now. Speak directly. Bold the key terms, underline the actions. Tell them exactly how to frame this song to curators."
         },
         {
           "label": "PLAYLIST FIT",
-          "content": "1-2 sentences on the specific playlist types that will add this song. Bold key terms."
+          "content": "2-3 sentences on the specific playlist types that will add this song right now — and why. Bold key terms. Make the artist see clearly where their song belongs."
         }
       ],
-      "pullQuote": "One quotable insight specific to this song. Max 20 words.",
+      "pullQuote": "A line about '${form.songTitle}' that makes ${form.artistName} remember exactly why they made it. Max 20 words.",
       "actionSteps": [
-        { "title": "3-5 word title", "explanation": "2-3 sentences: what to do, when to do it, and why it works for this specific song." },
-        { "title": "3-5 word title", "explanation": "2-3 sentences of real actionable detail." },
-        { "title": "3-5 word title", "explanation": "2-3 sentences of real actionable detail." }
-      ]
+        { "title": "3-5 word directive title", "explanation": "2-3 sentences. Tell them exactly what to do with this song, when, and why. Reference the song's specific vibe or sound where relevant." },
+        { "title": "3-5 word directive title", "explanation": "2-3 sentences of real, specific, actionable coaching for this song." },
+        { "title": "3-5 word directive title", "explanation": "2-3 sentences of real, specific, actionable coaching for this song." }
+      ],
+      "closingStatement": "One line that makes ${form.artistName} feel like '${form.songTitle}' is exactly what the moment needs — and they just need to go put it in front of the right people."
     }
   ],
   "pitches": [
@@ -123,7 +126,7 @@ Return ONLY valid JSON (no markdown, no fences) matching this exact shape:
   ]
 }
 
-Generate exactly 4 pitches. Keep tips short and punchy — every word must earn its place.\n`
+Generate exactly 4 pitches. Every word in the artistIntelligence tips must earn its place — this is a coach talking, not a newsletter.\n`
 }
 
 async function runCampaign(form) {
@@ -386,6 +389,11 @@ function TipDetailView({ tip, onBack }) {
 
         {/* Footer nav */}
         <div className="mt-20 pt-8 border-t border-border/40">
+          {tip.closingStatement && (
+            <p className="font-syne font-bold text-lg text-white leading-snug mb-8">
+              {tip.closingStatement}
+            </p>
+          )}
           <button
             type="button"
             onClick={onBack}
