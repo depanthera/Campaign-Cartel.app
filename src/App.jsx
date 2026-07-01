@@ -25,7 +25,7 @@ const LOADING_MESSAGES = [
 ]
 
 function buildPrompt(form) {
-  return `You are a music industry promotion expert with deep knowledge of current Spotify algorithm behavior, playlist curation trends, and artist promotion strategy. Based on the artist info below, generate a campaign.
+  return `You are a music industry insider with deep knowledge of current Spotify algorithm behavior, playlist curation, and artist strategy. Generate a campaign based on the artist info below.
 
 Artist: ${form.artistName}
 Song: ${form.songTitle}
@@ -44,23 +44,83 @@ Return ONLY valid JSON (no markdown, no fences) matching this exact shape:
     {
       "id": "algorithm",
       "title": "Algorithm Tips",
-      "summary": "1-2 sentence preview of the most actionable Spotify/playlist algorithm insight relevant right now — current platform behavior, not generic advice.",
-      "detail": "5-7 sentence detailed breakdown of current Spotify algorithm behavior. Reference specific metrics (save rate, skip rate, playlist add velocity), current editorial patterns, and what the algorithm is rewarding in 2025. Be specific and actionable.",
-      "actionSteps": ["specific action 1", "specific action 2", "specific action 3", "specific action 4"]
+      "summary": "1-2 sentence preview of the single most actionable Spotify algorithm insight right now.",
+      "hook": "One gripping, bold opening sentence that immediately commands attention — like the lede of a Rolling Stone cover story. Make it feel urgent and insider.",
+      "sections": [
+        {
+          "label": "WHY THIS MATTERS",
+          "content": "2-3 sentences explaining the current platform mechanic at play. Use **bold** around key industry terms like **save rate**, **playlist add velocity**, **momentum score**. Include real numbers and percentages where relevant, e.g. 18% or 72 hours. Use __underline__ around phrases the artist should literally do, like __pitch within the first 72 hours of release__."
+        },
+        {
+          "label": "WHAT'S CHANGING",
+          "content": "2-3 sentences about how Spotify's algorithm has shifted recently. Bold key terms, include timeframes like 30 days or 6 weeks."
+        },
+        {
+          "label": "THE OPPORTUNITY",
+          "content": "2-3 sentences on the specific window of opportunity for an artist at this listener level and in this genre. Bold key terms, underline actionable phrases."
+        }
+      ],
+      "pullQuote": "The single most powerful, quotable insight from this tip — 1-2 sentences that would make an artist stop scrolling. Make it feel like an insider secret.",
+      "actionSteps": [
+        { "title": "Short bold title for the action", "explanation": "2-3 sentence explanation of exactly how to execute this step. Be specific." },
+        { "title": "Short bold title for the action", "explanation": "2-3 sentence explanation." },
+        { "title": "Short bold title for the action", "explanation": "2-3 sentence explanation." },
+        { "title": "Short bold title for the action", "explanation": "2-3 sentence explanation." }
+      ]
     },
     {
       "id": "genre",
       "title": "For Your Genre",
-      "summary": "1-2 sentence preview of the most important ${form.genre} trend or curator behavior happening this month.",
-      "detail": "5-7 sentence breakdown of what is working in ${form.genre} right now — which playlist types are growing, what sound textures curators are seeking, how listener behavior in this genre differs from the broader market, and what ${form.genre} artists with similar listener counts are doing successfully.",
-      "actionSteps": ["specific action 1", "specific action 2", "specific action 3", "specific action 4"]
+      "summary": "1-2 sentence preview of the most important ${form.genre} trend happening this month.",
+      "hook": "One gripping opening sentence specific to what is happening in ${form.genre} right now — urgent, insider-feeling, commanding.",
+      "sections": [
+        {
+          "label": "THE SHIFT HAPPENING NOW",
+          "content": "2-3 sentences about how the ${form.genre} playlist landscape has changed. Bold key terms, include real numbers."
+        },
+        {
+          "label": "CURATOR PSYCHOLOGY",
+          "content": "2-3 sentences on what ${form.genre} curators are actually looking for right now — what gets a reply, what gets deleted. Bold key terms, underline actionable phrases."
+        },
+        {
+          "label": "WHERE THE MOMENTUM IS",
+          "content": "2-3 sentences on which sub-niches and playlist types in ${form.genre} are growing fastest and why. Bold key terms."
+        }
+      ],
+      "pullQuote": "The single most powerful, quotable insight about ${form.genre} curation or audience behavior right now.",
+      "actionSteps": [
+        { "title": "Short bold title", "explanation": "Specific explanation." },
+        { "title": "Short bold title", "explanation": "Specific explanation." },
+        { "title": "Short bold title", "explanation": "Specific explanation." },
+        { "title": "Short bold title", "explanation": "Specific explanation." }
+      ]
     },
     {
       "id": "song",
       "title": "For Your Song",
-      "summary": "1-2 sentence preview of the most powerful tailored insight for ${form.artistName}'s specific song '${form.songTitle}' given its vibe and description.",
-      "detail": "5-7 sentence breakdown that references the actual song description, vibes, and genre to give hyper-specific advice. Mention which playlists this song would realistically fit, what the pitch angle should emphasize, which curator personality type is most likely to add it, and what release momentum patterns would help it gain traction.",
-      "actionSteps": ["specific action 1", "specific action 2", "specific action 3", "specific action 4"]
+      "summary": "1-2 sentence preview of the most powerful tailored insight for ${form.artistName}'s song '${form.songTitle}'.",
+      "hook": "One gripping opening sentence that references something specific about this exact song — its vibe, description, or what makes it uniquely promotable right now.",
+      "sections": [
+        {
+          "label": "YOUR STRONGEST ANGLE",
+          "content": "2-3 sentences identifying the specific pitching angle that gives this song the best shot. Reference the actual song vibes and description. Bold key terms, underline actionable phrases."
+        },
+        {
+          "label": "THE PLAYLIST FIT",
+          "content": "2-3 sentences on exactly which playlist types and curator personalities are most likely to add this song and why. Be specific. Bold key terms."
+        },
+        {
+          "label": "RELEASE MOMENTUM",
+          "content": "2-3 sentences on the timing and sequence that will maximize traction for this specific song at this listener level. Include timeframes. Bold key terms, underline actionable phrases."
+        }
+      ],
+      "pullQuote": "The single most powerful, specific insight about what makes this song uniquely promotable.",
+      "actionSteps": [
+        { "title": "Short bold title", "explanation": "Specific explanation referencing the song." },
+        { "title": "Short bold title", "explanation": "Specific explanation." },
+        { "title": "Short bold title", "explanation": "Specific explanation." },
+        { "title": "Short bold title", "explanation": "Specific explanation." }
+      ]
     }
   ],
   "pitches": [
@@ -78,7 +138,7 @@ Return ONLY valid JSON (no markdown, no fences) matching this exact shape:
   ]
 }
 
-Generate exactly 4 pitches. Make curator names, playlist names, and all details realistic and specific to the genre. Vary the submit methods. Make the artistIntelligence tips feel like real intel from an industry insider — reference current platform behavior, real patterns, and specific details from the song info.\n`
+Generate exactly 4 pitches. Make everything realistic and specific. The artistIntelligence tips should feel like insider intel worth $500 — reference current platform behavior, real curator patterns, and the artist's specific song details.\n`
 }
 
 async function runCampaign(form) {
@@ -93,7 +153,7 @@ async function runCampaign(form) {
     },
     body: JSON.stringify({
       model: 'claude-sonnet-4-6',
-      max_tokens: 5000,
+      max_tokens: 7000,
       messages: [{ role: 'user', content: prompt }],
     }),
   })
@@ -107,22 +167,350 @@ async function runCampaign(form) {
   return JSON.parse(stripped)
 }
 
-function VibeChip({ label, selected, onClick }) {
+// ─── Rich text parsing ────────────────────────────────────────────────────────
+// Supports: **bold term**, __underline action__, and auto-highlighted numbers/stats
+
+function parseRichText(text) {
+  const segments = []
+  // Split on **bold** and __underline__ markers
+  const parts = text.split(/(\*\*[^*]+\*\*|__[^_]+__)/g)
+
+  const statPattern = /(\b\d+(?:\.\d+)?(?:\s*%|\s*x\b|\+|\s*K\b|\s*M\b|\s*B\b|\s*hrs?\b|\s*hours?\b|\s*days?\b|\s*weeks?\b|\s*months?\b|\s*mins?\b|\s*minutes?\b|\s*secs?\b|\s*seconds?\b))/g
+
+  for (const part of parts) {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      segments.push({ type: 'bold', content: part.slice(2, -2) })
+    } else if (part.startsWith('__') && part.endsWith('__')) {
+      segments.push({ type: 'underline', content: part.slice(2, -2) })
+    } else {
+      // Auto-highlight stat patterns
+      let lastIndex = 0
+      let match
+      statPattern.lastIndex = 0
+      while ((match = statPattern.exec(part)) !== null) {
+        if (match.index > lastIndex) {
+          segments.push({ type: 'text', content: part.slice(lastIndex, match.index) })
+        }
+        segments.push({ type: 'stat', content: match[1].trim() })
+        lastIndex = match.index + match[1].length
+      }
+      if (lastIndex < part.length) {
+        segments.push({ type: 'text', content: part.slice(lastIndex) })
+      }
+    }
+  }
+  return segments
+}
+
+function RichText({ text, className = '' }) {
+  if (!text) return null
+  const segments = parseRichText(text)
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`px-3 py-1.5 rounded-full text-xs font-inter font-medium border transition-all duration-150 ${
-        selected
-          ? 'bg-accent text-bg border-accent'
-          : 'bg-transparent text-muted border-border hover:border-accent/50 hover:text-text'
-      }`}
-    >
-      {label}
-    </button>
+    <span className={className}>
+      {segments.map((seg, i) => {
+        if (seg.type === 'bold') {
+          return (
+            <strong key={i} className="font-bold text-accent">
+              {seg.content}
+            </strong>
+          )
+        }
+        if (seg.type === 'underline') {
+          return (
+            <span key={i} className="underline decoration-accent decoration-2 underline-offset-2 text-accent/90 font-medium">
+              {seg.content}
+            </span>
+          )
+        }
+        if (seg.type === 'stat') {
+          return (
+            <span key={i} className="inline-flex items-baseline bg-accent text-bg font-mono font-bold text-[0.8em] px-1.5 py-0.5 rounded mx-0.5 leading-none relative top-[-1px]">
+              {seg.content}
+            </span>
+          )
+        }
+        return <span key={i}>{seg.content}</span>
+      })}
+    </span>
   )
 }
 
+// ─── Scroll progress bar ──────────────────────────────────────────────────────
+function ScrollProgressBar() {
+  const [progress, setProgress] = useState(0)
+
+  useEffect(() => {
+    const handle = () => {
+      const el = document.documentElement
+      const total = el.scrollHeight - el.clientHeight
+      setProgress(total > 0 ? (el.scrollTop / total) * 100 : 0)
+    }
+    window.addEventListener('scroll', handle, { passive: true })
+    handle()
+    return () => window.removeEventListener('scroll', handle)
+  }, [])
+
+  return (
+    <div className="fixed top-0 left-0 right-0 z-[70] h-[3px] bg-border/40">
+      <div
+        className="h-full bg-accent transition-none"
+        style={{ width: `${progress}%` }}
+      />
+    </div>
+  )
+}
+
+// ─── Reading time ─────────────────────────────────────────────────────────────
+function getReadingTime(tip) {
+  const text = [
+    tip.hook || '',
+    ...(tip.sections || []).map((s) => s.content || ''),
+    tip.pullQuote || '',
+    ...(tip.actionSteps || []).map((s) =>
+      typeof s === 'string' ? s : `${s.title || ''} ${s.explanation || ''}`
+    ),
+  ].join(' ')
+  const words = text.split(/\s+/).filter(Boolean).length
+  return `${Math.max(2, Math.ceil(words / 180))} min read`
+}
+
+// ─── Tip detail view ──────────────────────────────────────────────────────────
+const TIP_ICONS = {
+  algorithm: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+    </svg>
+  ),
+  genre: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 18V5l12-2v13" />
+      <circle cx="6" cy="18" r="3" />
+      <circle cx="18" cy="16" r="3" />
+    </svg>
+  ),
+  song: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+    </svg>
+  ),
+}
+
+function TipDetailView({ tip, onBack }) {
+  const readingTime = getReadingTime(tip)
+
+  return (
+    <div className="min-h-screen bg-bg font-inter">
+      <ScrollProgressBar />
+
+      {/* Sticky header */}
+      <header className="sticky top-0 z-50 bg-bg/90 backdrop-blur-md border-b border-border">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
+          <button
+            type="button"
+            onClick={onBack}
+            className="flex items-center gap-2 text-sm font-inter text-muted hover:text-text transition-colors duration-150 group"
+          >
+            <span className="transition-transform duration-150 group-hover:-translate-x-0.5">←</span>
+            <span>Back to My Campaign</span>
+          </button>
+          <div className="flex items-center gap-2 text-xs font-inter text-muted">
+            <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+            <span>{readingTime}</span>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-12">
+
+        {/* Category label */}
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-9 h-9 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center text-accent flex-shrink-0">
+            {TIP_ICONS[tip.id]}
+          </div>
+          <div>
+            <p className="text-[11px] font-inter text-accent uppercase tracking-[0.15em] font-semibold">
+              Artist Intelligence
+            </p>
+            <p className="text-xs font-inter text-muted">{readingTime}</p>
+          </div>
+        </div>
+
+        {/* Title */}
+        <h1 className="font-syne font-black text-4xl sm:text-5xl text-text leading-[1.05] tracking-tight mb-8">
+          {tip.title}
+        </h1>
+
+        {/* Hook — magazine lede */}
+        {tip.hook && (
+          <p className="font-syne font-bold text-xl sm:text-2xl text-text leading-snug mb-10 border-l-[3px] border-accent pl-5">
+            <RichText text={tip.hook} />
+          </p>
+        )}
+
+        {/* Sections */}
+        {(tip.sections || []).map((section, i) => (
+          <div key={i} className="mb-10">
+            <p className="text-[10px] font-inter font-bold text-accent uppercase tracking-[0.2em] mb-3">
+              {section.label}
+            </p>
+            <p className="text-base font-inter text-text/80 leading-relaxed">
+              <RichText text={section.content} />
+            </p>
+          </div>
+        ))}
+
+        {/* Pull quote */}
+        {tip.pullQuote && (
+          <div className="my-12 border-l-4 border-accent pl-6 py-2">
+            <p className="font-syne font-bold text-xl sm:text-2xl text-text italic leading-snug">
+              "{tip.pullQuote}"
+            </p>
+          </div>
+        )}
+
+        {/* Divider */}
+        <div className="border-t border-border my-10" />
+
+        {/* Action steps */}
+        {(tip.actionSteps || []).length > 0 && (
+          <div>
+            <p className="text-[10px] font-inter font-bold text-accent uppercase tracking-[0.2em] mb-6">
+              Action Steps
+            </p>
+            <div className="space-y-6">
+              {tip.actionSteps.map((step, i) => {
+                const title = typeof step === 'string' ? step : step.title
+                const explanation = typeof step === 'string' ? null : step.explanation
+                return (
+                  <div key={i} className="flex gap-4 items-start group">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-accent flex items-center justify-center font-syne font-black text-bg text-sm leading-none mt-0.5 group-hover:scale-110 transition-transform duration-150">
+                      {i + 1}
+                    </div>
+                    <div className="flex-1 pt-0.5">
+                      <p className="font-syne font-bold text-base text-text mb-1">
+                        <RichText text={title} />
+                      </p>
+                      {explanation && (
+                        <p className="text-sm font-inter text-text/70 leading-relaxed">
+                          <RichText text={explanation} />
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Footer */}
+        <div className="mt-16 pt-8 border-t border-border flex items-center justify-between">
+          <button
+            type="button"
+            onClick={onBack}
+            className="flex items-center gap-2 text-sm font-inter text-muted hover:text-text transition-colors duration-150 group"
+          >
+            <span className="transition-transform duration-150 group-hover:-translate-x-0.5">←</span>
+            <span>Back to My Campaign</span>
+          </button>
+          <div className="flex items-center gap-1.5 text-[11px] font-inter text-muted/60 uppercase tracking-widest">
+            <span>Artist Intelligence</span>
+          </div>
+        </div>
+      </main>
+    </div>
+  )
+}
+
+// ─── Tip card ─────────────────────────────────────────────────────────────────
+function TipCard({ tip, onLearnMore }) {
+  return (
+    <div className="bg-surface border border-border rounded-2xl p-4 flex flex-col gap-3 hover:border-accent/30 transition-colors duration-200">
+      <div className="flex items-center gap-2">
+        <span className="text-accent">{TIP_ICONS[tip.id]}</span>
+        <span className="font-syne font-bold text-sm text-text">{tip.title}</span>
+      </div>
+      <p className="text-xs font-inter text-text/70 leading-relaxed flex-1">
+        {tip.summary}
+      </p>
+      <button
+        type="button"
+        onClick={() => onLearnMore(tip)}
+        className="self-start flex items-center gap-1.5 text-xs font-inter font-semibold text-accent hover:text-accent/80 transition-colors duration-150 group"
+      >
+        <span>Learn More</span>
+        <span className="transition-transform duration-150 group-hover:translate-x-0.5">→</span>
+      </button>
+    </div>
+  )
+}
+
+// ─── Artist intelligence panel ────────────────────────────────────────────────
+function ArtistIntelligence({ tips, onLearnMore }) {
+  if (!tips || tips.length === 0) return null
+  return (
+    <div className="mb-8">
+      <div className="flex items-center gap-2 mb-3">
+        <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+        <h2 className="font-syne font-bold text-base text-text">Artist Intelligence</h2>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {tips.map((tip) => (
+          <TipCard key={tip.id} tip={tip} onLearnMore={onLearnMore} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ─── Trend report ─────────────────────────────────────────────────────────────
+function TrendReport({ report }) {
+  const [open, setOpen] = useState(true)
+
+  return (
+    <div className="mb-5">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-2 text-sm font-inter text-muted hover:text-accent transition-colors duration-150 mb-3"
+      >
+        <div className="w-1.5 h-1.5 rounded-full bg-accent" />
+        <span>{open ? 'Hide Trend Report' : 'View Trend Report'}</span>
+        <span className={`transition-transform duration-200 ${open ? 'rotate-180' : ''}`}>▾</span>
+      </button>
+      {open && (
+        <div className="bg-surface border border-border rounded-2xl p-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <p className="text-xs font-inter text-muted uppercase tracking-wider mb-2">Trending Styles</p>
+              <ul className="space-y-1.5">
+                {report.trendingStyles.map((s, i) => (
+                  <li key={i} className="flex items-start gap-2 text-sm font-inter text-text/80">
+                    <span className="font-syne font-bold text-accent mt-0.5">0{i + 1}</span>
+                    <span>{s}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <p className="text-xs font-inter text-muted uppercase tracking-wider mb-2">Curator Behaviors</p>
+              <ul className="space-y-1.5">
+                {report.curatorBehaviors.map((b, i) => (
+                  <li key={i} className="flex items-start gap-2 text-sm font-inter text-text/80">
+                    <span className="text-accent mt-0.5">—</span>
+                    <span>{b}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Pitch card ───────────────────────────────────────────────────────────────
 function CopyButton({ text, label }) {
   const [copied, setCopied] = useState(false)
   const handle = async () => {
@@ -208,162 +596,7 @@ function PitchCard({ pitch }) {
   )
 }
 
-function TrendReport({ report }) {
-  const [open, setOpen] = useState(true)
-
-  return (
-    <div className="mb-5">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 text-sm font-inter text-muted hover:text-accent transition-colors duration-150 mb-3"
-      >
-        <div className="w-1.5 h-1.5 rounded-full bg-accent" />
-        <span>{open ? 'Hide Trend Report' : 'View Trend Report'}</span>
-        <span className={`transition-transform duration-200 ${open ? 'rotate-180' : ''}`}>▾</span>
-      </button>
-      {open && (
-        <div className="bg-surface border border-border rounded-2xl p-5">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <p className="text-xs font-inter text-muted uppercase tracking-wider mb-2">Trending Styles</p>
-              <ul className="space-y-1.5">
-                {report.trendingStyles.map((s, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm font-inter text-text/80">
-                    <span className="font-syne font-bold text-accent mt-0.5">0{i + 1}</span>
-                    <span>{s}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <p className="text-xs font-inter text-muted uppercase tracking-wider mb-2">Curator Behaviors</p>
-              <ul className="space-y-1.5">
-                {report.curatorBehaviors.map((b, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm font-inter text-text/80">
-                    <span className="text-accent mt-0.5">—</span>
-                    <span>{b}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
-const TIP_ICONS = {
-  algorithm: (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-    </svg>
-  ),
-  genre: (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M9 18V5l12-2v13" />
-      <circle cx="6" cy="18" r="3" />
-      <circle cx="18" cy="16" r="3" />
-    </svg>
-  ),
-  song: (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-    </svg>
-  ),
-}
-
-function TipCard({ tip, onLearnMore }) {
-  return (
-    <div className="bg-surface border border-border rounded-2xl p-4 flex flex-col gap-3 hover:border-accent/30 transition-colors duration-200">
-      <div className="flex items-center gap-2">
-        <span className="text-accent">{TIP_ICONS[tip.id]}</span>
-        <span className="font-syne font-bold text-sm text-text">{tip.title}</span>
-      </div>
-      <p className="text-xs font-inter text-text/70 leading-relaxed flex-1">
-        {tip.summary}
-      </p>
-      <button
-        type="button"
-        onClick={() => onLearnMore(tip)}
-        className="self-start flex items-center gap-1.5 text-xs font-inter font-semibold text-accent hover:text-accent/80 transition-colors duration-150 group"
-      >
-        <span>Learn More</span>
-        <span className="transition-transform duration-150 group-hover:translate-x-0.5">→</span>
-      </button>
-    </div>
-  )
-}
-
-function TipDetailView({ tip, onBack }) {
-  return (
-    <div className="min-h-screen bg-bg font-inter">
-      <header className="sticky top-0 z-10 bg-bg/80 backdrop-blur-md border-b border-border">
-        <div className="max-w-3xl mx-auto px-4 py-4 flex items-center gap-4">
-          <button
-            type="button"
-            onClick={onBack}
-            className="flex items-center gap-2 text-sm font-inter text-muted hover:text-text transition-colors duration-150"
-          >
-            <span>←</span>
-            <span>Back to My Campaign</span>
-          </button>
-        </div>
-      </header>
-
-      <main className="max-w-3xl mx-auto px-4 py-10">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-8 h-8 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center text-accent">
-            {TIP_ICONS[tip.id]}
-          </div>
-          <div>
-            <p className="text-xs font-inter text-muted uppercase tracking-wider">Artist Intelligence</p>
-            <h1 className="font-syne font-black text-2xl text-text leading-tight">{tip.title}</h1>
-          </div>
-        </div>
-
-        <div className="bg-surface border border-border rounded-2xl p-6 mb-6">
-          <p className="text-sm font-inter text-text/80 leading-relaxed">{tip.detail}</p>
-        </div>
-
-        {tip.actionSteps && tip.actionSteps.length > 0 && (
-          <div className="bg-surface border border-border rounded-2xl p-6">
-            <p className="text-xs font-inter text-muted uppercase tracking-wider mb-4">Action Steps</p>
-            <ul className="space-y-3">
-              {tip.actionSteps.map((step, i) => (
-                <li key={i} className="flex items-start gap-3">
-                  <span className="flex-shrink-0 w-5 h-5 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center font-syne font-bold text-[10px] text-accent mt-0.5">
-                    {i + 1}
-                  </span>
-                  <span className="text-sm font-inter text-text/80 leading-relaxed">{step}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </main>
-    </div>
-  )
-}
-
-function ArtistIntelligence({ tips, onLearnMore }) {
-  if (!tips || tips.length === 0) return null
-  return (
-    <div className="mb-8">
-      <div className="flex items-center gap-2 mb-3">
-        <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
-        <h2 className="font-syne font-bold text-base text-text">Artist Intelligence</h2>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {tips.map((tip) => (
-          <TipCard key={tip.id} tip={tip} onLearnMore={onLearnMore} />
-        ))}
-      </div>
-    </div>
-  )
-}
-
+// ─── Loading overlay ──────────────────────────────────────────────────────────
 function LoadingOverlay({ msgIndex }) {
   return (
     <div className="fixed inset-0 bg-bg/95 backdrop-blur-sm z-50 flex flex-col items-center justify-center gap-6">
@@ -382,6 +615,7 @@ function LoadingOverlay({ msgIndex }) {
   )
 }
 
+// ─── Form helpers ─────────────────────────────────────────────────────────────
 function FormField({ label, children, required }) {
   return (
     <div className="space-y-1.5">
@@ -393,9 +627,26 @@ function FormField({ label, children, required }) {
   )
 }
 
+function VibeChip({ label, selected, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`px-3 py-1.5 rounded-full text-xs font-inter font-medium border transition-all duration-150 ${
+        selected
+          ? 'bg-accent text-bg border-accent'
+          : 'bg-transparent text-muted border-border hover:border-accent/50 hover:text-text'
+      }`}
+    >
+      {label}
+    </button>
+  )
+}
+
 const inputClass =
   'w-full bg-surface border border-border rounded-xl px-4 py-3 text-sm font-inter text-text placeholder-muted/50 focus:outline-none focus:border-accent/60 transition-colors duration-150'
 
+// ─── App ──────────────────────────────────────────────────────────────────────
 export default function App() {
   const [form, setForm] = useState({
     artistName: '',
@@ -415,9 +666,7 @@ export default function App() {
   useEffect(() => {
     if (loading) {
       setMsgIndex(0)
-      intervalRef.current = setInterval(() => {
-        setMsgIndex((i) => i + 1)
-      }, 2000)
+      intervalRef.current = setInterval(() => setMsgIndex((i) => i + 1), 2000)
     } else {
       clearInterval(intervalRef.current)
     }
@@ -427,9 +676,7 @@ export default function App() {
   const toggleVibe = (vibe) => {
     setForm((f) => ({
       ...f,
-      vibes: f.vibes.includes(vibe)
-        ? f.vibes.filter((v) => v !== vibe)
-        : [...f.vibes, vibe],
+      vibes: f.vibes.includes(vibe) ? f.vibes.filter((v) => v !== vibe) : [...f.vibes, vibe],
     }))
   }
 
@@ -459,23 +706,11 @@ export default function App() {
     setResults(null)
     setSelectedTip(null)
     setError('')
-    setForm({
-      artistName: '',
-      songTitle: '',
-      genre: '',
-      monthlyListeners: '',
-      songDescription: '',
-      vibes: [],
-    })
+    setForm({ artistName: '', songTitle: '', genre: '', monthlyListeners: '', songDescription: '', vibes: [] })
   }
 
   if (results && selectedTip) {
-    return (
-      <TipDetailView
-        tip={selectedTip}
-        onBack={() => setSelectedTip(null)}
-      />
-    )
+    return <TipDetailView tip={selectedTip} onBack={() => setSelectedTip(null)} />
   }
 
   if (results) {
@@ -484,9 +719,7 @@ export default function App() {
         <header className="sticky top-0 z-10 bg-bg/80 backdrop-blur-md border-b border-border">
           <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
             <div>
-              <span className="font-syne font-black text-xl text-text tracking-tight">
-                Campaign Cartel
-              </span>
+              <span className="font-syne font-black text-xl text-text tracking-tight">Campaign Cartel</span>
               <span className="ml-2 text-xs font-inter text-muted">
                 for {form.artistName} — "{form.songTitle}"
               </span>
@@ -504,10 +737,7 @@ export default function App() {
           {results.trendReport && <TrendReport report={results.trendReport} />}
 
           {results.artistIntelligence && (
-            <ArtistIntelligence
-              tips={results.artistIntelligence}
-              onLearnMore={setSelectedTip}
-            />
+            <ArtistIntelligence tips={results.artistIntelligence} onLearnMore={setSelectedTip} />
           )}
 
           <div className="flex items-center justify-between mb-4">
@@ -547,9 +777,7 @@ export default function App() {
           <h1 className="font-syne font-black text-4xl md:text-6xl text-text leading-none tracking-tight mb-3">
             Campaign Cartel
           </h1>
-          <p className="font-syne text-lg md:text-xl text-muted font-medium">
-            Your AI Promotion Team
-          </p>
+          <p className="font-syne text-lg md:text-xl text-muted font-medium">Your AI Promotion Team</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -582,9 +810,7 @@ export default function App() {
                 className={`${inputClass} cursor-pointer`}
               >
                 <option value="" disabled>Select genre...</option>
-                {GENRES.map((g) => (
-                  <option key={g} value={g}>{g}</option>
-                ))}
+                {GENRES.map((g) => <option key={g} value={g}>{g}</option>)}
               </select>
             </FormField>
             <FormField label="Monthly Listeners" required>
@@ -594,9 +820,7 @@ export default function App() {
                 className={`${inputClass} cursor-pointer`}
               >
                 <option value="" disabled>Select range...</option>
-                {MONTHLY_LISTENER_RANGES.map((r) => (
-                  <option key={r} value={r}>{r}</option>
-                ))}
+                {MONTHLY_LISTENER_RANGES.map((r) => <option key={r} value={r}>{r}</option>)}
               </select>
             </FormField>
           </div>
@@ -614,12 +838,7 @@ export default function App() {
           <FormField label="Vibes (pick any)">
             <div className="flex flex-wrap gap-2 pt-1">
               {VIBES.map((v) => (
-                <VibeChip
-                  key={v}
-                  label={v}
-                  selected={form.vibes.includes(v)}
-                  onClick={() => toggleVibe(v)}
-                />
+                <VibeChip key={v} label={v} selected={form.vibes.includes(v)} onClick={() => toggleVibe(v)} />
               ))}
             </div>
           </FormField>
