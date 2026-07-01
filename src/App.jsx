@@ -58,9 +58,9 @@ Return ONLY valid JSON (no markdown, no fences) matching this exact shape:
       ],
       "pullQuote": "One quotable insider insight — max 20 words.",
       "actionSteps": [
-        { "title": "3-5 word title", "explanation": "One sentence." },
-        { "title": "3-5 word title", "explanation": "One sentence." },
-        { "title": "3-5 word title", "explanation": "One sentence." }
+        { "title": "3-5 word title", "explanation": "2-3 sentences: what to do, when to do it, and exactly why it works. Specific, professional, no filler." },
+        { "title": "3-5 word title", "explanation": "2-3 sentences of real actionable detail." },
+        { "title": "3-5 word title", "explanation": "2-3 sentences of real actionable detail." }
       ]
     },
     {
@@ -80,9 +80,9 @@ Return ONLY valid JSON (no markdown, no fences) matching this exact shape:
       ],
       "pullQuote": "One quotable insight about ${form.genre} curation right now. Max 20 words.",
       "actionSteps": [
-        { "title": "3-5 word title", "explanation": "One sentence." },
-        { "title": "3-5 word title", "explanation": "One sentence." },
-        { "title": "3-5 word title", "explanation": "One sentence." }
+        { "title": "3-5 word title", "explanation": "2-3 sentences: what to do, when to do it, and why it works for this genre." },
+        { "title": "3-5 word title", "explanation": "2-3 sentences of real actionable detail." },
+        { "title": "3-5 word title", "explanation": "2-3 sentences of real actionable detail." }
       ]
     },
     {
@@ -102,9 +102,9 @@ Return ONLY valid JSON (no markdown, no fences) matching this exact shape:
       ],
       "pullQuote": "One quotable insight specific to this song. Max 20 words.",
       "actionSteps": [
-        { "title": "3-5 word title", "explanation": "One sentence." },
-        { "title": "3-5 word title", "explanation": "One sentence." },
-        { "title": "3-5 word title", "explanation": "One sentence." }
+        { "title": "3-5 word title", "explanation": "2-3 sentences: what to do, when to do it, and why it works for this specific song." },
+        { "title": "3-5 word title", "explanation": "2-3 sentences of real actionable detail." },
+        { "title": "3-5 word title", "explanation": "2-3 sentences of real actionable detail." }
       ]
     }
   ],
@@ -207,21 +207,21 @@ function RichText({ text, className = '' }) {
       {segments.map((seg, i) => {
         if (seg.type === 'bold') {
           return (
-            <strong key={i} className="font-bold text-accent">
+            <strong key={i} className="font-semibold text-white">
               {seg.content}
             </strong>
           )
         }
         if (seg.type === 'underline') {
           return (
-            <span key={i} className="underline decoration-accent decoration-2 underline-offset-2 text-accent/90 font-medium">
+            <span key={i} className="underline decoration-accent decoration-[1.5px] underline-offset-[3px]">
               {seg.content}
             </span>
           )
         }
         if (seg.type === 'stat') {
           return (
-            <span key={i} className="inline-flex items-baseline bg-accent text-bg font-mono font-bold text-[0.8em] px-1.5 py-0.5 rounded mx-0.5 leading-none relative top-[-1px]">
+            <span key={i} className="font-mono font-semibold text-accent">
               {seg.content}
             </span>
           )
@@ -300,57 +300,41 @@ function TipDetailView({ tip, onBack }) {
       <ScrollProgressBar />
 
       {/* Sticky header */}
-      <header className="sticky top-0 z-50 bg-bg/90 backdrop-blur-md border-b border-border">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
+      <header className="sticky top-0 z-50 bg-bg/95 backdrop-blur-md border-b border-border/60">
+        <div className="max-w-2xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
           <button
             type="button"
             onClick={onBack}
             className="flex items-center gap-2 text-sm font-inter text-muted hover:text-text transition-colors duration-150 group"
           >
             <span className="transition-transform duration-150 group-hover:-translate-x-0.5">←</span>
-            <span>Back to My Campaign</span>
+            <span>Back</span>
           </button>
-          <div className="flex items-center gap-2 text-xs font-inter text-muted">
-            <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
-            <span>{readingTime}</span>
-          </div>
+          <span className="text-xs font-inter text-muted/60 tracking-widest uppercase">Artist Intelligence</span>
         </div>
       </header>
 
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-12">
+      <main className="max-w-2xl mx-auto px-6 pt-16 pb-24">
 
         {/* Category label */}
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-9 h-9 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center text-accent flex-shrink-0">
-            {TIP_ICONS[tip.id]}
-          </div>
-          <div>
-            <p className="text-[11px] font-inter text-accent uppercase tracking-[0.15em] font-semibold">
-              Artist Intelligence
-            </p>
-            <p className="text-xs font-inter text-muted">{readingTime}</p>
-          </div>
-        </div>
+        <p className="text-[11px] font-inter text-accent uppercase tracking-[0.18em] font-medium mb-5">
+          {tip.title} · {readingTime}
+        </p>
 
-        {/* Title */}
-        <h1 className="font-syne font-black text-4xl sm:text-5xl text-text leading-[1.05] tracking-tight mb-8">
-          {tip.title}
-        </h1>
-
-        {/* Hook — magazine lede */}
+        {/* Hook — editorial lede */}
         {tip.hook && (
-          <p className="font-syne font-bold text-xl sm:text-2xl text-text leading-snug mb-10 border-l-[3px] border-accent pl-5">
+          <p className="font-syne font-bold text-2xl sm:text-3xl text-white leading-[1.25] tracking-tight mb-14">
             <RichText text={tip.hook} />
           </p>
         )}
 
         {/* Sections */}
         {(tip.sections || []).map((section, i) => (
-          <div key={i} className="mb-10">
-            <p className="text-[10px] font-inter font-bold text-accent uppercase tracking-[0.2em] mb-3">
+          <div key={i} className="mb-12">
+            <p className="text-[10px] font-inter font-semibold text-white/30 uppercase tracking-[0.22em] mb-4">
               {section.label}
             </p>
-            <p className="text-base font-inter text-text/80 leading-relaxed">
+            <p className="text-[15px] font-inter text-white/70 leading-[1.75]">
               <RichText text={section.content} />
             </p>
           </div>
@@ -358,37 +342,37 @@ function TipDetailView({ tip, onBack }) {
 
         {/* Pull quote */}
         {tip.pullQuote && (
-          <div className="my-12 border-l-4 border-accent pl-6 py-2">
-            <p className="font-syne font-bold text-xl sm:text-2xl text-text italic leading-snug">
+          <div className="my-14 border-l-2 border-accent pl-5">
+            <p className="font-inter text-base text-white/80 italic leading-relaxed">
               "{tip.pullQuote}"
             </p>
           </div>
         )}
 
         {/* Divider */}
-        <div className="border-t border-border my-10" />
+        <div className="border-t border-border/40 my-14" />
 
         {/* Action steps */}
         {(tip.actionSteps || []).length > 0 && (
           <div>
-            <p className="text-[10px] font-inter font-bold text-accent uppercase tracking-[0.2em] mb-6">
+            <p className="text-[10px] font-inter font-semibold text-white/30 uppercase tracking-[0.22em] mb-10">
               Action Steps
             </p>
-            <div className="space-y-6">
+            <div className="space-y-10">
               {tip.actionSteps.map((step, i) => {
                 const title = typeof step === 'string' ? step : step.title
                 const explanation = typeof step === 'string' ? null : step.explanation
                 return (
-                  <div key={i} className="flex gap-4 items-start group">
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-accent flex items-center justify-center font-syne font-black text-bg text-sm leading-none mt-0.5 group-hover:scale-110 transition-transform duration-150">
-                      {i + 1}
+                  <div key={i} className="flex gap-6 items-start">
+                    <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center mt-0.5">
+                      <span className="font-syne font-bold text-xs text-accent">{String(i + 1).padStart(2, '0')}</span>
                     </div>
-                    <div className="flex-1 pt-0.5">
-                      <p className="font-syne font-bold text-base text-text mb-1">
+                    <div className="flex-1">
+                      <p className="font-syne font-bold text-base text-white mb-3">
                         <RichText text={title} />
                       </p>
                       {explanation && (
-                        <p className="text-sm font-inter text-text/70 leading-relaxed">
+                        <p className="text-[14px] font-inter text-white/60 leading-[1.8]">
                           <RichText text={explanation} />
                         </p>
                       )}
@@ -400,8 +384,8 @@ function TipDetailView({ tip, onBack }) {
           </div>
         )}
 
-        {/* Footer */}
-        <div className="mt-16 pt-8 border-t border-border flex items-center justify-between">
+        {/* Footer nav */}
+        <div className="mt-20 pt-8 border-t border-border/40">
           <button
             type="button"
             onClick={onBack}
@@ -410,9 +394,6 @@ function TipDetailView({ tip, onBack }) {
             <span className="transition-transform duration-150 group-hover:-translate-x-0.5">←</span>
             <span>Back to My Campaign</span>
           </button>
-          <div className="flex items-center gap-1.5 text-[11px] font-inter text-muted/60 uppercase tracking-widest">
-            <span>Artist Intelligence</span>
-          </div>
         </div>
       </main>
     </div>
