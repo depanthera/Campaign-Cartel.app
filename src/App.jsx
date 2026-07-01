@@ -187,7 +187,7 @@ function PitchCard({ pitch }) {
 }
 
 function TrendReport({ report }) {
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(true)
 
   return (
     <div className="mb-6">
