@@ -125,26 +125,24 @@ function CopyButton({ text, label }) {
   )
 }
 
-function PitchCard({ pitch, index }) {
+function PitchCard({ pitch }) {
+  const [open, setOpen] = useState(false)
   const score = pitch.matchScore ?? 85
   const scoreColor =
     score >= 90 ? 'text-accent' : score >= 80 ? 'text-yellow-400' : 'text-orange-400'
 
   return (
     <div className="bg-surface border border-border rounded-2xl overflow-hidden hover:border-accent/30 transition-colors duration-200">
-      <div className="p-5 border-b border-border flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2 flex-wrap mb-1">
-            <span className="font-syne font-semibold text-text text-sm">
-              {pitch.curatorName}
-            </span>
-            <span className="text-xs font-inter text-muted">·</span>
-            <span className="text-xs font-inter text-muted">{pitch.submitVia}</span>
+      <div className="p-4 flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 flex-wrap mb-0.5">
+            <span className="font-syne font-bold text-sm text-text">{pitch.curatorName}</span>
+            <span className="text-xs font-inter text-muted">via {pitch.submitVia}</span>
           </div>
-          <p className="font-syne font-bold text-base text-text leading-snug">
+          <p className="font-syne font-semibold text-base text-text leading-snug truncate">
             {pitch.playlistName}
           </p>
-          <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
             <span className="text-xs font-inter text-muted">{pitch.followers} followers</span>
             <span className="text-xs font-inter px-2 py-0.5 rounded-full bg-accent/10 text-accent border border-accent/20">
               {pitch.trendingStatus}
@@ -152,83 +150,90 @@ function PitchCard({ pitch, index }) {
           </div>
         </div>
         <div className="flex-shrink-0 text-right">
-          <div className={`font-syne font-bold text-2xl ${scoreColor}`}>{score}</div>
-          <div className="text-xs font-inter text-muted">match</div>
+          <div className={`font-syne font-bold text-xl ${scoreColor}`}>{score}</div>
+          <div className="text-[10px] font-inter text-muted uppercase tracking-wide">match</div>
         </div>
       </div>
 
-      <div className="p-5 space-y-3">
-        <div className="bg-bg/60 rounded-lg p-3 border border-border/60">
-          <p className="text-xs font-inter text-muted mb-1 uppercase tracking-wider">Why this fits</p>
-          <p className="text-sm font-inter text-text/80 leading-relaxed">{pitch.matchReason}</p>
-        </div>
-
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-inter text-muted uppercase tracking-wider">Subject line</p>
+      <div className="px-4 pb-3 border-t border-border/50 pt-3 space-y-2.5">
+        <p className="text-xs font-inter text-text/70 leading-snug bg-bg/40 rounded-lg px-3 py-2 border border-border/40">
+          {pitch.subject}
+        </p>
+        <div className="flex items-center justify-between gap-2">
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            className="text-xs font-inter text-muted hover:text-accent transition-colors duration-150 flex items-center gap-1"
+          >
+            <span>{open ? 'Hide Pitch' : 'Show Pitch'}</span>
+            <span className={`transition-transform duration-200 ${open ? 'rotate-180' : ''}`}>▾</span>
+          </button>
+          <div className="flex gap-1.5">
             <CopyButton text={pitch.subject} label="Copy Subject" />
+            <CopyButton text={pitch.pitch} label="Copy Body" />
+            <CopyButton text={`Subject: ${pitch.subject}\n\n${pitch.pitch}`} label="Copy Full" />
           </div>
-          <p className="text-sm font-inter text-text font-medium leading-snug bg-bg/40 rounded-lg px-3 py-2 border border-border/40">
-            {pitch.subject}
-          </p>
         </div>
-
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-inter text-muted uppercase tracking-wider">Pitch email</p>
-            <div className="flex gap-2">
-              <CopyButton text={pitch.pitch} label="Copy Body" />
-              <CopyButton text={`Subject: ${pitch.subject}\n\n${pitch.pitch}`} label="Copy Full Email" />
-            </div>
-          </div>
-          <div className="bg-bg/40 rounded-lg px-3 py-3 border border-border/40 max-h-48 overflow-y-auto">
-            <p className="text-sm font-inter text-text/70 leading-relaxed whitespace-pre-wrap">
+        {open && (
+          <div className="bg-bg/40 rounded-lg px-3 py-3 border border-border/40 max-h-40 overflow-y-auto">
+            <p className="text-xs font-inter text-text/70 leading-relaxed whitespace-pre-wrap">
               {pitch.pitch}
             </p>
           </div>
-        </div>
+        )}
       </div>
     </div>
   )
 }
 
 function TrendReport({ report }) {
+  const [open, setOpen] = useState(false)
+
   return (
-    <div className="bg-surface border border-border rounded-2xl p-6 mb-8">
-      <div className="flex items-center gap-2 mb-5">
-        <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
-        <h2 className="font-syne font-bold text-lg text-text">Trend Report</h2>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-        <div className="md:col-span-1">
-          <p className="text-xs font-inter text-muted uppercase tracking-wider mb-3">Trending Styles</p>
-          <ul className="space-y-2">
-            {report.trendingStyles.map((s, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm font-inter text-text/80">
-                <span className="font-syne font-bold text-accent mt-0.5">0{i + 1}</span>
-                <span>{s}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div className="md:col-span-1">
-          <p className="text-xs font-inter text-muted uppercase tracking-wider mb-3">Curator Behaviors</p>
-          <ul className="space-y-2">
-            {report.curatorBehaviors.map((b, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm font-inter text-text/80">
-                <span className="text-accent mt-0.5">—</span>
-                <span>{b}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div className="md:col-span-1">
-          <p className="text-xs font-inter text-muted uppercase tracking-wider mb-3">Pro Tip</p>
-          <div className="bg-accent/10 border border-accent/20 rounded-xl p-3">
-            <p className="text-sm font-inter text-text/90 leading-relaxed">{report.proTip}</p>
+    <div className="mb-6">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-2 text-sm font-inter text-muted hover:text-accent transition-colors duration-150 mb-3"
+      >
+        <div className="w-1.5 h-1.5 rounded-full bg-accent" />
+        <span>{open ? 'Hide Trend Report' : 'View Trend Report'}</span>
+        <span className={`transition-transform duration-200 ${open ? 'rotate-180' : ''}`}>▾</span>
+      </button>
+      {open && (
+        <div className="bg-surface border border-border rounded-2xl p-5">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <p className="text-xs font-inter text-muted uppercase tracking-wider mb-2">Trending Styles</p>
+              <ul className="space-y-1.5">
+                {report.trendingStyles.map((s, i) => (
+                  <li key={i} className="flex items-start gap-2 text-sm font-inter text-text/80">
+                    <span className="font-syne font-bold text-accent mt-0.5">0{i + 1}</span>
+                    <span>{s}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <p className="text-xs font-inter text-muted uppercase tracking-wider mb-2">Curator Behaviors</p>
+              <ul className="space-y-1.5">
+                {report.curatorBehaviors.map((b, i) => (
+                  <li key={i} className="flex items-start gap-2 text-sm font-inter text-text/80">
+                    <span className="text-accent mt-0.5">—</span>
+                    <span>{b}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <p className="text-xs font-inter text-muted uppercase tracking-wider mb-2">Pro Tip</p>
+              <div className="bg-accent/10 border border-accent/20 rounded-xl p-3">
+                <p className="text-sm font-inter text-text/90 leading-relaxed">{report.proTip}</p>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }
@@ -368,7 +373,7 @@ export default function App() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
             {(results.pitches ?? []).map((pitch, i) => (
-              <PitchCard key={i} pitch={pitch} index={i} />
+              <PitchCard key={i} pitch={pitch} />
             ))}
           </div>
 
