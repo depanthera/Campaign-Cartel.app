@@ -601,6 +601,284 @@ function LoadingOverlay({ msgIndex }) {
   )
 }
 
+// ─── City scene ──────────────────────────────────────────────────────────────
+function CityScene() {
+  return (
+    <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 0 }}>
+
+      {/* Sky gradient — black to deep midnight purple at horizon */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background: 'linear-gradient(to bottom, #050505 0%, #050505 45%, #0d0818 70%, #130d24 82%, #1a1030 88%, #0a0810 100%)',
+        }}
+      />
+
+      {/* City glow halo — light pollution rising from skyline */}
+      <div
+        className="city-glow absolute"
+        style={{
+          bottom: '13%',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: '140%',
+          height: '28%',
+          background: 'radial-gradient(ellipse 60% 100% at 50% 100%, rgba(80,30,120,0.38) 0%, rgba(60,20,100,0.18) 50%, transparent 100%)',
+          filter: 'blur(18px)',
+        }}
+      />
+
+      {/* Secondary warm glow — dirty amber on left like the 405 at night */}
+      <div
+        className="absolute"
+        style={{
+          bottom: '14%',
+          left: '18%',
+          width: '35%',
+          height: '18%',
+          background: 'radial-gradient(ellipse at 50% 100%, rgba(100,55,20,0.18) 0%, transparent 70%)',
+          filter: 'blur(22px)',
+          opacity: 0.7,
+        }}
+      />
+
+      {/* Lens flare 1 — left horizon */}
+      <div
+        className="lens-flare"
+        style={{
+          bottom: '18%',
+          left: '22%',
+          width: '180px',
+          height: '180px',
+          background: 'radial-gradient(circle, rgba(200,255,87,0.35) 0%, rgba(200,255,87,0.05) 40%, transparent 70%)',
+          animationDelay: '0s',
+        }}
+      />
+      {/* Lens flare 2 — right of center */}
+      <div
+        className="lens-flare"
+        style={{
+          bottom: '16%',
+          left: '62%',
+          width: '120px',
+          height: '120px',
+          background: 'radial-gradient(circle, rgba(180,120,255,0.2) 0%, rgba(140,80,200,0.06) 40%, transparent 70%)',
+          animationDelay: '2.5s',
+        }}
+      />
+      {/* Lens flare 3 — far right */}
+      <div
+        className="lens-flare"
+        style={{
+          bottom: '17%',
+          right: '10%',
+          width: '90px',
+          height: '90px',
+          background: 'radial-gradient(circle, rgba(200,255,87,0.25) 0%, transparent 65%)',
+          animationDelay: '4s',
+        }}
+      />
+
+      {/* SVG Cityscape */}
+      <svg
+        viewBox="0 0 1440 300"
+        preserveAspectRatio="xMidYMax slice"
+        xmlns="http://www.w3.org/2000/svg"
+        className="absolute bottom-0 w-full"
+        style={{ height: '40%' }}
+      >
+        {/* Deep back layer — faint, very dark */}
+        <g fill="#0e0e12" opacity="0.9">
+          <rect x="0"    y="210" width="28"  height="90" />
+          <rect x="30"   y="190" width="18"  height="110" />
+          <rect x="50"   y="200" width="40"  height="100" />
+          <rect x="92"   y="180" width="22"  height="120" />
+          <rect x="116"  y="195" width="30"  height="105" />
+          <rect x="148"  y="175" width="16"  height="125" />
+          <rect x="167"  y="205" width="36"  height="95" />
+          <rect x="205"  y="165" width="24"  height="135" />
+          <rect x="232"  y="185" width="42"  height="115" />
+          <rect x="276"  y="170" width="20"  height="130" />
+          <rect x="300"  y="155" width="30"  height="145" />
+          <rect x="333"  y="190" width="22"  height="110" />
+          <rect x="358"  y="175" width="50"  height="125" />
+          <rect x="411"  y="160" width="18"  height="140" />
+          <rect x="432"  y="185" width="28"  height="115" />
+          <rect x="463"  y="150" width="35"  height="150" />
+          <rect x="500"  y="170" width="24"  height="130" />
+          <rect x="527"  y="190" width="16"  height="110" />
+          <rect x="546"  y="165" width="40"  height="135" />
+          <rect x="589"  y="175" width="26"  height="125" />
+          <rect x="618"  y="155" width="32"  height="145" />
+          <rect x="653"  y="185" width="20"  height="115" />
+          <rect x="676"  y="145" width="45"  height="155" />
+          <rect x="724"  y="170" width="28"  height="130" />
+          <rect x="755"  y="160" width="22"  height="140" />
+          <rect x="780"  y="185" width="35"  height="115" />
+          <rect x="818"  y="175" width="18"  height="125" />
+          <rect x="839"  y="155" width="30"  height="145" />
+          <rect x="872"  y="165" width="42"  height="135" />
+          <rect x="917"  y="180" width="24"  height="120" />
+          <rect x="944"  y="145" width="36"  height="155" />
+          <rect x="983"  y="170" width="20"  height="130" />
+          <rect x="1006" y="190" width="28"  height="110" />
+          <rect x="1037" y="160" width="50"  height="140" />
+          <rect x="1090" y="175" width="22"  height="125" />
+          <rect x="1115" y="150" width="30"  height="150" />
+          <rect x="1148" y="180" width="18"  height="120" />
+          <rect x="1169" y="165" width="40"  height="135" />
+          <rect x="1212" y="185" width="26"  height="115" />
+          <rect x="1241" y="155" width="35"  height="145" />
+          <rect x="1279" y="170" width="24"  height="130" />
+          <rect x="1306" y="190" width="20"  height="110" />
+          <rect x="1329" y="160" width="45"  height="140" />
+          <rect x="1377" y="175" width="28"  height="125" />
+          <rect x="1408" y="155" width="32"  height="145" />
+        </g>
+
+        {/* Mid layer — slightly less dark */}
+        <g fill="#0a0a0e" opacity="1">
+          <rect x="0"    y="230" width="55"  height="70" />
+          <rect x="57"   y="215" width="20"  height="85" />
+          <rect x="80"   y="205" width="35"  height="95" />
+          <rect x="118"  y="195" width="25"  height="105" />
+          {/* Downtown cluster — tallest buildings */}
+          <rect x="155"  y="160" width="18"  height="140" />
+          <rect x="175"  y="130" width="30"  height="170" /> {/* hero tower */}
+          <rect x="207"  y="150" width="22"  height="150" />
+          <rect x="232"  y="170" width="40"  height="130" />
+          <rect x="275"  y="185" width="15"  height="115" />
+          <rect x="293"  y="175" width="28"  height="125" />
+          <rect x="324"  y="190" width="20"  height="110" />
+          <rect x="347"  y="165" width="45"  height="135" />
+          <rect x="395"  y="180" width="18"  height="120" />
+          <rect x="416"  y="155" width="32"  height="145" />
+          <rect x="451"  y="195" width="22"  height="105" />
+          <rect x="476"  y="175" width="30"  height="125" />
+          <rect x="509"  y="160" width="40"  height="140" />
+          <rect x="552"  y="185" width="24"  height="115" />
+          <rect x="579"  y="145" width="18"  height="155" />
+          <rect x="600"  y="170" width="35"  height="130" />
+          {/* Central tower pair */}
+          <rect x="638"  y="120" width="28"  height="180" />
+          <rect x="668"  y="135" width="22"  height="165" />
+          <rect x="693"  y="165" width="38"  height="135" />
+          <rect x="734"  y="180" width="20"  height="120" />
+          <rect x="757"  y="155" width="30"  height="145" />
+          <rect x="790"  y="170" width="45"  height="130" />
+          <rect x="838"  y="190" width="18"  height="110" />
+          <rect x="859"  y="160" width="28"  height="140" />
+          <rect x="890"  y="145" width="40"  height="155" />
+          <rect x="933"  y="175" width="22"  height="125" />
+          <rect x="958"  y="185" width="30"  height="115" />
+          <rect x="991"  y="160" width="50"  height="140" />
+          <rect x="1044" y="175" width="20"  height="125" />
+          <rect x="1067" y="150" width="35"  height="150" />
+          <rect x="1105" y="170" width="25"  height="130" />
+          <rect x="1133" y="190" width="18"  height="110" />
+          <rect x="1154" y="155" width="42"  height="145" />
+          <rect x="1199" y="165" width="28"  height="135" />
+          <rect x="1230" y="180" width="22"  height="120" />
+          <rect x="1255" y="150" width="38"  height="150" />
+          <rect x="1296" y="170" width="30"  height="130" />
+          <rect x="1329" y="185" width="20"  height="115" />
+          <rect x="1352" y="155" width="45"  height="145" />
+          <rect x="1400" y="165" width="40"  height="135" />
+        </g>
+
+        {/* Foreground — darkest, fills bottom */}
+        <g fill="#060608">
+          <rect x="0"    y="250" width="200" height="50" />
+          <rect x="0"    y="240" width="80"  height="60" />
+          <rect x="82"   y="235" width="40"  height="65" />
+          <rect x="124"  y="245" width="60"  height="55" />
+          <rect x="186"  y="238" width="90"  height="62" />
+          <rect x="278"  y="248" width="70"  height="52" />
+          <rect x="350"  y="242" width="50"  height="58" />
+          <rect x="402"  y="252" width="120" height="48" />
+          <rect x="524"  y="244" width="80"  height="56" />
+          <rect x="606"  y="250" width="100" height="50" />
+          <rect x="708"  y="240" width="65"  height="60" />
+          <rect x="775"  y="248" width="85"  height="52" />
+          <rect x="862"  y="242" width="55"  height="58" />
+          <rect x="919"  y="250" width="110" height="50" />
+          <rect x="1031" y="244" width="70"  height="56" />
+          <rect x="1103" y="250" width="90"  height="50" />
+          <rect x="1195" y="242" width="60"  height="58" />
+          <rect x="1257" y="248" width="100" height="52" />
+          <rect x="1359" y="240" width="81"  height="60" />
+          {/* Ground fill */}
+          <rect x="0" y="275" width="1440" height="25" />
+          {/* Highway / road strip */}
+          <rect x="0" y="268" width="1440" height="4" fill="#0c0c10" />
+        </g>
+
+        {/* Flickering windows */}
+        {/* Tower 1 windows */}
+        <rect className="win-f1" x="180" y="138" width="6"  height="4"  fill="#C8FF57" opacity="0.7" />
+        <rect className="win-f3" x="188" y="150" width="6"  height="4"  fill="#ffe4a0" opacity="0.6" />
+        <rect className="win-f2" x="180" y="162" width="6"  height="4"  fill="#C8FF57" opacity="0.5" />
+        <rect className="win-f4" x="188" y="172" width="6"  height="4"  fill="#ffe4a0" opacity="0.4" />
+        {/* Central tower windows */}
+        <rect className="win-f2" x="642" y="128" width="5"  height="4"  fill="#C8FF57" opacity="0.65" />
+        <rect className="win-f1" x="650" y="140" width="5"  height="4"  fill="#ffe4a0" opacity="0.55" />
+        <rect className="win-f3" x="642" y="155" width="5"  height="4"  fill="#C8FF57" opacity="0.6" />
+        <rect className="win-f4" x="650" y="168" width="5"  height="4"  fill="#a0c8ff" opacity="0.45" />
+        <rect className="win-f1" x="672" y="142" width="5"  height="4"  fill="#C8FF57" opacity="0.5" />
+        <rect className="win-f2" x="672" y="158" width="5"  height="4"  fill="#ffe4a0" opacity="0.6" />
+        {/* Right cluster */}
+        <rect className="win-f3" x="995" y="168" width="6"  height="4"  fill="#C8FF57" opacity="0.55" />
+        <rect className="win-f1" x="1004" y="180" width="6" height="4"  fill="#ffe4a0" opacity="0.5" />
+        <rect className="win-f4" x="995" y="193" width="6"  height="4"  fill="#a0c8ff" opacity="0.45" />
+        {/* Mid cluster */}
+        <rect className="win-f2" x="418" y="162" width="5"  height="4"  fill="#C8FF57" opacity="0.6" />
+        <rect className="win-f4" x="425" y="174" width="5"  height="4"  fill="#ffe4a0" opacity="0.5" />
+        {/* Far right */}
+        <rect className="win-f1" x="1260" y="158" width="6" height="4"  fill="#C8FF57" opacity="0.55" />
+        <rect className="win-f3" x="1269" y="170" width="6" height="4"  fill="#ffe4a0" opacity="0.5" />
+      </svg>
+
+      {/* Rising embers / particles */}
+      <div className="absolute" style={{ bottom: '24%', left: '20%' }}>
+        <div className="ember ember-a" style={{ width: 3, height: 3, opacity: 0 }} />
+      </div>
+      <div className="absolute" style={{ bottom: '25%', left: '32%' }}>
+        <div className="ember ember-b" style={{ width: 2, height: 2, opacity: 0 }} />
+      </div>
+      <div className="absolute" style={{ bottom: '23%', left: '45%' }}>
+        <div className="ember ember-c" style={{ width: 2.5, height: 2.5, opacity: 0 }} />
+      </div>
+      <div className="absolute" style={{ bottom: '26%', left: '55%' }}>
+        <div className="ember ember-d" style={{ width: 2, height: 2, opacity: 0 }} />
+      </div>
+      <div className="absolute" style={{ bottom: '24%', left: '64%' }}>
+        <div className="ember ember-e" style={{ width: 3, height: 3, opacity: 0 }} />
+      </div>
+      <div className="absolute" style={{ bottom: '25%', left: '72%' }}>
+        <div className="ember ember-f" style={{ width: 2, height: 2, opacity: 0 }} />
+      </div>
+      <div className="absolute" style={{ bottom: '23%', left: '27%' }}>
+        <div className="ember ember-g" style={{ width: 2.5, height: 2.5, opacity: 0 }} />
+      </div>
+      <div className="absolute" style={{ bottom: '26%', left: '50%' }}>
+        <div className="ember ember-h" style={{ width: 2, height: 2, opacity: 0 }} />
+      </div>
+      <div className="absolute" style={{ bottom: '24%', left: '38%' }}>
+        <div className="ember ember-i" style={{ width: 3, height: 3, opacity: 0 }} />
+      </div>
+      <div className="absolute" style={{ bottom: '25%', left: '80%' }}>
+        <div className="ember ember-j" style={{ width: 2, height: 2, opacity: 0 }} />
+      </div>
+
+      {/* Bottom ground fade to pure black */}
+      <div
+        className="absolute bottom-0 left-0 right-0"
+        style={{ height: '12%', background: 'linear-gradient(to top, #050505 0%, transparent 100%)' }}
+      />
+    </div>
+  )
+}
+
 // ─── Form helpers ─────────────────────────────────────────────────────────────
 function FormField({ label, children, required }) {
   return (
@@ -751,102 +1029,114 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-bg font-inter">
+    <div className="film-grain min-h-screen font-inter relative" style={{ background: '#050505' }}>
       {loading && <LoadingOverlay msgIndex={msgIndex} />}
+      <CityScene />
 
-      <div className="max-w-2xl mx-auto px-4 py-12 md:py-20">
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-accent/30 bg-accent/5 mb-6">
-            <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
-            <span className="text-xs font-inter text-accent tracking-wider uppercase">AI Powered</span>
+      {/* Content layer */}
+      <div className="relative z-10 min-h-screen flex flex-col justify-center px-4 py-16 md:py-24">
+        <div className="max-w-xl mx-auto w-full">
+
+          {/* Logo / hero */}
+          <div className="text-center mb-10">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-accent/20 bg-accent/5 mb-8">
+              <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+              <span className="text-[11px] font-inter text-accent tracking-[0.18em] uppercase">AI Powered</span>
+            </div>
+            <h1 className="neon-title font-syne font-black text-5xl md:text-7xl text-white leading-none tracking-tight mb-3">
+              Campaign Cartel
+            </h1>
+            <p className="font-inter text-base md:text-lg text-white/50 font-normal tracking-wide">
+              Your AI Promotion Team
+            </p>
           </div>
-          <h1 className="font-syne font-black text-4xl md:text-6xl text-text leading-none tracking-tight mb-3">
-            Campaign Cartel
-          </h1>
-          <p className="font-syne text-lg md:text-xl text-muted font-medium">Your AI Promotion Team</p>
+
+          {/* Frosted glass form card */}
+          <div className="glass-card p-6 md:p-8">
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <FormField label="Artist Name" required>
+                  <input
+                    type="text"
+                    placeholder="e.g. Milo James"
+                    value={form.artistName}
+                    onChange={(e) => setForm((f) => ({ ...f, artistName: e.target.value }))}
+                    className={inputClass}
+                  />
+                </FormField>
+                <FormField label="Song Title" required>
+                  <input
+                    type="text"
+                    placeholder="e.g. Golden Hour"
+                    value={form.songTitle}
+                    onChange={(e) => setForm((f) => ({ ...f, songTitle: e.target.value }))}
+                    className={inputClass}
+                  />
+                </FormField>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <FormField label="Genre" required>
+                  <select
+                    value={form.genre}
+                    onChange={(e) => setForm((f) => ({ ...f, genre: e.target.value }))}
+                    className={`${inputClass} cursor-pointer`}
+                  >
+                    <option value="" disabled>Select genre...</option>
+                    {GENRES.map((g) => <option key={g} value={g}>{g}</option>)}
+                  </select>
+                </FormField>
+                <FormField label="Monthly Listeners" required>
+                  <select
+                    value={form.monthlyListeners}
+                    onChange={(e) => setForm((f) => ({ ...f, monthlyListeners: e.target.value }))}
+                    className={`${inputClass} cursor-pointer`}
+                  >
+                    <option value="" disabled>Select range...</option>
+                    {MONTHLY_LISTENER_RANGES.map((r) => <option key={r} value={r}>{r}</option>)}
+                  </select>
+                </FormField>
+              </div>
+
+              <FormField label="Song Description" required>
+                <textarea
+                  rows={3}
+                  placeholder="Describe the sound, mood, and story of your song..."
+                  value={form.songDescription}
+                  onChange={(e) => setForm((f) => ({ ...f, songDescription: e.target.value }))}
+                  className={`${inputClass} resize-none leading-relaxed`}
+                />
+              </FormField>
+
+              <FormField label="Vibes (pick any)">
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {VIBES.map((v) => (
+                    <VibeChip key={v} label={v} selected={form.vibes.includes(v)} onClick={() => toggleVibe(v)} />
+                  ))}
+                </div>
+              </FormField>
+
+              {error && (
+                <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3">
+                  <p className="text-sm font-inter text-red-400">{error}</p>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={!isValid || loading}
+                className={`w-full py-4 rounded-xl font-syne font-bold text-base tracking-wide transition-all duration-150 active:scale-[0.99] ${
+                  isValid && !loading
+                    ? 'bg-accent text-bg hover:bg-accent/90 cursor-pointer'
+                    : 'bg-accent/20 text-accent/40 cursor-not-allowed'
+                }`}
+              >
+                Run My Campaign →
+              </button>
+            </form>
+          </div>
+
         </div>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormField label="Artist Name" required>
-              <input
-                type="text"
-                placeholder="e.g. Milo James"
-                value={form.artistName}
-                onChange={(e) => setForm((f) => ({ ...f, artistName: e.target.value }))}
-                className={inputClass}
-              />
-            </FormField>
-            <FormField label="Song Title" required>
-              <input
-                type="text"
-                placeholder="e.g. Golden Hour"
-                value={form.songTitle}
-                onChange={(e) => setForm((f) => ({ ...f, songTitle: e.target.value }))}
-                className={inputClass}
-              />
-            </FormField>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormField label="Genre" required>
-              <select
-                value={form.genre}
-                onChange={(e) => setForm((f) => ({ ...f, genre: e.target.value }))}
-                className={`${inputClass} cursor-pointer`}
-              >
-                <option value="" disabled>Select genre...</option>
-                {GENRES.map((g) => <option key={g} value={g}>{g}</option>)}
-              </select>
-            </FormField>
-            <FormField label="Monthly Listeners" required>
-              <select
-                value={form.monthlyListeners}
-                onChange={(e) => setForm((f) => ({ ...f, monthlyListeners: e.target.value }))}
-                className={`${inputClass} cursor-pointer`}
-              >
-                <option value="" disabled>Select range...</option>
-                {MONTHLY_LISTENER_RANGES.map((r) => <option key={r} value={r}>{r}</option>)}
-              </select>
-            </FormField>
-          </div>
-
-          <FormField label="Song Description" required>
-            <textarea
-              rows={3}
-              placeholder="Describe the sound, mood, and story of your song..."
-              value={form.songDescription}
-              onChange={(e) => setForm((f) => ({ ...f, songDescription: e.target.value }))}
-              className={`${inputClass} resize-none leading-relaxed`}
-            />
-          </FormField>
-
-          <FormField label="Vibes (pick any)">
-            <div className="flex flex-wrap gap-2 pt-1">
-              {VIBES.map((v) => (
-                <VibeChip key={v} label={v} selected={form.vibes.includes(v)} onClick={() => toggleVibe(v)} />
-              ))}
-            </div>
-          </FormField>
-
-          {error && (
-            <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3">
-              <p className="text-sm font-inter text-red-400">{error}</p>
-            </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={!isValid || loading}
-            className={`w-full py-4 rounded-xl font-syne font-bold text-base tracking-wide transition-all duration-150 active:scale-[0.99] ${
-              isValid && !loading
-                ? 'bg-accent text-bg hover:bg-accent/90 cursor-pointer'
-                : 'bg-accent/20 text-accent/40 cursor-not-allowed'
-            }`}
-          >
-            Run My Campaign →
-          </button>
-        </form>
       </div>
     </div>
   )
