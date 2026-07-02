@@ -601,168 +601,215 @@ function LoadingOverlay({ msgIndex }) {
   )
 }
 
+// ─── Palm tree (SVG helper) ──────────────────────────────────────────────────
+function Palm({ cx, baseY, height, lean = 0 }) {
+  const tx = cx + lean
+  const ty = baseY - height
+  const trunk = `M ${cx - 7},${baseY} Q ${(cx - 3 + lean * 0.4).toFixed(1)},${(baseY - height * 0.5).toFixed(1)} ${tx - 4},${ty} L ${tx + 4},${ty} Q ${(cx + 3 + lean * 0.4).toFixed(1)},${(baseY - height * 0.5).toFixed(1)} ${cx + 7},${baseY} Z`
+  const fl = height * 0.33
+  const fw = fl * 0.17
+  const angles = [-2.4, -1.7, -1.05, -0.38, 0.38, 1.05, 1.7, 2.4]
+  const fronds = angles.map(a => {
+    const ex = tx + Math.sin(a) * fl
+    const ey = ty - Math.cos(a) * fl
+    const p = a + Math.PI / 2
+    const c1x = (tx + Math.sin(a) * fl * 0.45 + Math.sin(p) * fw).toFixed(1)
+    const c1y = (ty - Math.cos(a) * fl * 0.45 - Math.cos(p) * fw).toFixed(1)
+    const c2x = (tx + Math.sin(a) * fl * 0.45 - Math.sin(p) * fw).toFixed(1)
+    const c2y = (ty - Math.cos(a) * fl * 0.45 + Math.cos(p) * fw).toFixed(1)
+    return `M ${tx.toFixed(1)},${ty.toFixed(1)} Q ${c1x},${c1y} ${ex.toFixed(1)},${ey.toFixed(1)} Q ${c2x},${c2y} ${tx.toFixed(1)},${ty.toFixed(1)}`
+  })
+  return (
+    <g fill="#050505">
+      <path d={trunk} />
+      {fronds.map((f, i) => <path key={i} d={f} />)}
+    </g>
+  )
+}
+
+// ─── EKG heart-monitor line ──────────────────────────────────────────────────
+function EKGLine() {
+  const canvasRef = useRef(null)
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    let w = 0, h = 0, scanX = 0, prevY = null, animId
+    const SPEED = 2.2
+    const CYCLE = 260
+
+    const setup = () => {
+      const dpr = window.devicePixelRatio || 1
+      w = canvas.offsetWidth
+      h = canvas.offsetHeight
+      canvas.width = w * dpr
+      canvas.height = h * dpr
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      scanX = 0
+      prevY = null
+      ctx.fillStyle = '#050505'
+      ctx.fillRect(0, 0, w, h)
+    }
+    setup()
+    window.addEventListener('resize', setup)
+
+    const getY = () => {
+      const cy = h / 2
+      const pos = ((Math.floor(scanX) % CYCLE) + CYCLE) % CYCLE
+      let offset = 0
+      if (pos >= 45 && pos < 65)     offset = -7  * Math.sin((pos - 45)  / 20 * Math.PI)
+      else if (pos >= 85 && pos < 93)  offset =  5  * Math.sin((pos - 85)  /  8 * Math.PI)
+      else if (pos >= 93 && pos < 108) offset = -h  * 0.44 * Math.sin((pos - 93)  / 15 * Math.PI)
+      else if (pos >= 108 && pos < 118) offset =  9  * Math.sin((pos - 108) / 10 * Math.PI)
+      else if (pos >= 142 && pos < 182) offset = -13 * Math.sin((pos - 142) / 40 * Math.PI)
+      return cy + offset
+    }
+
+    const draw = () => {
+      ctx.fillStyle = '#050505'
+      ctx.fillRect(scanX, 0, 38, h)
+      const cy = getY()
+      if (prevY !== null && scanX > 0) {
+        // Glow halo pass
+        ctx.beginPath()
+        ctx.moveTo(scanX - SPEED, prevY)
+        ctx.lineTo(scanX, cy)
+        ctx.strokeStyle = 'rgba(200,255,87,0.18)'
+        ctx.lineWidth = 6
+        ctx.shadowBlur = 0
+        ctx.lineCap = 'round'
+        ctx.stroke()
+        // Main line pass
+        ctx.beginPath()
+        ctx.moveTo(scanX - SPEED, prevY)
+        ctx.lineTo(scanX, cy)
+        ctx.strokeStyle = '#C8FF57'
+        ctx.lineWidth = 1.5
+        ctx.shadowBlur = 10
+        ctx.shadowColor = 'rgba(200,255,87,0.55)'
+        ctx.stroke()
+      }
+      prevY = cy
+      scanX += SPEED
+      if (scanX >= w) {
+        scanX = 0
+        prevY = null
+        ctx.fillStyle = '#050505'
+        ctx.fillRect(0, 0, w, h)
+      }
+      animId = requestAnimationFrame(draw)
+    }
+
+    animId = requestAnimationFrame(draw)
+    return () => {
+      cancelAnimationFrame(animId)
+      window.removeEventListener('resize', setup)
+    }
+  }, [])
+
+  return (
+    <canvas
+      ref={canvasRef}
+      style={{
+        position: 'fixed',
+        left: 0,
+        right: 0,
+        width: '100%',
+        height: '76px',
+        bottom: '44%',
+        zIndex: 5,
+        pointerEvents: 'none',
+        display: 'block',
+      }}
+    />
+  )
+}
+
 // ─── City scene ──────────────────────────────────────────────────────────────
 function CityScene() {
   return (
-    <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 0 }}>
-
+    <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 0 }}>
       <div className="absolute inset-0" style={{ background: '#050505' }} />
 
-      {/* Atmospheric glow centered behind skyline */}
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div style={{
-          width: '75%', height: '55%',
-          background: 'radial-gradient(ellipse at 50% 65%, rgba(55,18,95,0.32) 0%, rgba(25,8,48,0.14) 50%, transparent 80%)',
-          filter: 'blur(45px)',
-        }} />
-      </div>
+      {/* Light-pollution glow — dark purple/teal sitting just above skyline */}
+      <div className="absolute" style={{
+        bottom: 0, left: 0, right: 0, height: '52%',
+        background: 'radial-gradient(ellipse 88% 48% at 50% 100%, rgba(38,14,72,0.22) 0%, rgba(12,28,36,0.10) 55%, transparent 100%)',
+        filter: 'blur(28px)',
+      }} />
 
-      {/* Centered LA skyline SVG outline */}
-      <div className="absolute inset-0 flex items-center justify-center px-4 sm:px-8">
-        <svg
-          viewBox="0 0 900 260"
-          className="w-full max-w-5xl"
-          style={{ maxHeight: '55vh' }}
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          {/* Mountain layer 1 — San Gabriel range, farthest back */}
-          <path
-            d="M 0,210 C 60,175 130,130 210,105 C 290,80 360,68 430,62 C 490,57 545,62 600,72 C 670,85 750,110 830,145 C 875,165 920,190 960,210 L 960,260 L 0,260 Z"
-            fill="rgba(255,255,255,0.022)"
-            stroke="rgba(255,255,255,0.055)"
-            strokeWidth="1"
-          />
-          {/* Mountain layer 2 — closer ridgeline */}
-          <path
-            d="M 0,230 C 50,205 110,178 175,162 C 230,148 278,140 325,138 C 370,136 405,142 445,150 C 490,160 540,172 600,185 C 660,198 730,215 800,228 C 850,238 900,248 960,255 L 960,260 L 0,260 Z"
-            fill="rgba(255,255,255,0.018)"
-            stroke="rgba(255,255,255,0.04)"
-            strokeWidth="1"
-          />
+      {/* Bottom-anchored SVG skyline */}
+      <svg
+        viewBox="0 0 1440 380"
+        preserveAspectRatio="xMidYMax slice"
+        className="absolute bottom-0 left-0 w-full"
+        style={{ height: '44vh', minHeight: '180px' }}
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        {/* Mountain layer 1 — far back, lightest */}
+        <path d="M -50,380 C 120,238 305,152 518,137 C 680,125 832,132 992,156 C 1175,182 1355,244 1490,294 L 1490,380 Z" fill="#1e1e1e" />
+        {/* Mountain layer 2 */}
+        <path d="M -50,380 C 88,290 202,222 328,200 C 454,176 568,168 680,168 C 806,168 926,180 1048,204 C 1204,234 1368,284 1490,326 L 1490,380 Z" fill="#131313" />
+        {/* Mountain layer 3 — closest */}
+        <path d="M -50,380 C 62,336 158,298 262,280 C 384,260 504,252 620,250 C 742,248 862,254 984,268 C 1126,286 1278,320 1490,366 L 1490,380 Z" fill="#090909" />
 
-          {/* ── Left palm trees ─────────────────────────────────────── */}
-          {/* Palm 1 */}
-          <path d="M 52,258 Q 50,232 47,208 Q 45,188 48,168" stroke="rgba(255,255,255,0.38)" strokeWidth="2.5" strokeLinecap="round" />
-          <path d="M 48,168 Q 30,150 12,154 M 48,168 Q 38,144 33,128 M 48,168 Q 52,140 62,132 M 48,168 Q 63,148 72,151 M 48,168 Q 42,155 26,158" stroke="rgba(255,255,255,0.3)" strokeWidth="1.8" strokeLinecap="round" fill="none" />
-          {/* Palm 2 */}
-          <path d="M 82,258 Q 80,234 77,212 Q 75,192 78,172" stroke="rgba(255,255,255,0.38)" strokeWidth="2.5" strokeLinecap="round" />
-          <path d="M 78,172 Q 60,154 42,158 M 78,172 Q 68,148 63,132 M 78,172 Q 82,144 92,136 M 78,172 Q 93,152 102,155 M 78,172 Q 72,159 56,162" stroke="rgba(255,255,255,0.3)" strokeWidth="1.8" strokeLinecap="round" fill="none" />
-          {/* Palm 3 */}
-          <path d="M 115,258 Q 112,236 108,215 Q 106,194 110,174" stroke="rgba(255,255,255,0.35)" strokeWidth="2.5" strokeLinecap="round" />
-          <path d="M 110,174 Q 92,156 74,160 M 110,174 Q 100,150 95,134 M 110,174 Q 114,146 124,138 M 110,174 Q 126,154 135,157 M 110,174 Q 103,161 88,164" stroke="rgba(255,255,255,0.28)" strokeWidth="1.8" strokeLinecap="round" fill="none" />
+        {/* ── Main city silhouette ─────────────────────────────────────────── */}
+        <path fill="#050505" d="
+          M 0,380 L 0,366 L 14,366 L 14,373 L 28,373 L 28,358 L 42,358 L 42,366
+          L 56,366 L 56,352 L 70,352 L 70,360 L 84,360 L 84,344
+          L 98,344 L 98,353 L 112,353 L 112,337 L 126,337 L 126,346
+          L 140,346 L 140,330 L 154,330 L 154,339 L 168,339 L 168,322
+          L 182,322 L 182,330 L 196,330 L 196,314 L 210,314 L 210,323
+          L 225,323 L 225,305 L 240,305 L 240,315 L 255,315 L 255,296
+          L 270,296 L 270,307 L 285,307 L 285,287 L 300,287 L 300,299
+          L 315,299 L 315,278 L 330,278 L 330,291 L 345,291 L 345,270
+          L 360,270 L 360,283 L 375,283 L 375,260 L 390,260 L 390,275
+          L 405,275 L 405,251 L 419,251 L 419,266 L 433,266 L 433,241
+          L 447,241 L 447,257 L 461,257 L 461,230 L 475,230 L 475,248
+          L 488,248 L 488,219 L 501,219 L 501,238 L 514,238 L 514,206
+          L 526,206 L 526,226 L 538,226 L 538,193 L 549,193 L 549,214
+          L 560,214 L 560,179 L 571,179 L 571,200 L 581,200 L 581,164
+          L 591,164 L 591,186 L 600,186 L 600,150 L 608,150 L 608,169
+          L 616,169 L 616,134 L 623,134 L 623,155 L 630,155 L 630,117
+          L 637,117 L 637,138 L 643,138 L 643,101 L 648,101 L 648,120
+          L 653,120 L 653,85  L 657,85  L 657,104 L 661,104 L 661,69
+          L 664,69  L 664,88  L 667,88  L 667,53  L 669,53  L 669,68
+          L 671,68  L 671,42  L 673,42  L 673,56  L 674,56  L 674,31
+          L 675,27  L 676,19  L 677,13  L 678,8   L 679,4   L 680,2
+          L 681,4   L 682,9   L 683,14  L 684,21  L 685,29  L 686,37
+          L 684,37  L 684,45  L 688,45  L 688,37  L 690,37  L 690,49
+          L 693,49  L 693,37  L 696,29  L 698,21  L 700,15  L 702,10
+          L 703,6   L 704,4   L 705,6   L 706,11  L 707,17  L 708,25
+          L 709,36  L 710,50  L 713,50  L 713,63  L 717,63  L 717,50
+          L 721,50  L 721,68  L 726,68  L 726,55  L 730,55  L 730,76
+          L 735,76  L 735,62  L 740,62  L 740,84  L 746,84  L 746,70
+          L 752,70  L 752,94  L 758,94  L 758,79  L 764,79  L 764,104
+          L 771,104 L 771,88  L 778,88  L 778,116 L 785,116 L 785,100
+          L 793,100 L 793,130 L 801,130 L 801,113 L 810,113 L 810,144
+          L 819,144 L 819,127 L 828,127 L 828,157 L 838,157 L 838,140
+          L 848,140 L 848,170 L 858,170 L 858,153 L 869,153 L 869,184
+          L 880,184 L 880,166 L 891,166 L 891,198 L 903,198 L 903,180
+          L 915,180 L 915,212 L 927,212 L 927,194 L 940,194 L 940,226
+          L 953,226 L 953,208 L 967,208 L 967,240 L 981,240 L 981,222
+          L 996,222 L 996,254 L 1011,254 L 1011,237 L 1027,237 L 1027,268
+          L 1043,268 L 1043,251 L 1060,251 L 1060,282 L 1077,282 L 1077,266
+          L 1095,266 L 1095,296 L 1113,296 L 1113,280 L 1132,280 L 1132,310
+          L 1152,310 L 1152,295 L 1173,295 L 1173,322 L 1196,322 L 1196,308
+          L 1220,308 L 1220,334 L 1247,334 L 1247,322 L 1276,322 L 1276,342
+          L 1308,342 L 1308,332 L 1344,332 L 1344,350 L 1384,350 L 1384,342
+          L 1428,342 L 1428,358 L 1440,358 L 1440,380 L 0,380 Z
+        " />
 
-          {/* ── Main LA skyline outline ──────────────────────────────── */}
-          {/*
-            Tracing the outer top-edge profile of the LA skyline, left to right.
-            Key landmarks: gradual low buildings → downtown rise →
-            US Bank Tower (tallest, notched crown) → Wilshire Grand (pointed) →
-            dense cluster → taper right
-          */}
-          <path
-            stroke="rgba(255,255,255,0.55)"
-            strokeWidth="1.5"
-            strokeLinejoin="round"
-            strokeLinecap="round"
-            d="
-              M 148,258
-              L 148,246 L 155,246 L 155,251 L 162,251 L 162,240
-              L 169,240 L 169,248 L 176,248 L 176,235
-              L 183,235 L 183,242 L 190,242 L 190,228
-              L 197,228 L 197,236 L 204,236 L 204,222
-              L 211,222 L 211,230 L 218,230 L 218,215
-              L 225,215 L 225,223 L 232,223 L 232,208
-              L 238,208 L 238,216 L 245,216 L 245,200
-              L 252,200 L 252,210 L 258,210 L 258,194
-              L 265,194 L 265,204 L 272,204 L 272,188
-              L 278,188 L 278,198 L 285,198 L 285,181
-              L 292,181 L 292,192 L 298,192 L 298,175
-              L 305,175 L 305,186 L 312,186 L 312,168
-              L 318,168 L 318,180 L 325,180 L 325,162
-              L 332,162 L 332,172 L 338,172 L 338,154
-              L 345,154 L 345,165 L 352,165 L 352,146
-              L 358,146 L 358,158 L 365,158 L 365,138
-              L 372,138 L 372,150 L 378,150 L 378,128
-              L 384,128 L 384,118 L 389,118 L 389,104
-              L 393,104 L 393,90  L 397,90  L 397,75
-              L 401,75  L 401,61  L 404,61  L 404,48
-              L 407,48  L 407,36  L 409,36  L 409,26
-              L 411,26  L 411,18  L 412,14  L 413,10
-              L 414,7   L 415,4   L 416,3   L 417,4
-              L 418,7   L 419,12  L 419,18
-              L 417,18  L 417,24  L 421,24  L 421,18
-              L 422,18  L 422,24  L 424,24
-              L 424,36  L 426,36  L 426,50
-              L 429,50  L 429,38  L 431,38  L 431,26
-              L 433,24  L 435,22  L 437,20
-              L 439,18  L 440,16  L 441,14  L 442,12
-              L 443,10  L 444,8   L 445,7   L 446,8
-              L 447,11  L 448,15  L 448,20  L 449,26
-              L 449,35  L 451,35  L 451,48
-              L 453,48  L 453,38  L 455,38  L 455,52
-              L 458,52  L 458,40  L 460,40  L 460,30
-              L 462,28  L 464,32  L 464,44  L 466,44
-              L 466,56  L 469,56  L 469,44  L 471,44
-              L 471,38  L 473,36  L 475,40  L 475,52
-              L 478,52  L 478,64  L 481,64  L 481,52
-              L 484,52  L 484,68  L 487,68  L 487,80
-              L 490,80  L 490,70  L 493,70  L 493,84
-              L 496,84  L 496,96  L 499,96  L 499,82
-              L 502,82  L 502,96  L 505,96  L 505,108
-              L 509,108 L 509,118 L 513,118 L 513,106
-              L 517,106 L 517,120 L 521,120 L 521,132
-              L 525,132 L 525,142 L 529,142 L 529,132
-              L 533,132 L 533,148 L 537,148 L 537,158
-              L 541,158 L 541,168 L 547,168 L 547,156
-              L 552,156 L 552,170 L 558,170 L 558,180
-              L 564,180 L 564,170 L 569,170 L 569,182
-              L 575,182 L 575,192 L 581,192 L 581,202
-              L 588,202 L 588,212 L 595,212 L 595,220
-              L 603,220 L 603,228 L 611,228 L 611,236
-              L 620,236 L 620,242 L 628,242 L 628,248
-              L 638,248 L 638,240 L 646,240 L 646,248
-              L 655,248 L 655,242 L 663,242 L 663,248
-              L 674,248 L 674,238 L 682,238 L 682,248
-              L 695,248 L 695,258
-            "
-          />
+        {/* ── Palm trees LEFT ─────────────────────────────────────────────── */}
+        <Palm cx={234} baseY={380} height={160} lean={7} />
+        <Palm cx={300} baseY={380} height={170} lean={-4} />
+        <Palm cx={364} baseY={380} height={150} lean={9} />
 
-          {/* ── Right palm trees ────────────────────────────────────── */}
-          {/* Palm 4 */}
-          <path d="M 760,258 Q 757,236 754,214 Q 752,193 755,172" stroke="rgba(255,255,255,0.35)" strokeWidth="2.5" strokeLinecap="round" />
-          <path d="M 755,172 Q 737,154 719,158 M 755,172 Q 745,148 740,132 M 755,172 Q 759,144 769,136 M 755,172 Q 771,152 780,155 M 755,172 Q 748,159 733,162" stroke="rgba(255,255,255,0.28)" strokeWidth="1.8" strokeLinecap="round" fill="none" />
-          {/* Palm 5 */}
-          <path d="M 796,258 Q 793,234 790,210 Q 788,190 791,168" stroke="rgba(255,255,255,0.38)" strokeWidth="2.5" strokeLinecap="round" />
-          <path d="M 791,168 Q 773,150 755,154 M 791,168 Q 781,144 776,128 M 791,168 Q 795,140 805,132 M 791,168 Q 807,148 816,151 M 791,168 Q 784,155 769,158" stroke="rgba(255,255,255,0.3)" strokeWidth="1.8" strokeLinecap="round" fill="none" />
-          {/* Palm 6 */}
-          <path d="M 830,258 Q 828,232 825,208 Q 823,186 826,164" stroke="rgba(255,255,255,0.38)" strokeWidth="2.5" strokeLinecap="round" />
-          <path d="M 826,164 Q 808,146 790,150 M 826,164 Q 816,140 811,124 M 826,164 Q 830,136 840,128 M 826,164 Q 842,144 851,147 M 826,164 Q 819,151 804,154" stroke="rgba(255,255,255,0.3)" strokeWidth="1.8" strokeLinecap="round" fill="none" />
-
-          {/* ── Subtle interior building lines (depth) ──────────────── */}
-          {/* US Bank Tower vertical lines */}
-          <line x1="413" y1="18" x2="413" y2="50"  stroke="rgba(255,255,255,0.12)" strokeWidth="1" />
-          <line x1="419" y1="18" x2="419" y2="50"  stroke="rgba(255,255,255,0.12)" strokeWidth="1" />
-          {/* A few window rows on downtown cluster */}
-          <line x1="378" y1="140" x2="426" y2="140" stroke="rgba(255,255,255,0.06)" strokeWidth="0.75" />
-          <line x1="378" y1="155" x2="426" y2="155" stroke="rgba(255,255,255,0.06)" strokeWidth="0.75" />
-          <line x1="378" y1="170" x2="426" y2="170" stroke="rgba(255,255,255,0.06)" strokeWidth="0.75" />
-          <line x1="440" y1="120" x2="520" y2="120" stroke="rgba(255,255,255,0.05)" strokeWidth="0.75" />
-          <line x1="440" y1="138" x2="520" y2="138" stroke="rgba(255,255,255,0.05)" strokeWidth="0.75" />
-
-          {/* ── Flickering windows ──────────────────────────────────── */}
-          <rect className="win-f1" x="414" y="26"  width="4" height="3" fill="#C8FF57" opacity="0.6" />
-          <rect className="win-f3" x="420" y="36"  width="4" height="3" fill="#ffe4a0" opacity="0.5" />
-          <rect className="win-f2" x="383" y="142" width="4" height="3" fill="#C8FF57" opacity="0.55" />
-          <rect className="win-f4" x="391" y="156" width="4" height="3" fill="#ffe4a0" opacity="0.45" />
-          <rect className="win-f1" x="462" y="46"  width="4" height="3" fill="#a0c8ff" opacity="0.5" />
-          <rect className="win-f2" x="470" y="58"  width="4" height="3" fill="#C8FF57" opacity="0.55" />
-          <rect className="win-f3" x="493" y="86"  width="4" height="3" fill="#ffe4a0" opacity="0.45" />
-          <rect className="win-f4" x="502" y="98"  width="4" height="3" fill="#C8FF57" opacity="0.5" />
-
-          {/* Ground line */}
-          <line x1="0" y1="258" x2="900" y2="258" stroke="rgba(255,255,255,0.06)" strokeWidth="0.75" />
-        </svg>
-      </div>
+        {/* ── Palm trees RIGHT ────────────────────────────────────────────── */}
+        <Palm cx={1078} baseY={380} height={156} lean={-7} />
+        <Palm cx={1146} baseY={380} height={164} lean={5} />
+        <Palm cx={1216} baseY={380} height={150} lean={-9} />
+      </svg>
     </div>
   )
 }
@@ -778,6 +825,8 @@ function FormField({ label, children, required }) {
     </div>
   )
 }
+
+
 
 function VibeChip({ label, selected, onClick }) {
   return (
@@ -917,17 +966,19 @@ export default function App() {
   }
 
   return (
-    <div className="film-grain min-h-screen font-inter relative" style={{ background: '#050505' }}>
+    <div className="film-grain min-h-screen font-inter" style={{ background: '#050505' }}>
       {loading && <LoadingOverlay msgIndex={msgIndex} />}
       <CityScene />
+      <EKGLine />
 
-      {/* Content layer */}
-      <div className="relative z-10 min-h-screen flex flex-col justify-center px-4 py-16 md:py-24">
+      {/* Content sits in the upper portion, above the skyline */}
+      <div className="relative z-10 flex flex-col justify-start px-4 pt-10 md:pt-14"
+           style={{ minHeight: '100vh', paddingBottom: '50vh' }}>
         <div className="max-w-xl mx-auto w-full">
 
           {/* Logo / hero */}
-          <div className="text-center mb-10">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-accent/20 bg-accent/5 mb-8">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-accent/20 bg-accent/5 mb-6">
               <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
               <span className="text-[11px] font-inter text-accent tracking-[0.18em] uppercase">AI Powered</span>
             </div>
