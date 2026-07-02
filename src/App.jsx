@@ -606,275 +606,163 @@ function CityScene() {
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 0 }}>
 
-      {/* Sky gradient — black to deep midnight purple at horizon */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background: 'linear-gradient(to bottom, #050505 0%, #050505 45%, #0d0818 70%, #130d24 82%, #1a1030 88%, #0a0810 100%)',
-        }}
-      />
+      <div className="absolute inset-0" style={{ background: '#050505' }} />
 
-      {/* City glow halo — light pollution rising from skyline */}
-      <div
-        className="city-glow absolute"
-        style={{
-          bottom: '13%',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: '140%',
-          height: '28%',
-          background: 'radial-gradient(ellipse 60% 100% at 50% 100%, rgba(80,30,120,0.38) 0%, rgba(60,20,100,0.18) 50%, transparent 100%)',
-          filter: 'blur(18px)',
-        }}
-      />
-
-      {/* Secondary warm glow — dirty amber on left like the 405 at night */}
-      <div
-        className="absolute"
-        style={{
-          bottom: '14%',
-          left: '18%',
-          width: '35%',
-          height: '18%',
-          background: 'radial-gradient(ellipse at 50% 100%, rgba(100,55,20,0.18) 0%, transparent 70%)',
-          filter: 'blur(22px)',
-          opacity: 0.7,
-        }}
-      />
-
-      {/* Lens flare 1 — left horizon */}
-      <div
-        className="lens-flare"
-        style={{
-          bottom: '18%',
-          left: '22%',
-          width: '180px',
-          height: '180px',
-          background: 'radial-gradient(circle, rgba(200,255,87,0.35) 0%, rgba(200,255,87,0.05) 40%, transparent 70%)',
-          animationDelay: '0s',
-        }}
-      />
-      {/* Lens flare 2 — right of center */}
-      <div
-        className="lens-flare"
-        style={{
-          bottom: '16%',
-          left: '62%',
-          width: '120px',
-          height: '120px',
-          background: 'radial-gradient(circle, rgba(180,120,255,0.2) 0%, rgba(140,80,200,0.06) 40%, transparent 70%)',
-          animationDelay: '2.5s',
-        }}
-      />
-      {/* Lens flare 3 — far right */}
-      <div
-        className="lens-flare"
-        style={{
-          bottom: '17%',
-          right: '10%',
-          width: '90px',
-          height: '90px',
-          background: 'radial-gradient(circle, rgba(200,255,87,0.25) 0%, transparent 65%)',
-          animationDelay: '4s',
-        }}
-      />
-
-      {/* SVG Cityscape */}
-      <svg
-        viewBox="0 0 1440 300"
-        preserveAspectRatio="xMidYMax slice"
-        xmlns="http://www.w3.org/2000/svg"
-        className="absolute bottom-0 w-full"
-        style={{ height: '40%' }}
-      >
-        {/* Deep back layer — faint, very dark */}
-        <g fill="#0e0e12" opacity="0.9">
-          <rect x="0"    y="210" width="28"  height="90" />
-          <rect x="30"   y="190" width="18"  height="110" />
-          <rect x="50"   y="200" width="40"  height="100" />
-          <rect x="92"   y="180" width="22"  height="120" />
-          <rect x="116"  y="195" width="30"  height="105" />
-          <rect x="148"  y="175" width="16"  height="125" />
-          <rect x="167"  y="205" width="36"  height="95" />
-          <rect x="205"  y="165" width="24"  height="135" />
-          <rect x="232"  y="185" width="42"  height="115" />
-          <rect x="276"  y="170" width="20"  height="130" />
-          <rect x="300"  y="155" width="30"  height="145" />
-          <rect x="333"  y="190" width="22"  height="110" />
-          <rect x="358"  y="175" width="50"  height="125" />
-          <rect x="411"  y="160" width="18"  height="140" />
-          <rect x="432"  y="185" width="28"  height="115" />
-          <rect x="463"  y="150" width="35"  height="150" />
-          <rect x="500"  y="170" width="24"  height="130" />
-          <rect x="527"  y="190" width="16"  height="110" />
-          <rect x="546"  y="165" width="40"  height="135" />
-          <rect x="589"  y="175" width="26"  height="125" />
-          <rect x="618"  y="155" width="32"  height="145" />
-          <rect x="653"  y="185" width="20"  height="115" />
-          <rect x="676"  y="145" width="45"  height="155" />
-          <rect x="724"  y="170" width="28"  height="130" />
-          <rect x="755"  y="160" width="22"  height="140" />
-          <rect x="780"  y="185" width="35"  height="115" />
-          <rect x="818"  y="175" width="18"  height="125" />
-          <rect x="839"  y="155" width="30"  height="145" />
-          <rect x="872"  y="165" width="42"  height="135" />
-          <rect x="917"  y="180" width="24"  height="120" />
-          <rect x="944"  y="145" width="36"  height="155" />
-          <rect x="983"  y="170" width="20"  height="130" />
-          <rect x="1006" y="190" width="28"  height="110" />
-          <rect x="1037" y="160" width="50"  height="140" />
-          <rect x="1090" y="175" width="22"  height="125" />
-          <rect x="1115" y="150" width="30"  height="150" />
-          <rect x="1148" y="180" width="18"  height="120" />
-          <rect x="1169" y="165" width="40"  height="135" />
-          <rect x="1212" y="185" width="26"  height="115" />
-          <rect x="1241" y="155" width="35"  height="145" />
-          <rect x="1279" y="170" width="24"  height="130" />
-          <rect x="1306" y="190" width="20"  height="110" />
-          <rect x="1329" y="160" width="45"  height="140" />
-          <rect x="1377" y="175" width="28"  height="125" />
-          <rect x="1408" y="155" width="32"  height="145" />
-        </g>
-
-        {/* Mid layer — slightly less dark */}
-        <g fill="#0a0a0e" opacity="1">
-          <rect x="0"    y="230" width="55"  height="70" />
-          <rect x="57"   y="215" width="20"  height="85" />
-          <rect x="80"   y="205" width="35"  height="95" />
-          <rect x="118"  y="195" width="25"  height="105" />
-          {/* Downtown cluster — tallest buildings */}
-          <rect x="155"  y="160" width="18"  height="140" />
-          <rect x="175"  y="130" width="30"  height="170" /> {/* hero tower */}
-          <rect x="207"  y="150" width="22"  height="150" />
-          <rect x="232"  y="170" width="40"  height="130" />
-          <rect x="275"  y="185" width="15"  height="115" />
-          <rect x="293"  y="175" width="28"  height="125" />
-          <rect x="324"  y="190" width="20"  height="110" />
-          <rect x="347"  y="165" width="45"  height="135" />
-          <rect x="395"  y="180" width="18"  height="120" />
-          <rect x="416"  y="155" width="32"  height="145" />
-          <rect x="451"  y="195" width="22"  height="105" />
-          <rect x="476"  y="175" width="30"  height="125" />
-          <rect x="509"  y="160" width="40"  height="140" />
-          <rect x="552"  y="185" width="24"  height="115" />
-          <rect x="579"  y="145" width="18"  height="155" />
-          <rect x="600"  y="170" width="35"  height="130" />
-          {/* Central tower pair */}
-          <rect x="638"  y="120" width="28"  height="180" />
-          <rect x="668"  y="135" width="22"  height="165" />
-          <rect x="693"  y="165" width="38"  height="135" />
-          <rect x="734"  y="180" width="20"  height="120" />
-          <rect x="757"  y="155" width="30"  height="145" />
-          <rect x="790"  y="170" width="45"  height="130" />
-          <rect x="838"  y="190" width="18"  height="110" />
-          <rect x="859"  y="160" width="28"  height="140" />
-          <rect x="890"  y="145" width="40"  height="155" />
-          <rect x="933"  y="175" width="22"  height="125" />
-          <rect x="958"  y="185" width="30"  height="115" />
-          <rect x="991"  y="160" width="50"  height="140" />
-          <rect x="1044" y="175" width="20"  height="125" />
-          <rect x="1067" y="150" width="35"  height="150" />
-          <rect x="1105" y="170" width="25"  height="130" />
-          <rect x="1133" y="190" width="18"  height="110" />
-          <rect x="1154" y="155" width="42"  height="145" />
-          <rect x="1199" y="165" width="28"  height="135" />
-          <rect x="1230" y="180" width="22"  height="120" />
-          <rect x="1255" y="150" width="38"  height="150" />
-          <rect x="1296" y="170" width="30"  height="130" />
-          <rect x="1329" y="185" width="20"  height="115" />
-          <rect x="1352" y="155" width="45"  height="145" />
-          <rect x="1400" y="165" width="40"  height="135" />
-        </g>
-
-        {/* Foreground — darkest, fills bottom */}
-        <g fill="#060608">
-          <rect x="0"    y="250" width="200" height="50" />
-          <rect x="0"    y="240" width="80"  height="60" />
-          <rect x="82"   y="235" width="40"  height="65" />
-          <rect x="124"  y="245" width="60"  height="55" />
-          <rect x="186"  y="238" width="90"  height="62" />
-          <rect x="278"  y="248" width="70"  height="52" />
-          <rect x="350"  y="242" width="50"  height="58" />
-          <rect x="402"  y="252" width="120" height="48" />
-          <rect x="524"  y="244" width="80"  height="56" />
-          <rect x="606"  y="250" width="100" height="50" />
-          <rect x="708"  y="240" width="65"  height="60" />
-          <rect x="775"  y="248" width="85"  height="52" />
-          <rect x="862"  y="242" width="55"  height="58" />
-          <rect x="919"  y="250" width="110" height="50" />
-          <rect x="1031" y="244" width="70"  height="56" />
-          <rect x="1103" y="250" width="90"  height="50" />
-          <rect x="1195" y="242" width="60"  height="58" />
-          <rect x="1257" y="248" width="100" height="52" />
-          <rect x="1359" y="240" width="81"  height="60" />
-          {/* Ground fill */}
-          <rect x="0" y="275" width="1440" height="25" />
-          {/* Highway / road strip */}
-          <rect x="0" y="268" width="1440" height="4" fill="#0c0c10" />
-        </g>
-
-        {/* Flickering windows */}
-        {/* Tower 1 windows */}
-        <rect className="win-f1" x="180" y="138" width="6"  height="4"  fill="#C8FF57" opacity="0.7" />
-        <rect className="win-f3" x="188" y="150" width="6"  height="4"  fill="#ffe4a0" opacity="0.6" />
-        <rect className="win-f2" x="180" y="162" width="6"  height="4"  fill="#C8FF57" opacity="0.5" />
-        <rect className="win-f4" x="188" y="172" width="6"  height="4"  fill="#ffe4a0" opacity="0.4" />
-        {/* Central tower windows */}
-        <rect className="win-f2" x="642" y="128" width="5"  height="4"  fill="#C8FF57" opacity="0.65" />
-        <rect className="win-f1" x="650" y="140" width="5"  height="4"  fill="#ffe4a0" opacity="0.55" />
-        <rect className="win-f3" x="642" y="155" width="5"  height="4"  fill="#C8FF57" opacity="0.6" />
-        <rect className="win-f4" x="650" y="168" width="5"  height="4"  fill="#a0c8ff" opacity="0.45" />
-        <rect className="win-f1" x="672" y="142" width="5"  height="4"  fill="#C8FF57" opacity="0.5" />
-        <rect className="win-f2" x="672" y="158" width="5"  height="4"  fill="#ffe4a0" opacity="0.6" />
-        {/* Right cluster */}
-        <rect className="win-f3" x="995" y="168" width="6"  height="4"  fill="#C8FF57" opacity="0.55" />
-        <rect className="win-f1" x="1004" y="180" width="6" height="4"  fill="#ffe4a0" opacity="0.5" />
-        <rect className="win-f4" x="995" y="193" width="6"  height="4"  fill="#a0c8ff" opacity="0.45" />
-        {/* Mid cluster */}
-        <rect className="win-f2" x="418" y="162" width="5"  height="4"  fill="#C8FF57" opacity="0.6" />
-        <rect className="win-f4" x="425" y="174" width="5"  height="4"  fill="#ffe4a0" opacity="0.5" />
-        {/* Far right */}
-        <rect className="win-f1" x="1260" y="158" width="6" height="4"  fill="#C8FF57" opacity="0.55" />
-        <rect className="win-f3" x="1269" y="170" width="6" height="4"  fill="#ffe4a0" opacity="0.5" />
-      </svg>
-
-      {/* Rising embers / particles */}
-      <div className="absolute" style={{ bottom: '24%', left: '20%' }}>
-        <div className="ember ember-a" style={{ width: 3, height: 3, opacity: 0 }} />
-      </div>
-      <div className="absolute" style={{ bottom: '25%', left: '32%' }}>
-        <div className="ember ember-b" style={{ width: 2, height: 2, opacity: 0 }} />
-      </div>
-      <div className="absolute" style={{ bottom: '23%', left: '45%' }}>
-        <div className="ember ember-c" style={{ width: 2.5, height: 2.5, opacity: 0 }} />
-      </div>
-      <div className="absolute" style={{ bottom: '26%', left: '55%' }}>
-        <div className="ember ember-d" style={{ width: 2, height: 2, opacity: 0 }} />
-      </div>
-      <div className="absolute" style={{ bottom: '24%', left: '64%' }}>
-        <div className="ember ember-e" style={{ width: 3, height: 3, opacity: 0 }} />
-      </div>
-      <div className="absolute" style={{ bottom: '25%', left: '72%' }}>
-        <div className="ember ember-f" style={{ width: 2, height: 2, opacity: 0 }} />
-      </div>
-      <div className="absolute" style={{ bottom: '23%', left: '27%' }}>
-        <div className="ember ember-g" style={{ width: 2.5, height: 2.5, opacity: 0 }} />
-      </div>
-      <div className="absolute" style={{ bottom: '26%', left: '50%' }}>
-        <div className="ember ember-h" style={{ width: 2, height: 2, opacity: 0 }} />
-      </div>
-      <div className="absolute" style={{ bottom: '24%', left: '38%' }}>
-        <div className="ember ember-i" style={{ width: 3, height: 3, opacity: 0 }} />
-      </div>
-      <div className="absolute" style={{ bottom: '25%', left: '80%' }}>
-        <div className="ember ember-j" style={{ width: 2, height: 2, opacity: 0 }} />
+      {/* Atmospheric glow centered behind skyline */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div style={{
+          width: '75%', height: '55%',
+          background: 'radial-gradient(ellipse at 50% 65%, rgba(55,18,95,0.32) 0%, rgba(25,8,48,0.14) 50%, transparent 80%)',
+          filter: 'blur(45px)',
+        }} />
       </div>
 
-      {/* Bottom ground fade to pure black */}
-      <div
-        className="absolute bottom-0 left-0 right-0"
-        style={{ height: '12%', background: 'linear-gradient(to top, #050505 0%, transparent 100%)' }}
-      />
+      {/* Centered LA skyline SVG outline */}
+      <div className="absolute inset-0 flex items-center justify-center px-4 sm:px-8">
+        <svg
+          viewBox="0 0 900 260"
+          className="w-full max-w-5xl"
+          style={{ maxHeight: '55vh' }}
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          {/* Mountain layer 1 — San Gabriel range, farthest back */}
+          <path
+            d="M 0,210 C 60,175 130,130 210,105 C 290,80 360,68 430,62 C 490,57 545,62 600,72 C 670,85 750,110 830,145 C 875,165 920,190 960,210 L 960,260 L 0,260 Z"
+            fill="rgba(255,255,255,0.022)"
+            stroke="rgba(255,255,255,0.055)"
+            strokeWidth="1"
+          />
+          {/* Mountain layer 2 — closer ridgeline */}
+          <path
+            d="M 0,230 C 50,205 110,178 175,162 C 230,148 278,140 325,138 C 370,136 405,142 445,150 C 490,160 540,172 600,185 C 660,198 730,215 800,228 C 850,238 900,248 960,255 L 960,260 L 0,260 Z"
+            fill="rgba(255,255,255,0.018)"
+            stroke="rgba(255,255,255,0.04)"
+            strokeWidth="1"
+          />
+
+          {/* ── Left palm trees ─────────────────────────────────────── */}
+          {/* Palm 1 */}
+          <path d="M 52,258 Q 50,232 47,208 Q 45,188 48,168" stroke="rgba(255,255,255,0.38)" strokeWidth="2.5" strokeLinecap="round" />
+          <path d="M 48,168 Q 30,150 12,154 M 48,168 Q 38,144 33,128 M 48,168 Q 52,140 62,132 M 48,168 Q 63,148 72,151 M 48,168 Q 42,155 26,158" stroke="rgba(255,255,255,0.3)" strokeWidth="1.8" strokeLinecap="round" fill="none" />
+          {/* Palm 2 */}
+          <path d="M 82,258 Q 80,234 77,212 Q 75,192 78,172" stroke="rgba(255,255,255,0.38)" strokeWidth="2.5" strokeLinecap="round" />
+          <path d="M 78,172 Q 60,154 42,158 M 78,172 Q 68,148 63,132 M 78,172 Q 82,144 92,136 M 78,172 Q 93,152 102,155 M 78,172 Q 72,159 56,162" stroke="rgba(255,255,255,0.3)" strokeWidth="1.8" strokeLinecap="round" fill="none" />
+          {/* Palm 3 */}
+          <path d="M 115,258 Q 112,236 108,215 Q 106,194 110,174" stroke="rgba(255,255,255,0.35)" strokeWidth="2.5" strokeLinecap="round" />
+          <path d="M 110,174 Q 92,156 74,160 M 110,174 Q 100,150 95,134 M 110,174 Q 114,146 124,138 M 110,174 Q 126,154 135,157 M 110,174 Q 103,161 88,164" stroke="rgba(255,255,255,0.28)" strokeWidth="1.8" strokeLinecap="round" fill="none" />
+
+          {/* ── Main LA skyline outline ──────────────────────────────── */}
+          {/*
+            Tracing the outer top-edge profile of the LA skyline, left to right.
+            Key landmarks: gradual low buildings → downtown rise →
+            US Bank Tower (tallest, notched crown) → Wilshire Grand (pointed) →
+            dense cluster → taper right
+          */}
+          <path
+            stroke="rgba(255,255,255,0.55)"
+            strokeWidth="1.5"
+            strokeLinejoin="round"
+            strokeLinecap="round"
+            d="
+              M 148,258
+              L 148,246 L 155,246 L 155,251 L 162,251 L 162,240
+              L 169,240 L 169,248 L 176,248 L 176,235
+              L 183,235 L 183,242 L 190,242 L 190,228
+              L 197,228 L 197,236 L 204,236 L 204,222
+              L 211,222 L 211,230 L 218,230 L 218,215
+              L 225,215 L 225,223 L 232,223 L 232,208
+              L 238,208 L 238,216 L 245,216 L 245,200
+              L 252,200 L 252,210 L 258,210 L 258,194
+              L 265,194 L 265,204 L 272,204 L 272,188
+              L 278,188 L 278,198 L 285,198 L 285,181
+              L 292,181 L 292,192 L 298,192 L 298,175
+              L 305,175 L 305,186 L 312,186 L 312,168
+              L 318,168 L 318,180 L 325,180 L 325,162
+              L 332,162 L 332,172 L 338,172 L 338,154
+              L 345,154 L 345,165 L 352,165 L 352,146
+              L 358,146 L 358,158 L 365,158 L 365,138
+              L 372,138 L 372,150 L 378,150 L 378,128
+              L 384,128 L 384,118 L 389,118 L 389,104
+              L 393,104 L 393,90  L 397,90  L 397,75
+              L 401,75  L 401,61  L 404,61  L 404,48
+              L 407,48  L 407,36  L 409,36  L 409,26
+              L 411,26  L 411,18  L 412,14  L 413,10
+              L 414,7   L 415,4   L 416,3   L 417,4
+              L 418,7   L 419,12  L 419,18
+              L 417,18  L 417,24  L 421,24  L 421,18
+              L 422,18  L 422,24  L 424,24
+              L 424,36  L 426,36  L 426,50
+              L 429,50  L 429,38  L 431,38  L 431,26
+              L 433,24  L 435,22  L 437,20
+              L 439,18  L 440,16  L 441,14  L 442,12
+              L 443,10  L 444,8   L 445,7   L 446,8
+              L 447,11  L 448,15  L 448,20  L 449,26
+              L 449,35  L 451,35  L 451,48
+              L 453,48  L 453,38  L 455,38  L 455,52
+              L 458,52  L 458,40  L 460,40  L 460,30
+              L 462,28  L 464,32  L 464,44  L 466,44
+              L 466,56  L 469,56  L 469,44  L 471,44
+              L 471,38  L 473,36  L 475,40  L 475,52
+              L 478,52  L 478,64  L 481,64  L 481,52
+              L 484,52  L 484,68  L 487,68  L 487,80
+              L 490,80  L 490,70  L 493,70  L 493,84
+              L 496,84  L 496,96  L 499,96  L 499,82
+              L 502,82  L 502,96  L 505,96  L 505,108
+              L 509,108 L 509,118 L 513,118 L 513,106
+              L 517,106 L 517,120 L 521,120 L 521,132
+              L 525,132 L 525,142 L 529,142 L 529,132
+              L 533,132 L 533,148 L 537,148 L 537,158
+              L 541,158 L 541,168 L 547,168 L 547,156
+              L 552,156 L 552,170 L 558,170 L 558,180
+              L 564,180 L 564,170 L 569,170 L 569,182
+              L 575,182 L 575,192 L 581,192 L 581,202
+              L 588,202 L 588,212 L 595,212 L 595,220
+              L 603,220 L 603,228 L 611,228 L 611,236
+              L 620,236 L 620,242 L 628,242 L 628,248
+              L 638,248 L 638,240 L 646,240 L 646,248
+              L 655,248 L 655,242 L 663,242 L 663,248
+              L 674,248 L 674,238 L 682,238 L 682,248
+              L 695,248 L 695,258
+            "
+          />
+
+          {/* ── Right palm trees ────────────────────────────────────── */}
+          {/* Palm 4 */}
+          <path d="M 760,258 Q 757,236 754,214 Q 752,193 755,172" stroke="rgba(255,255,255,0.35)" strokeWidth="2.5" strokeLinecap="round" />
+          <path d="M 755,172 Q 737,154 719,158 M 755,172 Q 745,148 740,132 M 755,172 Q 759,144 769,136 M 755,172 Q 771,152 780,155 M 755,172 Q 748,159 733,162" stroke="rgba(255,255,255,0.28)" strokeWidth="1.8" strokeLinecap="round" fill="none" />
+          {/* Palm 5 */}
+          <path d="M 796,258 Q 793,234 790,210 Q 788,190 791,168" stroke="rgba(255,255,255,0.38)" strokeWidth="2.5" strokeLinecap="round" />
+          <path d="M 791,168 Q 773,150 755,154 M 791,168 Q 781,144 776,128 M 791,168 Q 795,140 805,132 M 791,168 Q 807,148 816,151 M 791,168 Q 784,155 769,158" stroke="rgba(255,255,255,0.3)" strokeWidth="1.8" strokeLinecap="round" fill="none" />
+          {/* Palm 6 */}
+          <path d="M 830,258 Q 828,232 825,208 Q 823,186 826,164" stroke="rgba(255,255,255,0.38)" strokeWidth="2.5" strokeLinecap="round" />
+          <path d="M 826,164 Q 808,146 790,150 M 826,164 Q 816,140 811,124 M 826,164 Q 830,136 840,128 M 826,164 Q 842,144 851,147 M 826,164 Q 819,151 804,154" stroke="rgba(255,255,255,0.3)" strokeWidth="1.8" strokeLinecap="round" fill="none" />
+
+          {/* ── Subtle interior building lines (depth) ──────────────── */}
+          {/* US Bank Tower vertical lines */}
+          <line x1="413" y1="18" x2="413" y2="50"  stroke="rgba(255,255,255,0.12)" strokeWidth="1" />
+          <line x1="419" y1="18" x2="419" y2="50"  stroke="rgba(255,255,255,0.12)" strokeWidth="1" />
+          {/* A few window rows on downtown cluster */}
+          <line x1="378" y1="140" x2="426" y2="140" stroke="rgba(255,255,255,0.06)" strokeWidth="0.75" />
+          <line x1="378" y1="155" x2="426" y2="155" stroke="rgba(255,255,255,0.06)" strokeWidth="0.75" />
+          <line x1="378" y1="170" x2="426" y2="170" stroke="rgba(255,255,255,0.06)" strokeWidth="0.75" />
+          <line x1="440" y1="120" x2="520" y2="120" stroke="rgba(255,255,255,0.05)" strokeWidth="0.75" />
+          <line x1="440" y1="138" x2="520" y2="138" stroke="rgba(255,255,255,0.05)" strokeWidth="0.75" />
+
+          {/* ── Flickering windows ──────────────────────────────────── */}
+          <rect className="win-f1" x="414" y="26"  width="4" height="3" fill="#C8FF57" opacity="0.6" />
+          <rect className="win-f3" x="420" y="36"  width="4" height="3" fill="#ffe4a0" opacity="0.5" />
+          <rect className="win-f2" x="383" y="142" width="4" height="3" fill="#C8FF57" opacity="0.55" />
+          <rect className="win-f4" x="391" y="156" width="4" height="3" fill="#ffe4a0" opacity="0.45" />
+          <rect className="win-f1" x="462" y="46"  width="4" height="3" fill="#a0c8ff" opacity="0.5" />
+          <rect className="win-f2" x="470" y="58"  width="4" height="3" fill="#C8FF57" opacity="0.55" />
+          <rect className="win-f3" x="493" y="86"  width="4" height="3" fill="#ffe4a0" opacity="0.45" />
+          <rect className="win-f4" x="502" y="98"  width="4" height="3" fill="#C8FF57" opacity="0.5" />
+
+          {/* Ground line */}
+          <line x1="0" y1="258" x2="900" y2="258" stroke="rgba(255,255,255,0.06)" strokeWidth="0.75" />
+        </svg>
+      </div>
     </div>
   )
 }
