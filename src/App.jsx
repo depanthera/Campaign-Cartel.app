@@ -125,7 +125,7 @@ Return ONLY valid JSON (no markdown, no fences) matching this exact shape:
       "matchScore": number between 70 and 99,
       "trendingStatus": "string",
       "subject": "string",
-      "pitch": "string (full professional pitch email body, 3-4 paragraphs)"
+      "pitch": "string — a short, sharp pitch email. Format exactly like this example (use the artist/song/playlist names from this context):\n\nHey,\n\nI wanted to bring \\"[Song]\" by [Artist] to your attention for [Playlist].\n\n[One sentence on the sonic/emotional world of the track — name one or two real artist comparisons if they fit. No hype, just placement.]\n\n[One sentence on what the song is actually about — the emotional or thematic core. Make it specific, not abstract.]\n\n[One sentence on what separates this artist or this record right now.]\n\n[One closing sentence that ties the track to this curator's audience. Confident, not desperate.]\n\nThank you for your time.\n— [Artist]\n\nRules: 4 short paragraphs max. No long blocks. No adjective stacking. No words like 'genuinely', 'sincerely', 'I am confident'. Every sentence earns its place."
     }
   ]
 }
