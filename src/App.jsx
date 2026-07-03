@@ -1,6 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
 import './App.css'
 
+if (typeof window !== 'undefined' && window.emailjs) {
+  window.emailjs.init('E_3six6jiHP7vsvUS')
+}
+
 const GENRES = [
   'Pop', 'Hip-Hop', 'R&B', 'Afrobeats', 'Trap', 'Lo-Fi',
   'Electronic', 'House', 'Drill', 'Indie', 'Alternative',
@@ -521,64 +525,248 @@ function CopyButton({ text, label }) {
   )
 }
 
+function SendPitchModal({ pitch, onClose }) {
+  const [artistName, setArtistName]   = useState('')
+  const [artistEmail, setArtistEmail] = useState('')
+  const [curatorEmail, setCuratorEmail] = useState('')
+  const [status, setStatus] = useState('idle') // idle | sending | success | error
+  const [errorMsg, setErrorMsg] = useState('')
+
+  const canSend = artistName.trim() && artistEmail.trim() && curatorEmail.trim() && status === 'idle'
+
+  const handleSend = async () => {
+    setStatus('sending')
+    setErrorMsg('')
+    try {
+      const ejs = window.emailjs
+      if (!ejs) throw new Error('EmailJS not loaded')
+      ejs.init('E_3six6jiHP7vsvUS')
+      await ejs.send('service_9jggzz7', 'template_cv5q15h', {
+        to_email:   curatorEmail.trim(),
+        from_name:  artistName.trim(),
+        reply_to:   artistEmail.trim(),
+        subject:    pitch.subject,
+        message:    pitch.pitch,
+      })
+      setStatus('success')
+    } catch (err) {
+      setErrorMsg(err?.text || 'Failed to send. Please try again.')
+      setStatus('error')
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: 'rgba(5,5,5,0.88)', backdropFilter: 'blur(8px)' }}
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div
+        className="w-full max-w-lg rounded-2xl border border-border bg-surface overflow-hidden"
+        style={{ maxHeight: '92vh', display: 'flex', flexDirection: 'column' }}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border flex-shrink-0">
+          <div>
+            <p className="font-syne font-bold text-sm text-text">{pitch.curatorName}</p>
+            <p className="text-xs font-inter text-muted truncate max-w-[320px]">{pitch.playlistName}</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-muted hover:text-text transition-colors text-lg leading-none ml-4"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Scrollable body */}
+        <div className="overflow-y-auto flex-1 px-5 py-4 space-y-4">
+          {/* Email preview */}
+          <div className="rounded-xl border border-border/60 bg-bg/50 p-4 space-y-2">
+            <p className="text-[10px] font-inter text-muted uppercase tracking-wider mb-1">Email Preview</p>
+            <div className="text-xs font-inter text-muted">
+              <span className="text-text/50">Subject: </span>
+              <span className="text-text font-medium">{pitch.subject}</span>
+            </div>
+            <div
+              className="text-xs font-inter text-text/60 leading-relaxed whitespace-pre-wrap max-h-36 overflow-y-auto"
+              style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '8px', marginTop: '4px' }}
+            >
+              {pitch.pitch}
+            </div>
+          </div>
+
+          {/* Fields */}
+          <div className="space-y-3">
+            <div>
+              <label className="block text-[10px] font-inter font-medium text-muted uppercase tracking-wider mb-1">
+                Your Name <span className="text-accent">*</span>
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. Milo James"
+                value={artistName}
+                onChange={(e) => setArtistName(e.target.value)}
+                className="w-full bg-bg border border-border rounded-xl px-3 py-2.5 text-sm font-inter text-text placeholder-muted focus:outline-none focus:border-accent/60 transition-colors"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-inter font-medium text-muted uppercase tracking-wider mb-1">
+                Your Email <span className="text-accent">*</span>
+              </label>
+              <input
+                type="email"
+                placeholder="your@email.com"
+                value={artistEmail}
+                onChange={(e) => setArtistEmail(e.target.value)}
+                className="w-full bg-bg border border-border rounded-xl px-3 py-2.5 text-sm font-inter text-text placeholder-muted focus:outline-none focus:border-accent/60 transition-colors"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-inter font-medium text-muted uppercase tracking-wider mb-1">
+                Curator Email <span className="text-accent">*</span>
+              </label>
+              <input
+                type="email"
+                placeholder="curator@example.com"
+                value={curatorEmail}
+                onChange={(e) => setCuratorEmail(e.target.value)}
+                className="w-full bg-bg border border-border rounded-xl px-3 py-2.5 text-sm font-inter text-text placeholder-muted focus:outline-none focus:border-accent/60 transition-colors"
+              />
+            </div>
+          </div>
+
+          {/* Error */}
+          {status === 'error' && (
+            <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3">
+              <p className="text-xs font-inter text-red-400">{errorMsg}</p>
+            </div>
+          )}
+
+          {/* Success */}
+          {status === 'success' && (
+            <div className="bg-accent/10 border border-accent/30 rounded-xl px-4 py-3 text-center">
+              <p className="text-sm font-syne font-bold text-accent">Pitch sent successfully!</p>
+              <p className="text-xs font-inter text-muted mt-0.5">Check your email for confirmation.</p>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-5 py-4 border-t border-border flex gap-2.5 flex-shrink-0">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 py-2.5 rounded-xl border border-border text-sm font-inter font-medium text-muted hover:border-accent/40 hover:text-text transition-all duration-150"
+          >
+            {status === 'success' ? 'Close' : 'Cancel'}
+          </button>
+          {status !== 'success' && (
+            <button
+              type="button"
+              onClick={handleSend}
+              disabled={!canSend}
+              className={`flex-1 py-2.5 rounded-xl text-sm font-syne font-bold transition-all duration-150 ${
+                canSend
+                  ? 'bg-accent text-bg hover:bg-accent/90 cursor-pointer'
+                  : 'bg-accent/20 text-accent/40 cursor-not-allowed'
+              }`}
+            >
+              {status === 'sending' ? 'Sending…' : 'Confirm & Send'}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function PitchCard({ pitch }) {
   const [open, setOpen] = useState(false)
+  const [showModal, setShowModal] = useState(false)
+  const [sent, setSent] = useState(false)
   const score = pitch.matchScore ?? 85
   const scoreColor =
     score >= 90 ? 'text-accent' : score >= 80 ? 'text-yellow-400' : 'text-orange-400'
 
   return (
-    <div className="bg-surface border border-border rounded-2xl overflow-hidden hover:border-accent/30 transition-colors duration-200">
-      <div className="p-4 flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 flex-wrap mb-0.5">
-            <span className="font-syne font-bold text-sm text-text">{pitch.curatorName}</span>
-            <span className="text-xs font-inter text-muted">via {pitch.submitVia}</span>
-          </div>
-          <p className="font-syne font-semibold text-base text-text leading-snug truncate">
-            {pitch.playlistName}
-          </p>
-          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-            <span className="text-xs font-inter text-muted">{pitch.followers} followers</span>
-            <span className="text-xs font-inter px-2 py-0.5 rounded-full bg-accent/10 text-accent border border-accent/20">
-              {pitch.trendingStatus}
-            </span>
-          </div>
-        </div>
-        <div className="flex-shrink-0 text-right">
-          <div className={`font-syne font-bold text-xl ${scoreColor}`}>{score}</div>
-          <div className="text-[10px] font-inter text-muted uppercase tracking-wide">match</div>
-        </div>
-      </div>
-
-      <div className="px-4 pb-3 border-t border-border/50 pt-3 space-y-2.5">
-        <p className="text-xs font-inter text-text/70 leading-snug bg-bg/40 rounded-lg px-3 py-2 border border-border/40">
-          {pitch.subject}
-        </p>
-        <div className="flex items-center justify-between gap-2">
-          <button
-            type="button"
-            onClick={() => setOpen((v) => !v)}
-            className="text-xs font-inter text-muted hover:text-accent transition-colors duration-150 flex items-center gap-1"
-          >
-            <span>{open ? 'Hide Pitch' : 'Show Pitch'}</span>
-            <span className={`transition-transform duration-200 ${open ? 'rotate-180' : ''}`}>▾</span>
-          </button>
-          <div className="flex gap-1.5">
-            <CopyButton text={pitch.subject} label="Copy Subject" />
-            <CopyButton text={pitch.pitch} label="Copy Body" />
-            <CopyButton text={`Subject: ${pitch.subject}\n\n${pitch.pitch}`} label="Copy Full" />
-          </div>
-        </div>
-        {open && (
-          <div className="bg-bg/40 rounded-lg px-3 py-3 border border-border/40 max-h-40 overflow-y-auto">
-            <p className="text-xs font-inter text-text/70 leading-relaxed whitespace-pre-wrap">
-              {pitch.pitch}
+    <>
+      {showModal && (
+        <SendPitchModal
+          pitch={pitch}
+          onClose={() => {
+            setShowModal(false)
+          }}
+          onSent={() => {
+            setSent(true)
+            setShowModal(false)
+          }}
+        />
+      )}
+      <div className="bg-surface border border-border rounded-2xl overflow-hidden hover:border-accent/30 transition-colors duration-200">
+        <div className="p-4 flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 flex-wrap mb-0.5">
+              <span className="font-syne font-bold text-sm text-text">{pitch.curatorName}</span>
+              <span className="text-xs font-inter text-muted">via {pitch.submitVia}</span>
+            </div>
+            <p className="font-syne font-semibold text-base text-text leading-snug truncate">
+              {pitch.playlistName}
             </p>
+            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+              <span className="text-xs font-inter text-muted">{pitch.followers} followers</span>
+              <span className="text-xs font-inter px-2 py-0.5 rounded-full bg-accent/10 text-accent border border-accent/20">
+                {pitch.trendingStatus}
+              </span>
+            </div>
           </div>
-        )}
+          <div className="flex-shrink-0 text-right">
+            <div className={`font-syne font-bold text-xl ${scoreColor}`}>{score}</div>
+            <div className="text-[10px] font-inter text-muted uppercase tracking-wide">match</div>
+          </div>
+        </div>
+
+        <div className="px-4 pb-3 border-t border-border/50 pt-3 space-y-2.5">
+          <p className="text-xs font-inter text-text/70 leading-snug bg-bg/40 rounded-lg px-3 py-2 border border-border/40">
+            {pitch.subject}
+          </p>
+          <div className="flex items-center justify-between gap-2">
+            <button
+              type="button"
+              onClick={() => setOpen((v) => !v)}
+              className="text-xs font-inter text-muted hover:text-accent transition-colors duration-150 flex items-center gap-1"
+            >
+              <span>{open ? 'Hide Pitch' : 'Show Pitch'}</span>
+              <span className={`transition-transform duration-200 ${open ? 'rotate-180' : ''}`}>▾</span>
+            </button>
+            <div className="flex gap-1.5 flex-wrap justify-end">
+              <CopyButton text={pitch.subject} label="Copy Subject" />
+              <CopyButton text={pitch.pitch} label="Copy Body" />
+              <CopyButton text={`Subject: ${pitch.subject}\n\n${pitch.pitch}`} label="Copy Full" />
+              <button
+                type="button"
+                onClick={() => setShowModal(true)}
+                className={`px-3 py-1.5 text-xs font-inter font-medium rounded border transition-all duration-150 ${
+                  sent
+                    ? 'border-accent text-accent bg-accent/10 cursor-default'
+                    : 'border-accent/60 text-accent bg-accent/10 hover:bg-accent/20 cursor-pointer'
+                }`}
+              >
+                {sent ? 'Sent ✓' : 'Send Pitch'}
+              </button>
+            </div>
+          </div>
+          {open && (
+            <div className="bg-bg/40 rounded-lg px-3 py-3 border border-border/40 max-h-40 overflow-y-auto">
+              <p className="text-xs font-inter text-text/70 leading-relaxed whitespace-pre-wrap">
+                {pitch.pitch}
+              </p>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   )
 }
 
