@@ -526,13 +526,15 @@ function CopyButton({ text, label }) {
 }
 
 function SendPitchModal({ pitch, onClose }) {
+  const [subject, setSubject]         = useState(pitch.subject)
+  const [body, setBody]               = useState(pitch.pitch)
   const [artistName, setArtistName]   = useState('')
   const [artistEmail, setArtistEmail] = useState('')
   const [curatorEmail, setCuratorEmail] = useState('')
   const [status, setStatus] = useState('idle') // idle | sending | success | error
   const [errorMsg, setErrorMsg] = useState('')
 
-  const canSend = artistName.trim() && artistEmail.trim() && curatorEmail.trim() && status === 'idle'
+  const canSend = artistName.trim() && artistEmail.trim() && curatorEmail.trim() && subject.trim() && body.trim() && status === 'idle'
 
   const handleSend = async () => {
     setStatus('sending')
@@ -545,8 +547,8 @@ function SendPitchModal({ pitch, onClose }) {
         to_email:   curatorEmail.trim(),
         from_name:  artistName.trim(),
         reply_to:   artistEmail.trim(),
-        subject:    pitch.subject,
-        message:    pitch.pitch,
+        subject:    subject.trim(),
+        message:    body.trim(),
       })
       setStatus('success')
     } catch (err) {
@@ -582,25 +584,36 @@ function SendPitchModal({ pitch, onClose }) {
 
         {/* Scrollable body */}
         <div className="overflow-y-auto flex-1 px-5 py-4 space-y-4">
-          {/* Email preview */}
-          <div className="rounded-xl border border-border/60 bg-bg/50 p-4 space-y-2">
-            <p className="text-[10px] font-inter text-muted uppercase tracking-wider mb-1">Email Preview</p>
-            <div className="text-xs font-inter text-muted">
-              <span className="text-text/50">Subject: </span>
-              <span className="text-text font-medium">{pitch.subject}</span>
+          {/* Editable email content */}
+          <div className="space-y-3">
+            <div>
+              <label className="block text-[10px] font-inter font-medium text-muted uppercase tracking-wider mb-1">
+                Subject Line <span className="text-accent">*</span>
+              </label>
+              <input
+                type="text"
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                className="w-full bg-bg border border-border rounded-xl px-3 py-2.5 text-sm font-inter text-text placeholder-muted focus:outline-none focus:border-accent/60 transition-colors"
+              />
             </div>
-            <div
-              className="text-xs font-inter text-text/60 leading-relaxed whitespace-pre-wrap max-h-36 overflow-y-auto"
-              style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '8px', marginTop: '4px' }}
-            >
-              {pitch.pitch}
+            <div>
+              <label className="block text-[10px] font-inter font-medium text-muted uppercase tracking-wider mb-1">
+                Pitch Body <span className="text-accent">*</span>
+              </label>
+              <textarea
+                rows={8}
+                value={body}
+                onChange={(e) => setBody(e.target.value)}
+                className="w-full bg-bg border border-border rounded-xl px-3 py-2.5 text-xs font-inter text-text placeholder-muted focus:outline-none focus:border-accent/60 transition-colors resize-y leading-relaxed"
+              />
             </div>
           </div>
 
           {/* Fields */}
-          <div className="space-y-3">
+          <div className="space-y-3 pt-1 border-t border-border/40">
             <div>
-              <label className="block text-[10px] font-inter font-medium text-muted uppercase tracking-wider mb-1">
+              <label className="block text-[10px] font-inter font-medium text-muted uppercase tracking-wider mb-1 mt-3">
                 Your Name <span className="text-accent">*</span>
               </label>
               <input
