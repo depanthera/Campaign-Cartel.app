@@ -627,104 +627,6 @@ function Palm({ cx, baseY, height, lean = 0 }) {
   )
 }
 
-// ─── EKG heart-monitor line ──────────────────────────────────────────────────
-function EKGLine() {
-  const canvasRef = useRef(null)
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    let w = 0, h = 0, scanX = 0, prevY = null, animId
-    const SPEED = 2.2
-    const CYCLE = 260
-
-    const setup = () => {
-      const dpr = window.devicePixelRatio || 1
-      w = canvas.offsetWidth
-      h = canvas.offsetHeight
-      canvas.width = w * dpr
-      canvas.height = h * dpr
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-      scanX = 0
-      prevY = null
-      ctx.fillStyle = '#050505'
-      ctx.fillRect(0, 0, w, h)
-    }
-    setup()
-    window.addEventListener('resize', setup)
-
-    const getY = () => {
-      const cy = h / 2
-      const pos = ((Math.floor(scanX) % CYCLE) + CYCLE) % CYCLE
-      let offset = 0
-      if (pos >= 45 && pos < 65)     offset = -7  * Math.sin((pos - 45)  / 20 * Math.PI)
-      else if (pos >= 85 && pos < 93)  offset =  5  * Math.sin((pos - 85)  /  8 * Math.PI)
-      else if (pos >= 93 && pos < 108) offset = -h  * 0.44 * Math.sin((pos - 93)  / 15 * Math.PI)
-      else if (pos >= 108 && pos < 118) offset =  9  * Math.sin((pos - 108) / 10 * Math.PI)
-      else if (pos >= 142 && pos < 182) offset = -13 * Math.sin((pos - 142) / 40 * Math.PI)
-      return cy + offset
-    }
-
-    const draw = () => {
-      ctx.fillStyle = '#050505'
-      ctx.fillRect(scanX, 0, 38, h)
-      const cy = getY()
-      if (prevY !== null && scanX > 0) {
-        // Glow halo pass
-        ctx.beginPath()
-        ctx.moveTo(scanX - SPEED, prevY)
-        ctx.lineTo(scanX, cy)
-        ctx.strokeStyle = 'rgba(200,255,87,0.18)'
-        ctx.lineWidth = 6
-        ctx.shadowBlur = 0
-        ctx.lineCap = 'round'
-        ctx.stroke()
-        // Main line pass
-        ctx.beginPath()
-        ctx.moveTo(scanX - SPEED, prevY)
-        ctx.lineTo(scanX, cy)
-        ctx.strokeStyle = '#C8FF57'
-        ctx.lineWidth = 1.5
-        ctx.shadowBlur = 10
-        ctx.shadowColor = 'rgba(200,255,87,0.55)'
-        ctx.stroke()
-      }
-      prevY = cy
-      scanX += SPEED
-      if (scanX >= w) {
-        scanX = 0
-        prevY = null
-        ctx.fillStyle = '#050505'
-        ctx.fillRect(0, 0, w, h)
-      }
-      animId = requestAnimationFrame(draw)
-    }
-
-    animId = requestAnimationFrame(draw)
-    return () => {
-      cancelAnimationFrame(animId)
-      window.removeEventListener('resize', setup)
-    }
-  }, [])
-
-  return (
-    <canvas
-      ref={canvasRef}
-      style={{
-        position: 'fixed',
-        left: 0,
-        right: 0,
-        width: '100%',
-        height: '76px',
-        bottom: '44%',
-        zIndex: 5,
-        pointerEvents: 'none',
-        display: 'block',
-      }}
-    />
-  )
-}
-
 // ─── City scene ──────────────────────────────────────────────────────────────
 function CityScene() {
   return (
@@ -969,7 +871,6 @@ export default function App() {
     <div className="film-grain min-h-screen font-inter" style={{ background: '#050505' }}>
       {loading && <LoadingOverlay msgIndex={msgIndex} />}
       <CityScene />
-      <EKGLine />
 
       {/* Content sits in the upper portion, above the skyline */}
       <div className="relative z-10 flex flex-col justify-start px-4 pt-10 md:pt-14"
