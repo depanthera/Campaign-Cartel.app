@@ -118,13 +118,13 @@ Return ONLY valid JSON (no markdown, no fences) matching this exact shape:
   "pitches": [
     {
       "curatorName": "string",
-      "curatorEmail": "string (real, public submission email for this curator or playlist — use known platforms like submithub.com, groover.co, or the curator's own public contact; if unknown use an empty string)",
+      "curatorEmail": "string (required — provide the best available contact: for SubmitHub use 'submit@submithub.com', for Groover use 'contact@groover.co', for Spotify editorial use 'pitchtool@spotify.com', for independent curators provide their known public email or best-guess domain email — never return an empty string)",
       "playlistName": "string",
       "followers": "string",
       "submitVia": "string",
       "matchReason": "string",
       "matchScore": number between 70 and 99,
-      "trendingStatus": "string",
+      "trendingStatus": "string (max 5 words — e.g. 'Active curator lane' or 'High submission window')",
       "subject": "string",
       "pitch": "string — a short, sharp pitch email. Format exactly like this example (use the artist/song/playlist names from this context):\n\nHey,\n\nI wanted to bring \\"[Song]\" by [Artist] to your attention for [Playlist].\n\n[One sentence on the sonic/emotional world of the track — name one or two real artist comparisons if they fit. No hype, just placement.]\n\n[One sentence on what the song is actually about — the emotional or thematic core. Make it specific, not abstract.]\n\n[One sentence on what separates this artist or this record right now.]\n\n[One closing sentence that ties the track to this curator's audience. Confident, not desperate.]\n\nThank you for your time.\n— [Artist]\n\nRules: 4 short paragraphs max. No long blocks. No adjective stacking. No words like 'genuinely', 'sincerely', 'I am confident'. Every sentence earns its place."
     }
@@ -730,7 +730,7 @@ function PitchCard({ pitch }) {
             </p>
             <div className="flex items-center gap-2 mt-1.5 flex-wrap">
               <span className="text-xs font-inter text-muted">{pitch.followers} followers</span>
-              <span className="text-xs font-inter px-2 py-0.5 rounded-full bg-accent/10 text-accent border border-accent/20">
+              <span className="text-[10px] font-inter px-1.5 py-0.5 rounded-full bg-accent/10 text-accent border border-accent/20 whitespace-nowrap overflow-hidden max-w-[160px] truncate inline-block align-middle">
                 {pitch.trendingStatus}
               </span>
             </div>
