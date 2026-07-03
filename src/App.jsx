@@ -118,6 +118,7 @@ Return ONLY valid JSON (no markdown, no fences) matching this exact shape:
   "pitches": [
     {
       "curatorName": "string",
+      "curatorEmail": "string (real, public submission email for this curator or playlist — use known platforms like submithub.com, groover.co, or the curator's own public contact; if unknown use an empty string)",
       "playlistName": "string",
       "followers": "string",
       "submitVia": "string",
@@ -530,7 +531,7 @@ function SendPitchModal({ pitch, onClose }) {
   const [body, setBody]               = useState(pitch.pitch)
   const [artistName, setArtistName]   = useState('')
   const [artistEmail, setArtistEmail] = useState('')
-  const [curatorEmail, setCuratorEmail] = useState('')
+  const [curatorEmail, setCuratorEmail] = useState(pitch.curatorEmail ?? '')
   const [status, setStatus] = useState('idle') // idle | sending | success | error
   const [errorMsg, setErrorMsg] = useState('')
 
