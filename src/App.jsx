@@ -24,6 +24,25 @@ const LOADING_MESSAGES = [
   'Writing your pitches...',
 ]
 
+const GOALS = [
+  'Get on playlists', 'Get press', 'Book shows', 'Find collabs',
+  'Get sync deals', 'Grow social', 'Get signed',
+]
+
+const RELEASE_DURATIONS = [
+  'Just starting', '1-2 years', '3-5 years', '5+ years',
+]
+
+const RELEASE_FREQUENCIES = [
+  'Every few months', 'Monthly', 'Every 2-3 weeks', 'Weekly',
+]
+
+const INTAKE_STEPS = [
+  { num: 1, label: 'Who are you?' },
+  { num: 2, label: 'Where are you at?' },
+  { num: 3, label: 'Your goals' },
+]
+
 // ─── Platform icons & submission steps ───────────────────────────────────────
 const PlatformIcon = ({ platform, size = 18 }) => {
   const cls = `flex-shrink-0`
@@ -1211,11 +1230,264 @@ function VibeChip({ label, selected, onClick }) {
   )
 }
 
+function GoalChip({ label, selected, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`px-3 py-1.5 rounded-full text-xs font-inter font-medium border transition-all duration-150 ${
+        selected
+          ? 'bg-accent text-bg border-accent'
+          : 'bg-transparent text-muted border-border hover:border-accent/50 hover:text-text'
+      }`}
+    >
+      {label}
+    </button>
+  )
+}
+
 const inputClass =
   'w-full bg-surface border border-border rounded-xl px-4 py-3 text-sm font-inter text-text placeholder-muted/50 focus:outline-none focus:border-accent/60 transition-colors duration-150'
 
+// ─── Artist intake ────────────────────────────────────────────────────────────
+function ArtistIntakeFlow({ onComplete }) {
+  const [step, setStep] = useState(1)
+  const [data, setData] = useState({
+    artistName: '', genre: '', subgenre: '', location: '',
+    spotifyUrl: '', instagramHandle: '',
+    monthlyListeners: '', releaseDuration: '', releaseFrequency: '',
+    goals: [], influences: '', extra: '',
+  })
+
+  const update = (key, val) => setData(d => ({ ...d, [key]: val }))
+  const toggleGoal = (goal) => setData(d => ({
+    ...d,
+    goals: d.goals.includes(goal) ? d.goals.filter(g => g !== goal) : [...d.goals, goal],
+  }))
+
+  const step1Valid = data.artistName.trim() && data.genre && data.location.trim()
+  const step2Valid = data.monthlyListeners && data.releaseDuration && data.releaseFrequency
+  const step3Valid = data.goals.length > 0
+
+  const handleComplete = () => {
+    try { localStorage.setItem('cc_artist_profile', JSON.stringify(data)) } catch {}
+    onComplete(data)
+  }
+
+  return (
+    <div className="film-grain min-h-screen font-inter" style={{ background: '#050505' }}>
+      <CityScene />
+      <div className="relative z-10 flex flex-col items-center px-4 pt-10 md:pt-14"
+           style={{ minHeight: '100vh', paddingBottom: '50vh' }}>
+        <div className="max-w-xl w-full">
+
+          {/* Logo */}
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-accent/20 bg-accent/5 mb-6">
+              <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+              <span className="text-[11px] font-inter text-accent tracking-[0.18em] uppercase">Artist Profile</span>
+            </div>
+            <h1 className="neon-title font-syne font-black text-5xl md:text-7xl text-white leading-none tracking-tight mb-3">
+              Campaign Cartel
+            </h1>
+            <p className="font-inter text-base text-white/50 font-normal tracking-wide">
+              Let's build your profile first
+            </p>
+          </div>
+
+          {/* Step progress */}
+          <div className="mb-6 flex items-start justify-between">
+            {INTAKE_STEPS.map((s, i) => (
+              <div key={s.num} className="flex-1 flex items-start">
+                <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                  <div
+                    className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-syne font-bold border transition-all duration-300 ${
+                      step > s.num
+                        ? 'bg-accent border-accent text-bg'
+                        : step === s.num
+                        ? 'border-accent text-accent bg-accent/10'
+                        : 'border-border text-muted bg-transparent'
+                    }`}
+                  >
+                    {step > s.num ? (
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    ) : s.num}
+                  </div>
+                  <span className={`text-[9px] font-inter uppercase tracking-wider text-center leading-tight max-w-[64px] ${step === s.num ? 'text-accent' : 'text-muted/40'}`}>
+                    {s.label}
+                  </span>
+                </div>
+                {i < INTAKE_STEPS.length - 1 && (
+                  <div className={`flex-1 h-[1px] mt-3.5 mx-2 transition-all duration-300 ${step > s.num ? 'bg-accent/50' : 'bg-border'}`} />
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Card */}
+          <div className="glass-card p-6 md:p-8">
+
+            {/* Step 1 */}
+            {step === 1 && (
+              <div className="space-y-5">
+                <div>
+                  <h2 className="font-syne font-bold text-xl text-white mb-1">Who are you?</h2>
+                  <p className="text-xs font-inter text-muted">Your profile powers every pitch we write.</p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormField label="Artist Name" required>
+                    <input type="text" placeholder="e.g. Milo James" value={data.artistName}
+                      onChange={e => update('artistName', e.target.value)} className={inputClass} />
+                  </FormField>
+                  <FormField label="Genre" required>
+                    <select value={data.genre} onChange={e => update('genre', e.target.value)}
+                      className={`${inputClass} cursor-pointer`}>
+                      <option value="" disabled>Select genre...</option>
+                      {GENRES.map(g => <option key={g} value={g}>{g}</option>)}
+                    </select>
+                  </FormField>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormField label="Subgenre">
+                    <input type="text" placeholder="e.g. dark trap" value={data.subgenre}
+                      onChange={e => update('subgenre', e.target.value)} className={inputClass} />
+                  </FormField>
+                  <FormField label="City, State" required>
+                    <input type="text" placeholder="e.g. Los Angeles, CA" value={data.location}
+                      onChange={e => update('location', e.target.value)} className={inputClass} />
+                  </FormField>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormField label="Spotify URL">
+                    <input type="url" placeholder="https://open.spotify.com/artist/..." value={data.spotifyUrl}
+                      onChange={e => update('spotifyUrl', e.target.value)} className={inputClass} />
+                  </FormField>
+                  <FormField label="Instagram Handle">
+                    <input type="text" placeholder="@yourtag" value={data.instagramHandle}
+                      onChange={e => update('instagramHandle', e.target.value)} className={inputClass} />
+                  </FormField>
+                </div>
+
+                <button type="button" disabled={!step1Valid} onClick={() => setStep(2)}
+                  className={`w-full py-4 rounded-xl font-syne font-bold text-base tracking-wide transition-all duration-150 active:scale-[0.99] ${
+                    step1Valid ? 'bg-accent text-bg hover:bg-accent/90 cursor-pointer' : 'bg-accent/20 text-accent/40 cursor-not-allowed'
+                  }`}>
+                  Next →
+                </button>
+              </div>
+            )}
+
+            {/* Step 2 */}
+            {step === 2 && (
+              <div className="space-y-5">
+                <div>
+                  <h2 className="font-syne font-bold text-xl text-white mb-1">Where are you at?</h2>
+                  <p className="text-xs font-inter text-muted">Help us understand your current momentum.</p>
+                </div>
+
+                <FormField label="Monthly Listeners" required>
+                  <select value={data.monthlyListeners} onChange={e => update('monthlyListeners', e.target.value)}
+                    className={`${inputClass} cursor-pointer`}>
+                    <option value="" disabled>Select range...</option>
+                    {MONTHLY_LISTENER_RANGES.map(r => <option key={r} value={r}>{r}</option>)}
+                  </select>
+                </FormField>
+
+                <FormField label="How long have you been releasing?" required>
+                  <select value={data.releaseDuration} onChange={e => update('releaseDuration', e.target.value)}
+                    className={`${inputClass} cursor-pointer`}>
+                    <option value="" disabled>Select...</option>
+                    {RELEASE_DURATIONS.map(r => <option key={r} value={r}>{r}</option>)}
+                  </select>
+                </FormField>
+
+                <FormField label="How often do you release?" required>
+                  <select value={data.releaseFrequency} onChange={e => update('releaseFrequency', e.target.value)}
+                    className={`${inputClass} cursor-pointer`}>
+                    <option value="" disabled>Select...</option>
+                    {RELEASE_FREQUENCIES.map(r => <option key={r} value={r}>{r}</option>)}
+                  </select>
+                </FormField>
+
+                <div className="flex gap-3">
+                  <button type="button" onClick={() => setStep(1)}
+                    className="px-5 py-4 rounded-xl border border-border text-sm font-inter font-medium text-muted hover:border-accent/40 hover:text-text transition-all duration-150">
+                    ← Back
+                  </button>
+                  <button type="button" disabled={!step2Valid} onClick={() => setStep(3)}
+                    className={`flex-1 py-4 rounded-xl font-syne font-bold text-base tracking-wide transition-all duration-150 active:scale-[0.99] ${
+                      step2Valid ? 'bg-accent text-bg hover:bg-accent/90 cursor-pointer' : 'bg-accent/20 text-accent/40 cursor-not-allowed'
+                    }`}>
+                    Next →
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Step 3 */}
+            {step === 3 && (
+              <div className="space-y-5">
+                <div>
+                  <h2 className="font-syne font-bold text-xl text-white mb-1">What are you going for?</h2>
+                  <p className="text-xs font-inter text-muted">Your goals and influences shape every pitch we write.</p>
+                </div>
+
+                <FormField label="Goals — pick all that apply" required>
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {GOALS.map(g => (
+                      <GoalChip key={g} label={g} selected={data.goals.includes(g)} onClick={() => toggleGoal(g)} />
+                    ))}
+                  </div>
+                </FormField>
+
+                <FormField label="Sounds Like (influences)">
+                  <input type="text" placeholder="e.g. Travis Scott, Playboi Carti, Ken Carson"
+                    value={data.influences} onChange={e => update('influences', e.target.value)}
+                    className={inputClass} />
+                </FormField>
+
+                <FormField label="Anything else?">
+                  <textarea rows={3} placeholder="Upcoming shows, releases, collabs — anything we should know..."
+                    value={data.extra} onChange={e => update('extra', e.target.value)}
+                    className={`${inputClass} resize-none leading-relaxed`} />
+                </FormField>
+
+                <div className="flex gap-3">
+                  <button type="button" onClick={() => setStep(2)}
+                    className="px-5 py-4 rounded-xl border border-border text-sm font-inter font-medium text-muted hover:border-accent/40 hover:text-text transition-all duration-150">
+                    ← Back
+                  </button>
+                  <button type="button" disabled={!step3Valid} onClick={handleComplete}
+                    className={`flex-1 py-4 rounded-xl font-syne font-bold text-base tracking-wide transition-all duration-150 active:scale-[0.99] ${
+                      step3Valid ? 'bg-accent text-bg hover:bg-accent/90 cursor-pointer' : 'bg-accent/20 text-accent/40 cursor-not-allowed'
+                    }`}>
+                    Enter Campaign Cartel →
+                  </button>
+                </div>
+              </div>
+            )}
+
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── App ──────────────────────────────────────────────────────────────────────
 export default function App() {
+  const [artistProfile, setArtistProfile] = useState(() => {
+    try {
+      const s = localStorage.getItem('cc_artist_profile')
+      return s ? JSON.parse(s) : null
+    } catch {
+      return null
+    }
+  })
+
   const [form, setForm] = useState({
     artistName: '',
     songTitle: '',
@@ -1277,6 +1549,10 @@ export default function App() {
     setSubmittedSet(new Set())
     setError('')
     setForm({ artistName: '', songTitle: '', genre: '', monthlyListeners: '', songDescription: '', vibes: [] })
+  }
+
+  if (!artistProfile) {
+    return <ArtistIntakeFlow onComplete={setArtistProfile} />
   }
 
   if (results && selectedTip) {
