@@ -1071,7 +1071,7 @@ function SubmissionTracker({ total, submitted }) {
 }
 
 // ─── Loading overlay ──────────────────────────────────────────────────────────
-function LoadingOverlay({ msgIndex }) {
+function LoadingOverlay({ msgIndex, messages = LOADING_MESSAGES }) {
   return (
     <div className="fixed inset-0 bg-bg/95 backdrop-blur-sm z-50 flex flex-col items-center justify-center gap-6">
       <div className="relative w-14 h-14">
@@ -1081,7 +1081,7 @@ function LoadingOverlay({ msgIndex }) {
       </div>
       <div className="text-center space-y-2">
         <p className="font-syne font-semibold text-text text-lg transition-all duration-500">
-          {LOADING_MESSAGES[msgIndex % LOADING_MESSAGES.length]}
+          {messages[msgIndex % messages.length]}
         </p>
         <p className="font-inter text-muted text-sm">Building your personalized campaign...</p>
       </div>
@@ -1253,6 +1253,414 @@ function GoalChip({ label, selected, onClick }) {
 const inputClass =
   'w-full bg-surface border border-border rounded-xl px-4 py-3 text-sm font-inter text-text placeholder-muted/50 focus:outline-none focus:border-accent/60 transition-colors duration-150'
 
+// ─── Press & Blog — data & API ───────────────────────────────────────────────
+const PRESS_LOADING_MESSAGES = [
+  'Scanning active music blogs...',
+  'Finding journalists for your sound...',
+  'Writing your press pitches...',
+]
+
+const PRESS_GOALS = ['Blog Feature', 'Interview', 'Review', 'Premiere']
+
+const PRESS_URLS = {
+  'Two Story Melody':  'https://twostorymelody.com/submit',
+  'Earmilk':           'https://earmilk.com/submit',
+  'Ones To Watch':     'https://www.onestowatch.com/submit',
+  'Pigeons & Planes':  'https://pigeonsandplanes.com/submit',
+  'DJBooth':           'https://djbooth.net/submit',
+  'Lyrical Lemonade':  'https://lyricallemondade.com/submit',
+  'The FADER':         'https://thefader.com/submit',
+  'Audiomack':         'https://audiomack.com/submit',
+}
+
+function buildPressPrompt(form, profile) {
+  return `You are a music PR specialist. Generate 4 press pitches for this artist.
+
+Artist: ${profile.artistName}
+Genre: ${profile.genre}${profile.subgenre ? ` / ${profile.subgenre}` : ''}
+Location: ${profile.location || ''}
+Song: ${form.songTitle}
+Description: ${form.songDescription}${form.storyAngle ? `\nStory: ${form.storyAngle}` : ''}${form.vibes.length ? `\nVibes: ${form.vibes.join(', ')}` : ''}${form.pressGoals.length ? `\nGoals: ${form.pressGoals.join(', ')}` : ''}
+
+Return ONLY valid JSON (no markdown):
+{
+  "pitches": [
+    {
+      "publicationName": "string",
+      "journalistName": "string",
+      "beat": "string e.g. Hip-Hop & R&B",
+      "reach": "string e.g. 2.1M monthly readers",
+      "matchScore": number 70-99,
+      "subject": "string — compelling subject line under 10 words",
+      "pitch": "string — professional, story-driven, under 200 words. Lead with the song narrative not the artist bio."
+    }
+  ]
+}
+
+Target publications from: Two Story Melody, Earmilk, Ones To Watch, Pigeons & Planes, DJBooth, Lyrical Lemonade, The FADER, Audiomack. Match genre and vibe appropriately. Generate exactly 4 pitches.`
+}
+
+async function runPressSearch(form, profile) {
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': import.meta.env.VITE_ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 3000,
+      messages: [{ role: 'user', content: buildPressPrompt(form, profile) }],
+    }),
+  })
+  if (!response.ok) {
+    const err = await response.text()
+    throw new Error(`API error ${response.status}: ${err}`)
+  }
+  const data = await response.json()
+  const raw = data.content.map(b => b.text).join('')
+  const stripped = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim()
+  try {
+    return JSON.parse(stripped)
+  } catch {
+    const match = stripped.match(/\{[\s\S]*\}/)
+    if (match) { try { return JSON.parse(match[0]) } catch {} }
+    throw new Error('The AI response was incomplete. Please try again.')
+  }
+}
+
+// ─── Press pitch card ─────────────────────────────────────────────────────────
+function PressPitchCard({ pitch }) {
+  const [open, setOpen] = useState(false)
+  const url = PRESS_URLS[pitch.publicationName]
+  const score = pitch.matchScore ?? 85
+  const scoreColor = score >= 90 ? 'text-accent' : score >= 80 ? 'text-yellow-400' : 'text-orange-400'
+
+  return (
+    <div className="bg-surface border border-border rounded-2xl overflow-hidden hover:border-accent/30 transition-colors duration-200">
+      <div className="p-4 flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <div className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-inter font-semibold border border-accent/30 bg-accent/10 text-accent">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              <span>Press</span>
+            </div>
+          </div>
+          <p className="font-syne font-bold text-sm text-text">{pitch.journalistName}</p>
+          <p className="font-syne font-semibold text-base text-text leading-snug truncate">{pitch.publicationName}</p>
+          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+            <span className="text-xs font-inter text-muted">{pitch.beat}</span>
+            {pitch.reach && (
+              <span className="text-[10px] font-inter px-1.5 py-0.5 rounded-full bg-accent/10 text-accent border border-accent/20 whitespace-nowrap">
+                {pitch.reach}
+              </span>
+            )}
+          </div>
+        </div>
+        <div className="flex-shrink-0 text-right">
+          <div className={`font-syne font-bold text-xl ${scoreColor}`}>{score}</div>
+          <div className="text-[10px] font-inter text-muted uppercase tracking-wide">match</div>
+        </div>
+      </div>
+
+      <div className="px-4 pb-3 border-t border-border/50 pt-3 space-y-2.5">
+        <p className="text-xs font-inter text-text/70 leading-snug bg-bg/40 rounded-lg px-3 py-2 border border-border/40">
+          {pitch.subject}
+        </p>
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <button type="button" onClick={() => setOpen(v => !v)}
+            className="text-xs font-inter text-muted hover:text-accent transition-colors duration-150 flex items-center gap-1">
+            <span>{open ? 'Hide Pitch' : 'Show Pitch'}</span>
+            <span className={`transition-transform duration-200 ${open ? 'rotate-180' : ''}`}>▾</span>
+          </button>
+          <div className="flex gap-1.5 flex-wrap justify-end">
+            <CopyButton text={pitch.subject} label="Copy Subject" />
+            <CopyButton text={pitch.pitch} label="Copy Body" />
+            {url ? (
+              <a href={url} target="_blank" rel="noopener noreferrer"
+                className="px-3 py-1.5 text-xs font-inter font-bold rounded border flex items-center gap-1"
+                style={{ background: '#C8FF57', borderColor: '#C8FF57', color: '#050505' }}>
+                Open Page →
+              </a>
+            ) : (
+              <button type="button" disabled
+                className="px-3 py-1.5 text-xs font-inter font-medium rounded border border-border text-muted/40 cursor-not-allowed">
+                No URL
+              </button>
+            )}
+          </div>
+        </div>
+        {open && (
+          <div className="bg-bg/40 rounded-lg px-3 py-3 border border-border/40 max-h-40 overflow-y-auto">
+            <p className="text-xs font-inter text-text/70 leading-relaxed whitespace-pre-wrap">{pitch.pitch}</p>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ─── Press & Blog view ────────────────────────────────────────────────────────
+function PressBlogView({ profile, onBack }) {
+  const trialUsed = localStorage.getItem('pressTrialUsed') === 'true'
+  const [phase, setPhase] = useState(trialUsed ? 'upgrade' : 'form')
+  const [form, setForm] = useState({
+    songTitle: '', songDescription: '', vibes: [], storyAngle: '', pressGoals: [],
+  })
+  const [loading, setLoading] = useState(false)
+  const [msgIndex, setMsgIndex] = useState(0)
+  const [results, setResults] = useState(null)
+  const [showBanner, setShowBanner] = useState(false)
+  const [error, setError] = useState('')
+  const intervalRef = useRef(null)
+
+  useEffect(() => {
+    if (loading) {
+      setMsgIndex(0)
+      intervalRef.current = setInterval(() => setMsgIndex(i => i + 1), 2000)
+    } else {
+      clearInterval(intervalRef.current)
+    }
+    return () => clearInterval(intervalRef.current)
+  }, [loading])
+
+  const toggleVibe = vibe => setForm(f => ({
+    ...f, vibes: f.vibes.includes(vibe) ? f.vibes.filter(v => v !== vibe) : [...f.vibes, vibe],
+  }))
+
+  const toggleGoal = goal => setForm(f => ({
+    ...f, pressGoals: f.pressGoals.includes(goal) ? f.pressGoals.filter(g => g !== goal) : [...f.pressGoals, goal],
+  }))
+
+  const isValid = form.songTitle.trim() && form.songDescription.trim()
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (!isValid) return
+    setError('')
+    setLoading(true)
+    try {
+      const data = await runPressSearch(form, profile)
+      try { localStorage.setItem('pressTrialUsed', 'true') } catch {}
+      setResults(data)
+      setShowBanner(true)
+      setPhase('results')
+    } catch (err) {
+      setError(err.message || 'Something went wrong. Try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Upgrade screen
+  if (phase === 'upgrade') {
+    return (
+      <div className="min-h-screen bg-bg font-inter">
+        <NavBar profile={profile} onDashboard={onBack} />
+        <main className="max-w-lg mx-auto px-4 py-16">
+          <div className="text-center mb-10">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-accent/20 bg-accent/5 mb-5">
+              <div className="w-1.5 h-1.5 rounded-full bg-accent" />
+              <span className="text-[10px] font-inter text-accent uppercase tracking-widest font-bold">Campaign Cartel Pro</span>
+            </div>
+            <h1 className="font-syne font-black text-4xl text-white mb-3">Unlock Unlimited Access</h1>
+            <p className="text-sm font-inter text-muted">You've used your free Press & Blog campaign.</p>
+          </div>
+
+          <div className="bg-surface border border-border rounded-2xl p-6 mb-6 space-y-3">
+            {[
+              'Unlimited Playlist Pitching campaigns',
+              'Unlimited Press & Blog campaigns',
+              'Show Booking (coming soon)',
+              'Social Strategy (coming soon)',
+              'Priority pitch quality',
+            ].map((benefit, i) => (
+              <div key={i} className="flex items-center gap-3">
+                <div className="w-5 h-5 rounded-full bg-accent/15 flex items-center justify-center flex-shrink-0">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#C8FF57" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <span className="text-sm font-inter text-text">{benefit}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="space-y-3">
+            <button type="button"
+              className="w-full py-4 bg-accent text-bg font-syne font-bold text-base rounded-xl hover:bg-accent/90 transition-all duration-150 active:scale-[0.99]">
+              Upgrade to Pro $29/mo →
+            </button>
+            <button type="button" onClick={results ? () => setPhase('results') : onBack}
+              className="w-full py-3 text-sm font-inter text-muted hover:text-text transition-colors">
+              Maybe Later
+            </button>
+          </div>
+        </main>
+      </div>
+    )
+  }
+
+  // Results
+  if (phase === 'results' && results) {
+    return (
+      <div className="min-h-screen bg-bg font-inter">
+        <header className="sticky top-0 z-10 bg-bg/80 backdrop-blur-md border-b border-border">
+          <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <button type="button" onClick={onBack}
+                className="flex items-center gap-1.5 text-sm font-inter text-muted hover:text-text transition-colors group">
+                <span className="group-hover:-translate-x-0.5 transition-transform">←</span>
+                <span>Dashboard</span>
+              </button>
+              <div className="w-px h-4 bg-border" />
+              <span className="font-syne font-black text-xl text-text tracking-tight">Press & Blog</span>
+            </div>
+            <span className="text-xs font-inter text-muted hidden sm:block">
+              {profile.artistName} — "{form.songTitle}"
+            </span>
+          </div>
+        </header>
+
+        <main className="max-w-5xl mx-auto px-4 py-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-syne font-bold text-xl text-text">Your Press Pack</h2>
+            <span className="text-xs font-inter text-muted">{results.pitches?.length ?? 0} publications targeted</span>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-8">
+            {(results.pitches ?? []).map((pitch, i) => (
+              <PressPitchCard key={i} pitch={pitch} />
+            ))}
+          </div>
+
+          {showBanner && (
+            <div className="bg-surface border border-accent/20 rounded-2xl px-5 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-syne font-bold text-white">You used your free Press campaign.</p>
+                <p className="text-xs font-inter text-muted mt-0.5">Upgrade to Pro $29/mo for unlimited access.</p>
+              </div>
+              <div className="flex items-center gap-3 flex-shrink-0">
+                <button type="button" onClick={() => setShowBanner(false)}
+                  className="text-xs font-inter text-muted hover:text-text transition-colors">
+                  Maybe Later
+                </button>
+                <button type="button" onClick={() => setPhase('upgrade')}
+                  className="px-4 py-2 bg-accent text-bg text-xs font-syne font-bold rounded-xl hover:bg-accent/90 transition-all">
+                  Upgrade to Pro →
+                </button>
+              </div>
+            </div>
+          )}
+        </main>
+      </div>
+    )
+  }
+
+  // Form
+  return (
+    <div className="film-grain min-h-screen font-inter" style={{ background: '#050505' }}>
+      {loading && <LoadingOverlay msgIndex={msgIndex} messages={PRESS_LOADING_MESSAGES} />}
+      <CityScene />
+
+      <div className="relative z-10 flex flex-col justify-start px-4 pt-10 md:pt-14"
+           style={{ minHeight: '100vh', paddingBottom: '50vh' }}>
+        <div className="max-w-xl mx-auto w-full">
+
+          <button type="button" onClick={onBack}
+            className="flex items-center gap-1.5 text-sm font-inter text-white/40 hover:text-white/70 transition-colors mb-8 group">
+            <span className="group-hover:-translate-x-0.5 transition-transform">←</span>
+            <span>Back to Dashboard</span>
+          </button>
+
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-accent/20 bg-accent/5 mb-6">
+              <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+              <span className="text-[11px] font-inter text-accent tracking-[0.18em] uppercase">Press & Blog</span>
+            </div>
+            <h1 className="neon-title font-syne font-black text-5xl md:text-7xl text-white leading-none tracking-tight mb-3">
+              Campaign Cartel
+            </h1>
+            <p className="font-inter text-base md:text-lg text-white/50 font-normal tracking-wide">
+              Your AI Promotion Team
+            </p>
+          </div>
+
+          <div className="glass-card p-6 md:p-8">
+            <form onSubmit={handleSubmit} className="space-y-5">
+
+              {/* Artist info banner */}
+              <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-accent/5 border border-accent/15">
+                <div className="w-7 h-7 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0">
+                  <span className="font-syne font-bold text-[11px] text-accent uppercase">
+                    {(profile.artistName || '?')[0]}
+                  </span>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-inter font-semibold text-text truncate">{profile.artistName}</p>
+                  <p className="text-[10px] font-inter text-muted">
+                    {profile.genre}{profile.subgenre ? ` · ${profile.subgenre}` : ''}
+                    {profile.location ? ` · ${profile.location}` : ''}
+                  </p>
+                </div>
+              </div>
+
+              <FormField label="Song Title" required>
+                <input type="text" placeholder="e.g. Golden Hour" value={form.songTitle}
+                  onChange={e => setForm(f => ({ ...f, songTitle: e.target.value }))}
+                  className={inputClass} />
+              </FormField>
+
+              <FormField label="Song Description" required>
+                <textarea rows={3} placeholder="Describe the sound, mood, and feel of your song..."
+                  value={form.songDescription}
+                  onChange={e => setForm(f => ({ ...f, songDescription: e.target.value }))}
+                  className={`${inputClass} resize-none leading-relaxed`} />
+              </FormField>
+
+              <FormField label="Vibes (pick any)">
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {VIBES.map(v => (
+                    <VibeChip key={v} label={v} selected={form.vibes.includes(v)} onClick={() => toggleVibe(v)} />
+                  ))}
+                </div>
+              </FormField>
+
+              <FormField label="Story Angle">
+                <textarea rows={2} placeholder="What's the story behind this song? Personal journey, social commentary, inspired by..."
+                  value={form.storyAngle}
+                  onChange={e => setForm(f => ({ ...f, storyAngle: e.target.value }))}
+                  className={`${inputClass} resize-none leading-relaxed`} />
+              </FormField>
+
+              <FormField label="Press Goal (pick any)">
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {PRESS_GOALS.map(g => (
+                    <VibeChip key={g} label={g} selected={form.pressGoals.includes(g)} onClick={() => toggleGoal(g)} />
+                  ))}
+                </div>
+              </FormField>
+
+              {error && (
+                <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3">
+                  <p className="text-sm font-inter text-red-400">{error}</p>
+                </div>
+              )}
+
+              <button type="submit" disabled={!isValid || loading}
+                className={`w-full py-4 rounded-xl font-syne font-bold text-base tracking-wide transition-all duration-150 active:scale-[0.99] ${
+                  isValid && !loading ? 'bg-accent text-bg hover:bg-accent/90 cursor-pointer' : 'bg-accent/20 text-accent/40 cursor-not-allowed'
+                }`}>
+                Find My Press →
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Nav bar ──────────────────────────────────────────────────────────────────
 function NavBar({ profile, onDashboard }) {
   return (
@@ -1301,7 +1709,7 @@ const TOOL_ICONS = {
   ),
 }
 
-function ToolCard({ id, title, description, available, onLaunch }) {
+function ToolCard({ id, title, description, available, isPro = false, onLaunch }) {
   return (
     <div className={`relative bg-surface border rounded-2xl p-5 flex flex-col gap-4 transition-all duration-200 ${
       available ? 'border-border hover:border-accent/40' : 'border-border/50'
@@ -1320,7 +1728,14 @@ function ToolCard({ id, title, description, available, onLaunch }) {
           {TOOL_ICONS[id]}
         </div>
         <div className="flex-1 min-w-0 pr-6">
-          <h3 className="font-syne font-bold text-[15px] text-text mb-1">{title}</h3>
+          <div className="flex items-center gap-2 mb-1">
+            <h3 className="font-syne font-bold text-[15px] text-text">{title}</h3>
+            {isPro && (
+              <span className="text-[9px] font-inter font-bold px-1.5 py-0.5 rounded-full bg-accent/15 text-accent border border-accent/30 uppercase tracking-widest">
+                PRO
+              </span>
+            )}
+          </div>
           <p className="text-xs font-inter text-muted leading-relaxed">{description}</p>
         </div>
       </div>
@@ -1352,7 +1767,7 @@ function CampaignHistoryItem({ campaign }) {
 }
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
-function Dashboard({ profile, campaigns, onLaunchCampaign, onEditProfile }) {
+function Dashboard({ profile, campaigns, onLaunchCampaign, onLaunchPress, onEditProfile }) {
   return (
     <div className="min-h-screen bg-bg font-inter">
       <NavBar profile={profile} onDashboard={() => {}} />
@@ -1403,7 +1818,7 @@ function Dashboard({ profile, campaigns, onLaunchCampaign, onEditProfile }) {
               available={true} onLaunch={onLaunchCampaign} />
             <ToolCard id="press" title="Press & Blog"
               description="Get featured in music blogs & magazines that reach your audience."
-              available={false} />
+              available={true} isPro={true} onLaunch={onLaunchPress} />
             <ToolCard id="booking" title="Show Booking"
               description="Find venues & festivals to pitch yourself for live performance."
               available={false} />
@@ -1815,7 +2230,17 @@ export default function App() {
         profile={artistProfile}
         campaigns={campaigns}
         onLaunchCampaign={enterCampaign}
+        onLaunchPress={() => setView('press')}
         onEditProfile={() => setEditingProfile(true)}
+      />
+    )
+  }
+
+  if (view === 'press') {
+    return (
+      <PressBlogView
+        profile={artistProfile}
+        onBack={() => setView('dashboard')}
       />
     )
   }
