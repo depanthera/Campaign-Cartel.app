@@ -1823,47 +1823,63 @@ function ToolCard({ id, title, description, available, isPro = false, onLaunch }
 }
 
 // ─── Campaign history item ────────────────────────────────────────────────────
-function CampaignHistoryItem({ campaign, onView }) {
+function CampaignHistoryItem({ campaign, onView, onDelete }) {
   const d = new Date(campaign.date)
   const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
   const count = campaign.pitchCount ?? 0
   const hasResults = !!campaign.results
   return (
-    <button type="button" onClick={hasResults ? onView : undefined}
-      className={`w-full bg-surface border rounded-xl px-4 py-3.5 flex items-center justify-between gap-3 transition-all duration-150 text-left group ${
-        hasResults
-          ? 'border-border hover:border-accent/50 hover:bg-accent/[0.04] cursor-pointer'
-          : 'border-border/50 opacity-60 cursor-default'
-      }`}>
-      <div className="min-w-0 flex items-center gap-3">
-        <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors duration-150 ${
-          hasResults ? 'bg-accent/8 group-hover:bg-accent/15' : 'bg-border/30'
+    <div className={`relative bg-surface border rounded-xl transition-all duration-150 group ${
+      hasResults
+        ? 'border-border hover:border-accent/50 hover:bg-accent/[0.04]'
+        : 'border-border/50 opacity-60'
+    }`}>
+      <button type="button" onClick={hasResults ? onView : undefined}
+        className={`w-full px-4 py-3.5 flex items-center justify-between gap-3 text-left pr-12 ${
+          hasResults ? 'cursor-pointer' : 'cursor-default'
         }`}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={hasResults ? '#C8FF57' : '#555'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
-          </svg>
+        <div className="min-w-0 flex items-center gap-3">
+          <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors duration-150 ${
+            hasResults ? 'bg-accent/8 group-hover:bg-accent/15' : 'bg-border/30'
+          }`}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={hasResults ? '#C8FF57' : '#555'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+            </svg>
+          </div>
+          <div className="min-w-0">
+            <p className="font-syne font-bold text-sm text-text truncate">"{campaign.songTitle}"</p>
+            <p className="text-xs font-inter text-muted mt-0.5">
+              {campaign.genre} · {count} curator{count !== 1 ? 's' : ''} targeted
+            </p>
+          </div>
         </div>
-        <div className="min-w-0">
-          <p className="font-syne font-bold text-sm text-text truncate">"{campaign.songTitle}"</p>
-          <p className="text-xs font-inter text-muted mt-0.5">
-            {campaign.genre} · {count} curator{count !== 1 ? 's' : ''} targeted
-          </p>
+        <div className="flex items-center gap-3 flex-shrink-0">
+          <span className="text-xs font-inter text-muted/40">{label}</span>
+          {hasResults && (
+            <span className="text-xs font-inter font-semibold text-accent opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+              View Results →
+            </span>
+          )}
         </div>
-      </div>
-      <div className="flex items-center gap-3 flex-shrink-0">
-        <span className="text-xs font-inter text-muted/40">{label}</span>
-        {hasResults && (
-          <span className="text-xs font-inter font-semibold text-accent opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-            View Results →
-          </span>
-        )}
-      </div>
-    </button>
+      </button>
+
+      {/* Delete button */}
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); onDelete() }}
+        title="Delete campaign"
+        className="absolute right-3 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg flex items-center justify-center text-muted/30 hover:text-red-400 hover:bg-red-400/10 transition-all duration-150 opacity-0 group-hover:opacity-100"
+      >
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+        </svg>
+      </button>
+    </div>
   )
 }
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
-function Dashboard({ profile, campaigns, onLaunchCampaign, onLaunchPress, onEditProfile, onViewCampaign }) {
+function Dashboard({ profile, campaigns, onLaunchCampaign, onLaunchPress, onEditProfile, onViewCampaign, onDeleteCampaign }) {
   return (
     <div className="min-h-screen bg-bg font-inter">
       <NavBar profile={profile} onDashboard={() => {}} />
@@ -1941,7 +1957,7 @@ function Dashboard({ profile, campaigns, onLaunchCampaign, onLaunchPress, onEdit
           ) : (
             <div className="space-y-2.5">
               {campaigns.slice(0, 3).map((c, i) => (
-                <CampaignHistoryItem key={i} campaign={c} onView={() => onViewCampaign(c)} />
+                <CampaignHistoryItem key={i} campaign={c} onView={() => onViewCampaign(c)} onDelete={() => onDeleteCampaign(i)} />
               ))}
             </div>
           )}
@@ -2305,6 +2321,12 @@ export default function App() {
     setView('dashboard')
   }
 
+  const deleteCampaign = (index) => {
+    const updated = campaigns.filter((_, i) => i !== index)
+    setCampaigns(updated)
+    try { localStorage.setItem('cc_campaigns', JSON.stringify(updated)) } catch {}
+  }
+
   const loadCampaignResults = (campaign) => {
     if (!campaign.results) return
     setForm({
@@ -2350,6 +2372,7 @@ export default function App() {
         onLaunchPress={() => setView('press')}
         onEditProfile={() => setEditingProfile(true)}
         onViewCampaign={loadCampaignResults}
+        onDeleteCampaign={deleteCampaign}
       />
     )
   }
