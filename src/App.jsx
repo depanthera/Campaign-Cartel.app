@@ -167,18 +167,16 @@ function getPlatformAccent(platform) {
 }
 
 const PLATFORM_URLS = {
-  'SubmitHub':     'https://www.submithub.com/search',
-  'Groover':       'https://groover.co/en/music-promotion/',
-  'Musosoup':      'https://www.musosoup.com/artists',
-  'Soundplate':    'https://soundplate.com/submit-music/',
-  'Playlist Push': 'https://playlistpush.com/artist',
-  'Instagram':     'https://www.instagram.com',
-  'Direct Email':  'https://www.google.com/search',
-  'YouTube':       'https://www.youtube.com',
-  'TikTok':        'https://www.tiktok.com',
-  'Music Blog':    'https://twostorymelody.com/submit-music/',
-  'SoundCloud':    'https://soundcloud.com',
-  'Bandcamp':      'https://bandcamp.com',
+  'SubmitHub':          'https://www.submithub.com/for-artists',
+  'Groover':            'https://groover.co/en/music-promotion/',
+  'Musosoup':           'https://www.musosoup.com/artists',
+  'Playlist Push':      'https://playlistpush.com/artist',
+  'SubmitLink':         'https://www.submitlink.io/',
+  'Soundplate':         'https://soundplate.com/submit-music/',
+  'Daily Playlists':    'https://www.dailyplaylists.com/submit',
+  'Spotify for Artists':'https://artists.spotify.com/pitch',
+  'Two Story Melody':   'https://twostorymelody.com/submit',
+  'Indiemono':          'https://indieshuffle.com/submit',
 }
 
 function getPlatformUrl(platform) {
@@ -277,7 +275,7 @@ Return ONLY valid JSON (no markdown, no fences) matching this exact shape:
       "curatorName": "string",
       "playlistName": "string",
       "followers": "string",
-      "platform": "string — one of: SubmitHub, Groover, Musosoup, Soundplate, Playlist Push, Instagram, Direct Email, YouTube, TikTok, Music Blog, SoundCloud, Bandcamp. Vary across all 4 pitches so the artist hits different platforms.",
+      "platform": "string — one of: SubmitHub, Groover, Musosoup, Playlist Push, SubmitLink, Soundplate, Daily Playlists, Spotify for Artists, Two Story Melody, Indiemono. Vary across all 4 pitches so the artist hits different platforms.",
       "submissionMethod": "string — one sentence: what the artist should search for or do when they land on the platform page (e.g. 'Search for Hip-Hop curators, find one matching this playlist style, paste your pitch', 'Search for @curatorname on Instagram and DM your pitch')",
       "matchReason": "string",
       "matchScore": number between 70 and 99,
@@ -756,11 +754,9 @@ function SubmitNowModal({ pitch, onClose, onMarkSubmitted }) {
                 style={{ background: `${accent}0d`, borderColor: `${accent}30` }}
               >
                 <p className="text-xs font-inter text-text/80 leading-relaxed">
-                  We matched you with <span className="font-semibold text-text">{pitch.curatorName}</span> who curates{' '}
-                  <span className="font-semibold text-text">{pitch.playlistName}</span> on{' '}
+                  We matched you with a curator in this style on{' '}
                   <span className="font-semibold" style={{ color: accent }}>{platform}</span>.
-                  Click below to open {platform}'s submission page
-                  {pitch.submissionMethod ? ` — then: ${pitch.submissionMethod.replace(/^then:?\s*/i, '')}` : ', find this curator or a similar playlist, paste your pitch and submit'}.
+                  Click below to open their submission page, create a free account if needed, find curators matching your genre, and paste your pre-written pitch.
                 </p>
               </div>
 
