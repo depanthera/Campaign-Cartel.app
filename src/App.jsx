@@ -1915,8 +1915,341 @@ function CampaignHistoryItem({ campaign, onView, onDelete }) {
   )
 }
 
+// ─── Add Song Modal ───────────────────────────────────────────────────────────
+function AddSongModal({ profile, onSave, onClose }) {
+  const [data, setData] = useState({ title: '', description: '', vibes: [], spotifyLink: '' })
+  const update = (k, v) => setData(d => ({ ...d, [k]: v }))
+  const toggleVibe = (v) => setData(d => ({
+    ...d,
+    vibes: d.vibes.includes(v) ? d.vibes.filter(x => x !== v) : [...d.vibes, v],
+  }))
+  const isValid = data.title.trim() && data.description.trim()
+
+  const handleSave = () => {
+    if (!isValid) return
+    onSave({
+      id: Date.now().toString(),
+      title: data.title.trim(),
+      description: data.description.trim(),
+      vibes: data.vibes,
+      spotifyLink: data.spotifyLink.trim(),
+      genre: profile.genre,
+      monthlyListeners: profile.monthlyListeners,
+      dateAdded: new Date().toISOString(),
+    })
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
+      onClick={e => { if (e.target === e.currentTarget) onClose() }}>
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full max-w-lg bg-surface border border-border rounded-2xl shadow-2xl overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-border/60">
+          <div>
+            <h2 className="font-syne font-bold text-lg text-text">Add a Song</h2>
+            <p className="text-xs font-inter text-muted mt-0.5">
+              <span className="text-accent font-medium">{profile.genre}</span> · {profile.monthlyListeners} monthly listeners (from your profile)
+            </p>
+          </div>
+          <button type="button" onClick={onClose}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-muted hover:text-text hover:bg-border/40 transition-all duration-150">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+
+        <div className="px-6 py-5 space-y-5 max-h-[70vh] overflow-y-auto">
+          {/* Song title */}
+          <div>
+            <label className="block text-xs font-inter font-medium text-muted uppercase tracking-wider mb-2">Song Title *</label>
+            <input
+              type="text"
+              value={data.title}
+              onChange={e => update('title', e.target.value)}
+              placeholder="e.g. Midnight Drive"
+              className="w-full bg-bg border border-border rounded-xl px-4 py-3 text-sm font-inter text-text placeholder:text-muted/40 focus:outline-none focus:border-accent/50 transition-colors"
+            />
+          </div>
+
+          {/* Song description */}
+          <div>
+            <label className="block text-xs font-inter font-medium text-muted uppercase tracking-wider mb-2">Song Description *</label>
+            <textarea
+              value={data.description}
+              onChange={e => update('description', e.target.value)}
+              placeholder="Describe the sound, energy, and emotion of this track..."
+              rows={3}
+              className="w-full bg-bg border border-border rounded-xl px-4 py-3 text-sm font-inter text-text placeholder:text-muted/40 focus:outline-none focus:border-accent/50 transition-colors resize-none"
+            />
+          </div>
+
+          {/* Vibe chips */}
+          <div>
+            <label className="block text-xs font-inter font-medium text-muted uppercase tracking-wider mb-2">Vibes</label>
+            <div className="flex flex-wrap gap-2">
+              {VIBES.map(v => (
+                <button key={v} type="button" onClick={() => toggleVibe(v)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-inter font-medium border transition-all duration-150 ${
+                    data.vibes.includes(v)
+                      ? 'bg-accent/15 text-accent border-accent/40'
+                      : 'bg-bg text-muted border-border hover:border-accent/30 hover:text-text'
+                  }`}>
+                  {v}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Spotify link */}
+          <div>
+            <label className="block text-xs font-inter font-medium text-muted uppercase tracking-wider mb-2">Spotify Link <span className="text-muted/50 normal-case tracking-normal">(optional)</span></label>
+            <input
+              type="url"
+              value={data.spotifyLink}
+              onChange={e => update('spotifyLink', e.target.value)}
+              placeholder="https://open.spotify.com/track/..."
+              className="w-full bg-bg border border-border rounded-xl px-4 py-3 text-sm font-inter text-text placeholder:text-muted/40 focus:outline-none focus:border-accent/50 transition-colors"
+            />
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-border/60 flex gap-3">
+          <button type="button" onClick={onClose}
+            className="flex-1 py-3 rounded-xl border border-border text-sm font-syne font-bold text-muted hover:text-text hover:border-border/80 transition-all duration-150">
+            Cancel
+          </button>
+          <button type="button" onClick={handleSave} disabled={!isValid}
+            className={`flex-1 py-3 rounded-xl text-sm font-syne font-bold transition-all duration-150 active:scale-[0.99] ${
+              isValid ? 'bg-accent text-bg hover:bg-accent/90 cursor-pointer' : 'bg-accent/20 text-accent/40 cursor-not-allowed'
+            }`}>
+            Save Song →
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Song card ────────────────────────────────────────────────────────────────
+function SongCard({ song, onClick }) {
+  const d = new Date(song.dateAdded)
+  const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  return (
+    <button type="button" onClick={onClick}
+      className="flex-shrink-0 w-44 bg-surface border border-border rounded-2xl p-4 text-left hover:border-accent/50 hover:bg-accent/[0.04] transition-all duration-150 group">
+      {/* Icon */}
+      <div className="w-9 h-9 rounded-xl bg-accent/8 group-hover:bg-accent/15 flex items-center justify-center mb-3 transition-colors duration-150">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#C8FF57" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+        </svg>
+      </div>
+      {/* Title */}
+      <p className="font-syne font-bold text-sm text-text leading-tight mb-2 line-clamp-2">{song.title}</p>
+      {/* Genre tag */}
+      <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-inter font-semibold bg-accent/10 text-accent border border-accent/20 mb-2">
+        {song.genre}
+      </span>
+      {/* Vibe tags */}
+      {song.vibes.length > 0 && (
+        <div className="flex flex-wrap gap-1 mb-2">
+          {song.vibes.slice(0, 2).map(v => (
+            <span key={v} className="px-1.5 py-0.5 rounded text-[9px] font-inter text-muted/60 bg-border/30">{v}</span>
+          ))}
+          {song.vibes.length > 2 && (
+            <span className="px-1.5 py-0.5 rounded text-[9px] font-inter text-muted/40">+{song.vibes.length - 2}</span>
+          )}
+        </div>
+      )}
+      <p className="text-[10px] font-inter text-muted/40">{label}</p>
+    </button>
+  )
+}
+
+// ─── My Songs row ─────────────────────────────────────────────────────────────
+function MySongsRow({ songs, onAddSong, onSelectSong }) {
+  return (
+    <div className="mb-10">
+      <div className="flex items-center gap-2 mb-4">
+        <div className="w-1.5 h-1.5 rounded-full bg-accent" />
+        <h2 className="font-syne font-bold text-base text-text">My Songs</h2>
+        <span className="text-xs font-inter text-muted/40 ml-1">{songs.length > 0 ? `${songs.length} saved` : ''}</span>
+      </div>
+      <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4" style={{ scrollbarWidth: 'none' }}>
+        {/* Add Song card */}
+        <button type="button" onClick={onAddSong}
+          className="flex-shrink-0 w-44 bg-surface border border-dashed border-border/60 rounded-2xl p-4 text-left hover:border-accent/50 hover:bg-accent/[0.03] transition-all duration-150 group flex flex-col items-center justify-center gap-2 min-h-[148px]">
+          <div className="w-9 h-9 rounded-xl border border-border/60 group-hover:border-accent/40 flex items-center justify-center transition-colors duration-150">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="text-muted group-hover:text-accent transition-colors duration-150">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+          </div>
+          <span className="text-xs font-inter font-medium text-muted group-hover:text-text transition-colors duration-150">Add Song</span>
+        </button>
+        {songs.map(song => (
+          <SongCard key={song.id} song={song} onClick={() => onSelectSong(song)} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ─── Song Detail View ─────────────────────────────────────────────────────────
+function SongDetailView({ song, campaigns, onBack, onRunPlaylistPitch, onRunPressCampaign }) {
+  const songCampaigns = campaigns.filter(c =>
+    c.songTitle?.toLowerCase() === song.title?.toLowerCase()
+  )
+
+  const tools = [
+    {
+      id: 'pitch',
+      label: 'Run Playlist Pitch',
+      description: 'Find curators & generate personalized pitches.',
+      available: true,
+      onClick: onRunPlaylistPitch,
+    },
+    {
+      id: 'press',
+      label: 'Run Press Campaign',
+      description: 'Get featured in music blogs & magazines.',
+      available: true,
+      onClick: onRunPressCampaign,
+    },
+    {
+      id: 'venue',
+      label: 'Run Venue Pitch',
+      description: 'Find venues & festivals for live performance.',
+      available: false,
+    },
+    {
+      id: 'social',
+      label: 'Run Social Strategy',
+      description: 'Get a content plan for your sound and goals.',
+      available: false,
+    },
+  ]
+
+  return (
+    <div className="min-h-screen bg-bg font-inter">
+      {/* Header */}
+      <header className="sticky top-0 z-10 bg-bg/80 backdrop-blur-md border-b border-border">
+        <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
+          <button type="button" onClick={onBack}
+            className="flex items-center gap-1.5 text-sm font-inter text-muted hover:text-text transition-colors group">
+            <span className="group-hover:-translate-x-0.5 transition-transform">←</span>
+            <span>Dashboard</span>
+          </button>
+          <span className="font-syne font-black text-xl text-text tracking-tight">Campaign Cartel</span>
+        </div>
+      </header>
+
+      <main className="max-w-3xl mx-auto px-4 py-10">
+
+        {/* Song header */}
+        <div className="mb-10">
+          <div className="flex items-start gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center flex-shrink-0">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C8FF57" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+              </svg>
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] font-inter text-muted uppercase tracking-[0.18em] mb-1">Song</p>
+              <h1 className="font-syne font-black text-3xl text-white leading-tight mb-3">{song.title}</h1>
+              <div className="flex flex-wrap items-center gap-2 mb-3">
+                <span className="px-2.5 py-1 rounded-full text-xs font-inter font-semibold bg-accent/10 text-accent border border-accent/20">
+                  {song.genre}
+                </span>
+                {song.vibes.map(v => (
+                  <span key={v} className="px-2.5 py-1 rounded-full text-xs font-inter font-medium bg-surface text-muted border border-border">
+                    {v}
+                  </span>
+                ))}
+              </div>
+              {song.description && (
+                <p className="text-sm font-inter text-muted leading-relaxed max-w-xl">{song.description}</p>
+              )}
+              {song.spotifyLink && (
+                <a href={song.spotifyLink} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 mt-3 text-xs font-inter text-muted hover:text-accent transition-colors">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+                  Open on Spotify
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Tool launch buttons */}
+        <div className="mb-10">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-1.5 h-1.5 rounded-full bg-accent" />
+            <h2 className="font-syne font-bold text-base text-text">Launch a Campaign</h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {tools.map(tool => (
+              <div key={tool.id} className={`bg-surface border rounded-xl p-4 flex items-center justify-between gap-3 transition-all duration-150 ${
+                tool.available
+                  ? 'border-border hover:border-accent/50 hover:bg-accent/[0.04] cursor-pointer group'
+                  : 'border-border/50 opacity-50'
+              }`}
+                onClick={tool.available ? tool.onClick : undefined}
+                role={tool.available ? 'button' : undefined}
+              >
+                <div className="min-w-0">
+                  <p className="font-syne font-bold text-sm text-text">{tool.label}</p>
+                  <p className="text-xs font-inter text-muted mt-0.5">{tool.description}</p>
+                </div>
+                {tool.available ? (
+                  <span className="text-accent font-inter font-semibold text-sm flex-shrink-0 group-hover:translate-x-0.5 transition-transform">→</span>
+                ) : (
+                  <span className="text-[10px] font-inter font-bold text-muted/40 border border-border/40 rounded-full px-2 py-0.5 flex-shrink-0 uppercase tracking-wider">Soon</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Past campaigns for this song */}
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-1.5 h-1.5 rounded-full bg-border" />
+            <h2 className="font-syne font-bold text-base text-text">
+              {songCampaigns.length === 0
+                ? 'No campaigns yet'
+                : `You've run ${songCampaigns.length} campaign${songCampaigns.length !== 1 ? 's' : ''} for this song`}
+            </h2>
+          </div>
+          {songCampaigns.length === 0 ? (
+            <div className="bg-surface border border-border rounded-2xl px-6 py-8 text-center">
+              <p className="text-sm font-inter text-muted">Run your first campaign above — one click and it goes.</p>
+            </div>
+          ) : (
+            <div className="space-y-2.5">
+              {songCampaigns.map((c, i) => {
+                const d = new Date(c.date)
+                const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                return (
+                  <div key={i} className="bg-surface border border-border rounded-xl px-4 py-3 flex items-center justify-between gap-3">
+                    <div>
+                      <p className="font-inter text-sm text-text font-medium">{label}</p>
+                      <p className="text-xs font-inter text-muted mt-0.5">{c.pitchCount ?? 0} curators targeted</p>
+                    </div>
+                    <span className="text-xs font-inter text-muted/40">{c.genre}</span>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+
+      </main>
+    </div>
+  )
+}
+
 // ─── Dashboard ────────────────────────────────────────────────────────────────
-function Dashboard({ profile, campaigns, onLaunchCampaign, onLaunchPress, onEditProfile, onViewCampaign, onDeleteCampaign }) {
+function Dashboard({ profile, campaigns, songs, onLaunchCampaign, onLaunchPress, onEditProfile, onViewCampaign, onDeleteCampaign, onAddSong, onSelectSong }) {
   return (
     <div className="min-h-screen bg-bg font-inter">
       <NavBar profile={profile} onDashboard={() => {}} />
@@ -1954,6 +2287,9 @@ function Dashboard({ profile, campaigns, onLaunchCampaign, onLaunchPress, onEdit
             Edit Profile
           </button>
         </div>
+
+        {/* My Songs */}
+        <MySongsRow songs={songs} onAddSong={onAddSong} onSelectSong={onSelectSong} />
 
         {/* Tools grid */}
         <div className="mb-10">
@@ -2273,6 +2609,14 @@ export default function App() {
     catch { return [] }
   })
 
+  const [songs, setSongs] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('cc_songs') || '[]') }
+    catch { return [] }
+  })
+
+  const [showAddSong, setShowAddSong] = useState(false)
+  const [selectedSong, setSelectedSong] = useState(null)
+
   const [form, setForm] = useState({
     artistName: '', songTitle: '', genre: '',
     monthlyListeners: '', songDescription: '', vibes: [],
@@ -2300,6 +2644,28 @@ export default function App() {
     setArtistProfile(profile)
     setEditingProfile(false)
     setView('dashboard')
+  }
+
+  const addSong = (song) => {
+    const updated = [song, ...songs]
+    setSongs(updated)
+    try { localStorage.setItem('cc_songs', JSON.stringify(updated)) } catch {}
+    setShowAddSong(false)
+  }
+
+  const enterCampaignFromSong = (song) => {
+    setForm({
+      artistName: artistProfile?.artistName || '',
+      monthlyListeners: song.monthlyListeners || artistProfile?.monthlyListeners || '',
+      genre: song.genre || artistProfile?.genre || '',
+      songTitle: song.title,
+      songDescription: song.description,
+      vibes: song.vibes || [],
+    })
+    setResults(null)
+    setError('')
+    setSelectedSong(null)
+    setView('campaign')
   }
 
   const enterCampaign = () => {
@@ -2400,17 +2766,44 @@ export default function App() {
     )
   }
 
+  if (view === 'dashboard' && selectedSong) {
+    return (
+      <SongDetailView
+        song={selectedSong}
+        campaigns={campaigns}
+        onBack={() => setSelectedSong(null)}
+        onRunPlaylistPitch={() => enterCampaignFromSong(selectedSong)}
+        onRunPressCampaign={() => {
+          setSelectedSong(null)
+          setView('press')
+        }}
+      />
+    )
+  }
+
   if (view === 'dashboard') {
     return (
-      <Dashboard
-        profile={artistProfile}
-        campaigns={campaigns}
-        onLaunchCampaign={enterCampaign}
-        onLaunchPress={() => setView('press')}
-        onEditProfile={() => setEditingProfile(true)}
-        onViewCampaign={loadCampaignResults}
-        onDeleteCampaign={deleteCampaign}
-      />
+      <>
+        <Dashboard
+          profile={artistProfile}
+          campaigns={campaigns}
+          songs={songs}
+          onLaunchCampaign={enterCampaign}
+          onLaunchPress={() => setView('press')}
+          onEditProfile={() => setEditingProfile(true)}
+          onViewCampaign={loadCampaignResults}
+          onDeleteCampaign={deleteCampaign}
+          onAddSong={() => setShowAddSong(true)}
+          onSelectSong={(song) => setSelectedSong(song)}
+        />
+        {showAddSong && artistProfile && (
+          <AddSongModal
+            profile={artistProfile}
+            onSave={addSong}
+            onClose={() => setShowAddSong(false)}
+          />
+        )}
+      </>
     )
   }
 
