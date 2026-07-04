@@ -1827,20 +1827,36 @@ function CampaignHistoryItem({ campaign, onView }) {
   const d = new Date(campaign.date)
   const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
   const count = campaign.pitchCount ?? 0
+  const hasResults = !!campaign.results
   return (
-    <button type="button" onClick={onView}
-      className="w-full bg-surface border border-border rounded-xl px-4 py-3 flex items-center justify-between gap-3 hover:border-accent/30 transition-all duration-150 text-left group">
-      <div className="min-w-0">
-        <p className="font-syne font-bold text-sm text-text truncate">"{campaign.songTitle}"</p>
-        <p className="text-xs font-inter text-muted mt-0.5">
-          {campaign.genre} · {count} curator{count !== 1 ? 's' : ''} targeted
-        </p>
+    <button type="button" onClick={hasResults ? onView : undefined}
+      className={`w-full bg-surface border rounded-xl px-4 py-3.5 flex items-center justify-between gap-3 transition-all duration-150 text-left group ${
+        hasResults
+          ? 'border-border hover:border-accent/50 hover:bg-accent/[0.04] cursor-pointer'
+          : 'border-border/50 opacity-60 cursor-default'
+      }`}>
+      <div className="min-w-0 flex items-center gap-3">
+        <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors duration-150 ${
+          hasResults ? 'bg-accent/8 group-hover:bg-accent/15' : 'bg-border/30'
+        }`}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={hasResults ? '#C8FF57' : '#555'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+          </svg>
+        </div>
+        <div className="min-w-0">
+          <p className="font-syne font-bold text-sm text-text truncate">"{campaign.songTitle}"</p>
+          <p className="text-xs font-inter text-muted mt-0.5">
+            {campaign.genre} · {count} curator{count !== 1 ? 's' : ''} targeted
+          </p>
+        </div>
       </div>
       <div className="flex items-center gap-3 flex-shrink-0">
-        <span className="text-xs font-inter text-muted/50">{label}</span>
-        <span className="text-xs font-inter font-semibold text-accent opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-          View Results →
-        </span>
+        <span className="text-xs font-inter text-muted/40">{label}</span>
+        {hasResults && (
+          <span className="text-xs font-inter font-semibold text-accent opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+            View Results →
+          </span>
+        )}
       </div>
     </button>
   )
