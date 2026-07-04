@@ -1916,8 +1916,12 @@ function CampaignHistoryItem({ campaign, onView, onDelete }) {
 }
 
 // ─── Add Song Modal ───────────────────────────────────────────────────────────
-function AddSongModal({ profile, onSave, onClose }) {
-  const [data, setData] = useState({ title: '', description: '', vibes: [], spotifyLink: '' })
+function AddSongModal({ profile, initialSong = null, onSave, onClose }) {
+  const isEdit = !!initialSong
+  const [data, setData] = useState(() => initialSong
+    ? { title: initialSong.title, description: initialSong.description, vibes: initialSong.vibes || [], spotifyLink: initialSong.spotifyLink || '' }
+    : { title: '', description: '', vibes: [], spotifyLink: '' }
+  )
   const update = (k, v) => setData(d => ({ ...d, [k]: v }))
   const toggleVibe = (v) => setData(d => ({
     ...d,
@@ -1927,16 +1931,20 @@ function AddSongModal({ profile, onSave, onClose }) {
 
   const handleSave = () => {
     if (!isValid) return
-    onSave({
-      id: Date.now().toString(),
-      title: data.title.trim(),
-      description: data.description.trim(),
-      vibes: data.vibes,
-      spotifyLink: data.spotifyLink.trim(),
-      genre: profile.genre,
-      monthlyListeners: profile.monthlyListeners,
-      dateAdded: new Date().toISOString(),
-    })
+    if (isEdit) {
+      onSave({ ...initialSong, title: data.title.trim(), description: data.description.trim(), vibes: data.vibes, spotifyLink: data.spotifyLink.trim() })
+    } else {
+      onSave({
+        id: Date.now().toString(),
+        title: data.title.trim(),
+        description: data.description.trim(),
+        vibes: data.vibes,
+        spotifyLink: data.spotifyLink.trim(),
+        genre: profile.genre,
+        monthlyListeners: profile.monthlyListeners,
+        dateAdded: new Date().toISOString(),
+      })
+    }
   }
 
   return (
@@ -1947,7 +1955,7 @@ function AddSongModal({ profile, onSave, onClose }) {
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-border/60">
           <div>
-            <h2 className="font-syne font-bold text-lg text-text">Add a Song</h2>
+            <h2 className="font-syne font-bold text-lg text-text">{isEdit ? 'Edit Song' : 'Add a Song'}</h2>
             <p className="text-xs font-inter text-muted mt-0.5">
               <span className="text-accent font-medium">{profile.genre}</span> · {profile.monthlyListeners} monthly listeners (from your profile)
             </p>
@@ -2023,7 +2031,7 @@ function AddSongModal({ profile, onSave, onClose }) {
             className={`flex-1 py-3 rounded-xl text-sm font-syne font-bold transition-all duration-150 active:scale-[0.99] ${
               isValid ? 'bg-accent text-bg hover:bg-accent/90 cursor-pointer' : 'bg-accent/20 text-accent/40 cursor-not-allowed'
             }`}>
-            Save Song →
+            {isEdit ? 'Save Changes →' : 'Save Song →'}
           </button>
         </div>
       </div>
@@ -2032,25 +2040,35 @@ function AddSongModal({ profile, onSave, onClose }) {
 }
 
 // ─── Song card ────────────────────────────────────────────────────────────────
-function SongCard({ song, onClick }) {
+function SongCard({ song, campaigns = [], onClick }) {
+  const songCampaigns = campaigns.filter(c =>
+    (c.songId && c.songId === song.id) ||
+    (!c.songId && c.songTitle?.toLowerCase() === song.title?.toLowerCase())
+  )
+  const lastCampaign = [...songCampaigns].sort((a, b) => new Date(b.date) - new Date(a.date))[0]
+
+  function timeAgo(dateStr) {
+    const diff = Date.now() - new Date(dateStr).getTime()
+    const days = Math.floor(diff / 86400000)
+    if (days === 0) return 'Today'
+    if (days === 1) return 'Yesterday'
+    return `${days}d ago`
+  }
+
   const d = new Date(song.dateAdded)
-  const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  const added = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
   return (
     <button type="button" onClick={onClick}
       className="flex-shrink-0 w-44 bg-surface border border-border rounded-2xl p-4 text-left hover:border-accent/50 hover:bg-accent/[0.04] transition-all duration-150 group">
-      {/* Icon */}
       <div className="w-9 h-9 rounded-xl bg-accent/8 group-hover:bg-accent/15 flex items-center justify-center mb-3 transition-colors duration-150">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#C8FF57" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
         </svg>
       </div>
-      {/* Title */}
       <p className="font-syne font-bold text-sm text-text leading-tight mb-2 line-clamp-2">{song.title}</p>
-      {/* Genre tag */}
       <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-inter font-semibold bg-accent/10 text-accent border border-accent/20 mb-2">
         {song.genre}
       </span>
-      {/* Vibe tags */}
       {song.vibes.length > 0 && (
         <div className="flex flex-wrap gap-1 mb-2">
           {song.vibes.slice(0, 2).map(v => (
@@ -2061,13 +2079,17 @@ function SongCard({ song, onClick }) {
           )}
         </div>
       )}
-      <p className="text-[10px] font-inter text-muted/40">{label}</p>
+      {lastCampaign ? (
+        <p className="text-[10px] font-inter text-accent/60">Campaign: {timeAgo(lastCampaign.date)}</p>
+      ) : (
+        <p className="text-[10px] font-inter text-muted/40">Added {added}</p>
+      )}
     </button>
   )
 }
 
 // ─── My Songs row ─────────────────────────────────────────────────────────────
-function MySongsRow({ songs, onAddSong, onSelectSong }) {
+function MySongsRow({ songs, campaigns = [], onAddSong, onSelectSong }) {
   return (
     <div className="mb-10">
       <div className="flex items-center gap-2 mb-4">
@@ -2076,7 +2098,6 @@ function MySongsRow({ songs, onAddSong, onSelectSong }) {
         <span className="text-xs font-inter text-muted/40 ml-1">{songs.length > 0 ? `${songs.length} saved` : ''}</span>
       </div>
       <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4" style={{ scrollbarWidth: 'none' }}>
-        {/* Add Song card */}
         <button type="button" onClick={onAddSong}
           className="flex-shrink-0 w-44 bg-surface border border-dashed border-border/60 rounded-2xl p-4 text-left hover:border-accent/50 hover:bg-accent/[0.03] transition-all duration-150 group flex flex-col items-center justify-center gap-2 min-h-[148px]">
           <div className="w-9 h-9 rounded-xl border border-border/60 group-hover:border-accent/40 flex items-center justify-center transition-colors duration-150">
@@ -2087,53 +2108,53 @@ function MySongsRow({ songs, onAddSong, onSelectSong }) {
           <span className="text-xs font-inter font-medium text-muted group-hover:text-text transition-colors duration-150">Add Song</span>
         </button>
         {songs.map(song => (
-          <SongCard key={song.id} song={song} onClick={() => onSelectSong(song)} />
+          <SongCard key={song.id} song={song} campaigns={campaigns} onClick={() => onSelectSong(song)} />
         ))}
       </div>
     </div>
   )
 }
 
-// ─── Song Detail View ─────────────────────────────────────────────────────────
-function SongDetailView({ song, campaigns, onBack, onRunPlaylistPitch, onRunPressCampaign }) {
-  const songCampaigns = campaigns.filter(c =>
-    c.songTitle?.toLowerCase() === song.title?.toLowerCase()
-  )
+// ─── Song Detail View — Kanban progress tracker ───────────────────────────────
+function SongDetailView({ song, campaigns, onBack, onRunPlaylistPitch, onRunPressCampaign, onViewCampaign, onEditSong, onDeleteSong }) {
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
-  const tools = [
-    {
-      id: 'pitch',
-      label: 'Run Playlist Pitch',
-      description: 'Find curators & generate personalized pitches.',
-      available: true,
-      onClick: onRunPlaylistPitch,
-    },
-    {
-      id: 'press',
-      label: 'Run Press Campaign',
-      description: 'Get featured in music blogs & magazines.',
-      available: true,
-      onClick: onRunPressCampaign,
-    },
-    {
-      id: 'venue',
-      label: 'Run Venue Pitch',
-      description: 'Find venues & festivals for live performance.',
-      available: false,
-    },
-    {
-      id: 'social',
-      label: 'Run Social Strategy',
-      description: 'Get a content plan for your sound and goals.',
-      available: false,
-    },
+  function timeAgo(dateStr) {
+    const diff = Date.now() - new Date(dateStr).getTime()
+    const days = Math.floor(diff / 86400000)
+    if (days === 0) return 'Today'
+    if (days === 1) return 'Yesterday'
+    return `${days}d ago`
+  }
+
+  // Filter campaigns for this song by songId (new) or title match (legacy)
+  const songCampaigns = campaigns.filter(c =>
+    (c.songId && c.songId === song.id) ||
+    (!c.songId && c.songTitle?.toLowerCase() === song.title?.toLowerCase())
+  )
+  const playlistCampaigns = [...songCampaigns.filter(c => !c.tool || c.tool === 'playlist')].sort((a, b) => new Date(b.date) - new Date(a.date))
+  const pressCampaigns = [...songCampaigns.filter(c => c.tool === 'press')].sort((a, b) => new Date(b.date) - new Date(a.date))
+  const allSorted = [...songCampaigns].sort((a, b) => new Date(b.date) - new Date(a.date))
+
+  const TOOL_ICONS = {
+    playlist: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>,
+    press: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>,
+    venue: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
+    social: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"/></svg>,
+  }
+
+  const columns = [
+    { id: 'playlist', label: 'Playlist Pitching', sub: 'Curator placements', available: true, campaigns: playlistCampaigns, onRun: onRunPlaylistPitch, unit: 'curators' },
+    { id: 'press',    label: 'Press & Blog',      sub: 'Blogs & magazines',  available: true, campaigns: pressCampaigns,    onRun: onRunPressCampaign, unit: 'publications' },
+    { id: 'venue',    label: 'Show Booking',       sub: 'Venues & festivals', available: false, campaigns: [], unit: 'venues' },
+    { id: 'social',   label: 'Social Strategy',    sub: 'Content & growth',   available: false, campaigns: [], unit: 'posts' },
   ]
 
   return (
     <div className="min-h-screen bg-bg font-inter">
-      {/* Header */}
-      <header className="sticky top-0 z-10 bg-bg/80 backdrop-blur-md border-b border-border">
-        <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
+      {/* Sticky header */}
+      <header className="sticky top-0 z-50 bg-bg/95 backdrop-blur-md border-b border-border">
+        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
           <button type="button" onClick={onBack}
             className="flex items-center gap-1.5 text-sm font-inter text-muted hover:text-text transition-colors group">
             <span className="group-hover:-translate-x-0.5 transition-transform">←</span>
@@ -2143,31 +2164,27 @@ function SongDetailView({ song, campaigns, onBack, onRunPlaylistPitch, onRunPres
         </div>
       </header>
 
-      <main className="max-w-3xl mx-auto px-4 py-10">
+      <main className="max-w-6xl mx-auto px-4 py-8 pb-20">
 
-        {/* Song header */}
-        <div className="mb-10">
-          <div className="flex items-start gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center flex-shrink-0">
+        {/* ── Song header ── */}
+        <div className="flex items-start justify-between gap-4 mb-10">
+          <div className="flex items-start gap-4 min-w-0 flex-1">
+            <div className="w-14 h-14 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center flex-shrink-0 text-accent">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C8FF57" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
               </svg>
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-[11px] font-inter text-muted uppercase tracking-[0.18em] mb-1">Song</p>
-              <h1 className="font-syne font-black text-3xl text-white leading-tight mb-3">{song.title}</h1>
-              <div className="flex flex-wrap items-center gap-2 mb-3">
-                <span className="px-2.5 py-1 rounded-full text-xs font-inter font-semibold bg-accent/10 text-accent border border-accent/20">
-                  {song.genre}
-                </span>
-                {song.vibes.map(v => (
-                  <span key={v} className="px-2.5 py-1 rounded-full text-xs font-inter font-medium bg-surface text-muted border border-border">
-                    {v}
-                  </span>
+              <h1 className="font-syne font-black text-3xl md:text-4xl text-white leading-tight mb-3">{song.title}</h1>
+              <div className="flex flex-wrap items-center gap-2 mb-2">
+                <span className="px-2.5 py-1 rounded-full text-xs font-inter font-semibold bg-accent/10 text-accent border border-accent/20">{song.genre}</span>
+                {(song.vibes || []).map(v => (
+                  <span key={v} className="px-2.5 py-1 rounded-full text-xs font-inter font-medium bg-surface text-muted border border-border">{v}</span>
                 ))}
               </div>
               {song.description && (
-                <p className="text-sm font-inter text-muted leading-relaxed max-w-xl">{song.description}</p>
+                <p className="text-sm font-inter text-muted leading-relaxed max-w-xl mt-1">{song.description}</p>
               )}
               {song.spotifyLink && (
                 <a href={song.spotifyLink} target="_blank" rel="noopener noreferrer"
@@ -2178,67 +2195,207 @@ function SongDetailView({ song, campaigns, onBack, onRunPlaylistPitch, onRunPres
               )}
             </div>
           </div>
+
+          {/* Edit / Delete */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <button type="button" onClick={onEditSong}
+              className="px-3 py-1.5 text-xs font-inter font-medium rounded-lg border border-border text-muted hover:text-text hover:border-accent/40 transition-all duration-150">
+              Edit
+            </button>
+            {!confirmDelete ? (
+              <button type="button" onClick={() => setConfirmDelete(true)}
+                className="px-3 py-1.5 text-xs font-inter font-medium rounded-lg border border-border text-red-500/50 hover:text-red-400 hover:border-red-500/40 transition-all duration-150">
+                Delete
+              </button>
+            ) : (
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-inter text-red-400/80">Delete song?</span>
+                <button type="button" onClick={onDeleteSong}
+                  className="px-2.5 py-1 text-[11px] font-inter font-semibold rounded-lg bg-red-500/15 text-red-400 border border-red-500/30 hover:bg-red-500/25 transition-all duration-150">
+                  Delete
+                </button>
+                <button type="button" onClick={() => setConfirmDelete(false)}
+                  className="px-2.5 py-1 text-[11px] font-inter font-semibold rounded-lg bg-surface text-muted border border-border hover:text-text transition-all duration-150">
+                  Cancel
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Tool launch buttons */}
-        <div className="mb-10">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-1.5 h-1.5 rounded-full bg-accent" />
-            <h2 className="font-syne font-bold text-base text-text">Launch a Campaign</h2>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {tools.map(tool => (
-              <div key={tool.id} className={`bg-surface border rounded-xl p-4 flex items-center justify-between gap-3 transition-all duration-150 ${
-                tool.available
-                  ? 'border-border hover:border-accent/50 hover:bg-accent/[0.04] cursor-pointer group'
-                  : 'border-border/50 opacity-50'
-              }`}
-                onClick={tool.available ? tool.onClick : undefined}
-                role={tool.available ? 'button' : undefined}
-              >
-                <div className="min-w-0">
-                  <p className="font-syne font-bold text-sm text-text">{tool.label}</p>
-                  <p className="text-xs font-inter text-muted mt-0.5">{tool.description}</p>
+        {/* ── Kanban columns ── */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
+          {columns.map(col => {
+            const hasCampaigns = col.campaigns.length > 0
+            const latest = col.campaigns[0]
+            const status = !col.available ? 'coming_soon' : hasCampaigns ? 'has_campaigns' : 'not_started'
+
+            return (
+              <div key={col.id} className={`flex flex-col rounded-2xl border overflow-hidden transition-all duration-150 ${
+                col.available ? 'bg-surface border-border' : 'bg-surface/50 border-border/40 opacity-55'
+              }`}>
+                {/* Column header */}
+                <div className="px-4 pt-4 pb-3 border-b border-border/50">
+                  <div className="flex items-start justify-between gap-2 mb-1">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                        col.available ? 'bg-accent/8 text-accent' : 'bg-border/20 text-muted/30'
+                      }`}>
+                        {TOOL_ICONS[col.id]}
+                      </div>
+                      <p className="font-syne font-bold text-sm text-text leading-tight">{col.label}</p>
+                    </div>
+                    {!col.available && (
+                      <span className="text-[9px] font-inter font-bold text-muted/40 border border-border/40 rounded-full px-1.5 py-0.5 uppercase tracking-wider flex-shrink-0">Soon</span>
+                    )}
+                  </div>
+                  <p className="text-[10px] font-inter text-muted/40 mb-2 pl-9">{col.sub}</p>
+                  {/* Status pill */}
+                  <div className="flex items-center gap-1.5 pl-9">
+                    <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                      status === 'has_campaigns' ? 'bg-accent' :
+                      status === 'not_started' ? 'bg-muted/30' : 'bg-border'
+                    }`} />
+                    <span className="text-[10px] font-inter font-medium uppercase tracking-wider text-muted/50">
+                      {status === 'has_campaigns' ? 'In Progress' : status === 'not_started' ? 'Not Started' : 'Coming Soon'}
+                    </span>
+                  </div>
                 </div>
-                {tool.available ? (
-                  <span className="text-accent font-inter font-semibold text-sm flex-shrink-0 group-hover:translate-x-0.5 transition-transform">→</span>
-                ) : (
-                  <span className="text-[10px] font-inter font-bold text-muted/40 border border-border/40 rounded-full px-2 py-0.5 flex-shrink-0 uppercase tracking-wider">Soon</span>
+
+                {/* Column body */}
+                <div className="flex-1 px-4 py-3 flex flex-col gap-3">
+                  {status === 'coming_soon' && (
+                    <div className="flex-1 flex flex-col items-center justify-center py-6 gap-3">
+                      <div className="w-8 h-8 rounded-xl bg-border/15 flex items-center justify-center">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted/25">
+                          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                        </svg>
+                      </div>
+                      <p className="text-xs font-inter text-muted/30 text-center">Available soon</p>
+                    </div>
+                  )}
+
+                  {status === 'not_started' && (
+                    <div className="flex-1 flex flex-col items-center justify-center py-6 gap-1 text-center">
+                      <p className="text-xs font-inter text-muted/40">No campaigns run yet</p>
+                    </div>
+                  )}
+
+                  {status === 'has_campaigns' && latest && (
+                    <div className="flex-1 flex flex-col gap-2.5">
+                      {/* Latest campaign card */}
+                      <div className="bg-bg rounded-xl p-3 border border-border/50">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <p className="text-[10px] font-inter text-muted/50 uppercase tracking-wider">Last run</p>
+                          <p className="text-[10px] font-inter font-semibold text-accent">{timeAgo(latest.date)}</p>
+                        </div>
+                        <p className="text-xs font-inter font-semibold text-text">
+                          {latest.pitchCount ?? 0} {col.unit} targeted
+                        </p>
+                        <div className="mt-2.5">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-[9px] font-inter text-muted/40 uppercase tracking-wider">Submitted</span>
+                            <span className="text-[9px] font-inter text-muted/40">0 / {latest.pitchCount ?? 0}</span>
+                          </div>
+                          <div className="h-1 bg-border/30 rounded-full overflow-hidden">
+                            <div className="h-full bg-accent/60 rounded-full transition-all" style={{ width: '0%' }} />
+                          </div>
+                        </div>
+                      </div>
+
+                      {col.campaigns.length > 1 && (
+                        <p className="text-[10px] font-inter text-muted/40 text-center">
+                          {col.campaigns.length} campaigns total
+                        </p>
+                      )}
+
+                      {latest.results && (
+                        <button type="button" onClick={() => onViewCampaign(latest)}
+                          className="w-full py-2 text-xs font-inter font-semibold text-accent border border-accent/25 rounded-xl hover:bg-accent/8 transition-all duration-150">
+                          View Results →
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Run button footer */}
+                {col.available && (
+                  <div className="px-4 pb-4 pt-1">
+                    <button type="button" onClick={col.onRun}
+                      className={`w-full py-2.5 rounded-xl font-syne font-bold text-sm transition-all duration-150 active:scale-[0.99] ${
+                        status === 'not_started'
+                          ? 'bg-accent text-bg hover:bg-accent/90'
+                          : 'bg-accent/10 text-accent border border-accent/20 hover:bg-accent/18'
+                      }`}>
+                      {status === 'not_started' ? 'Run Now →' : 'Run Again →'}
+                    </button>
+                  </div>
                 )}
               </div>
-            ))}
-          </div>
+            )
+          })}
         </div>
 
-        {/* Past campaigns for this song */}
+        {/* ── Campaign Timeline ── */}
         <div>
-          <div className="flex items-center gap-2 mb-4">
+          <div className="flex items-center gap-2 mb-5">
             <div className="w-1.5 h-1.5 rounded-full bg-border" />
-            <h2 className="font-syne font-bold text-base text-text">
-              {songCampaigns.length === 0
-                ? 'No campaigns yet'
-                : `You've run ${songCampaigns.length} campaign${songCampaigns.length !== 1 ? 's' : ''} for this song`}
-            </h2>
+            <h2 className="font-syne font-bold text-base text-text">Campaign History</h2>
+            {allSorted.length > 0 && (
+              <span className="text-xs font-inter text-muted/40">{allSorted.length} total</span>
+            )}
           </div>
-          {songCampaigns.length === 0 ? (
-            <div className="bg-surface border border-border rounded-2xl px-6 py-8 text-center">
-              <p className="text-sm font-inter text-muted">Run your first campaign above — one click and it goes.</p>
+
+          {allSorted.length === 0 ? (
+            <div className="bg-surface border border-border rounded-2xl px-6 py-12 text-center">
+              <div className="w-10 h-10 rounded-2xl bg-border/15 flex items-center justify-center mx-auto mb-4 text-muted/25">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+                </svg>
+              </div>
+              <p className="text-sm font-inter text-muted mb-1">No campaigns run for this song yet.</p>
+              <p className="text-xs font-inter text-muted/50">Pick a tool above to launch your first one.</p>
             </div>
           ) : (
-            <div className="space-y-2.5">
-              {songCampaigns.map((c, i) => {
-                const d = new Date(c.date)
-                const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-                return (
-                  <div key={i} className="bg-surface border border-border rounded-xl px-4 py-3 flex items-center justify-between gap-3">
-                    <div>
-                      <p className="font-inter text-sm text-text font-medium">{label}</p>
-                      <p className="text-xs font-inter text-muted mt-0.5">{c.pitchCount ?? 0} curators targeted</p>
+            <div className="relative pl-10">
+              {/* Vertical timeline line */}
+              <div className="absolute left-4 top-4 bottom-4 w-px bg-border/40 pointer-events-none" />
+              <div className="space-y-3">
+                {allSorted.map((c, i) => {
+                  const isPlaylist = !c.tool || c.tool === 'playlist'
+                  const d = new Date(c.date)
+                  const dateLabel = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                  return (
+                    <div key={i} className="relative flex items-center gap-4">
+                      {/* Timeline dot */}
+                      <div className="absolute -left-10 w-8 h-8 rounded-xl bg-surface border border-border flex items-center justify-center text-muted/50 flex-shrink-0 z-10">
+                        {isPlaylist ? TOOL_ICONS['playlist'] : TOOL_ICONS['press']}
+                      </div>
+                      {/* Row */}
+                      <div className="flex-1 bg-surface border border-border rounded-xl px-4 py-3 flex items-center justify-between gap-3 min-w-0">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-syne font-bold text-xs text-text">
+                              {isPlaylist ? 'Playlist Pitching' : 'Press & Blog'}
+                            </p>
+                            <span className="text-[9px] font-inter text-muted/40 border border-border/50 rounded-full px-1.5 py-0.5">{dateLabel}</span>
+                          </div>
+                          <p className="text-xs font-inter text-muted mt-0.5">
+                            {c.pitchCount ?? 0} {isPlaylist ? 'curators' : 'publications'} targeted
+                          </p>
+                        </div>
+                        {c.results && (
+                          <button type="button" onClick={() => onViewCampaign(c)}
+                            className="text-xs font-inter font-semibold text-accent hover:text-accent/70 transition-colors whitespace-nowrap flex-shrink-0">
+                            View Results →
+                          </button>
+                        )}
+                      </div>
                     </div>
-                    <span className="text-xs font-inter text-muted/40">{c.genre}</span>
-                  </div>
-                )
-              })}
+                  )
+                })}
+              </div>
             </div>
           )}
         </div>
@@ -2289,7 +2446,7 @@ function Dashboard({ profile, campaigns, songs, onLaunchCampaign, onLaunchPress,
         </div>
 
         {/* My Songs */}
-        <MySongsRow songs={songs} onAddSong={onAddSong} onSelectSong={onSelectSong} />
+        <MySongsRow songs={songs} campaigns={campaigns} onAddSong={onAddSong} onSelectSong={onSelectSong} />
 
         {/* Tools grid */}
         <div className="mb-10">
@@ -2616,10 +2773,12 @@ export default function App() {
 
   const [showAddSong, setShowAddSong] = useState(false)
   const [selectedSong, setSelectedSong] = useState(null)
+  const [editingSong, setEditingSong] = useState(null)
 
   const [form, setForm] = useState({
     artistName: '', songTitle: '', genre: '',
     monthlyListeners: '', songDescription: '', vibes: [],
+    songId: null, tool: 'playlist',
   })
   const [loading, setLoading] = useState(false)
   const [msgIndex, setMsgIndex] = useState(0)
@@ -2653,7 +2812,22 @@ export default function App() {
     setShowAddSong(false)
   }
 
-  const enterCampaignFromSong = (song) => {
+  const updateSong = (updatedSong) => {
+    const updated = songs.map(s => s.id === updatedSong.id ? updatedSong : s)
+    setSongs(updated)
+    try { localStorage.setItem('cc_songs', JSON.stringify(updated)) } catch {}
+    setSelectedSong(updatedSong)
+    setEditingSong(null)
+  }
+
+  const deleteSong = (songId) => {
+    const updated = songs.filter(s => s.id !== songId)
+    setSongs(updated)
+    try { localStorage.setItem('cc_songs', JSON.stringify(updated)) } catch {}
+    setSelectedSong(null)
+  }
+
+  const enterCampaignFromSong = (song, tool = 'playlist') => {
     setForm({
       artistName: artistProfile?.artistName || '',
       monthlyListeners: song.monthlyListeners || artistProfile?.monthlyListeners || '',
@@ -2661,6 +2835,8 @@ export default function App() {
       songTitle: song.title,
       songDescription: song.description,
       vibes: song.vibes || [],
+      songId: song.id,
+      tool,
     })
     setResults(null)
     setError('')
@@ -2676,6 +2852,8 @@ export default function App() {
       songTitle: '',
       songDescription: '',
       vibes: [],
+      songId: null,
+      tool: 'playlist',
     })
     setResults(null)
     setError('')
@@ -2704,6 +2882,8 @@ export default function App() {
         genre: form.genre,
         pitchCount: data.pitches?.length || 0,
         results: data,
+        songId: form.songId || null,
+        tool: form.tool || 'playlist',
       }
       const updated = [entry, ...campaigns]
       setCampaigns(updated)
@@ -2768,16 +2948,29 @@ export default function App() {
 
   if (view === 'dashboard' && selectedSong) {
     return (
-      <SongDetailView
-        song={selectedSong}
-        campaigns={campaigns}
-        onBack={() => setSelectedSong(null)}
-        onRunPlaylistPitch={() => enterCampaignFromSong(selectedSong)}
-        onRunPressCampaign={() => {
-          setSelectedSong(null)
-          setView('press')
-        }}
-      />
+      <>
+        <SongDetailView
+          song={selectedSong}
+          campaigns={campaigns}
+          onBack={() => setSelectedSong(null)}
+          onRunPlaylistPitch={() => enterCampaignFromSong(selectedSong, 'playlist')}
+          onRunPressCampaign={() => {
+            setSelectedSong(null)
+            setView('press')
+          }}
+          onViewCampaign={loadCampaignResults}
+          onEditSong={() => setEditingSong(selectedSong)}
+          onDeleteSong={() => deleteSong(selectedSong.id)}
+        />
+        {editingSong && artistProfile && (
+          <AddSongModal
+            profile={artistProfile}
+            initialSong={editingSong}
+            onSave={updateSong}
+            onClose={() => setEditingSong(null)}
+          />
+        )}
+      </>
     )
   }
 
