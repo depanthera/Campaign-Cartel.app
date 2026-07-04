@@ -168,7 +168,7 @@ function getPlatformAccent(platform) {
 
 const PLATFORM_URLS = {
   'SubmitHub':          'https://www.submithub.com/for-artists',
-  'Groover':            'https://groover.co/en/music-promotion/',
+  'Groover':            'https://groover.co/en/',
   'Musosoup':           'https://www.musosoup.com/artists',
   'Playlist Push':      'https://playlistpush.com/artist',
   'SubmitLink':         'https://www.submitlink.io/',
