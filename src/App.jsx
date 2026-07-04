@@ -1404,15 +1404,13 @@ function PressPitchCard({ pitch }) {
 
 // ─── Press & Blog view ────────────────────────────────────────────────────────
 function PressBlogView({ profile, onBack }) {
-  const trialUsed = localStorage.getItem('pressTrialUsed') === 'true'
-  const [phase, setPhase] = useState(trialUsed ? 'upgrade' : 'form')
+  const [phase, setPhase] = useState('form')
   const [form, setForm] = useState({
     songTitle: '', songDescription: '', vibes: [], storyAngle: '', pressGoals: [],
   })
   const [loading, setLoading] = useState(false)
   const [msgIndex, setMsgIndex] = useState(0)
   const [results, setResults] = useState(null)
-  const [showBanner, setShowBanner] = useState(false)
   const [error, setError] = useState('')
   const intervalRef = useRef(null)
 
@@ -1443,62 +1441,13 @@ function PressBlogView({ profile, onBack }) {
     setLoading(true)
     try {
       const data = await runPressSearch(form, profile)
-      try { localStorage.setItem('pressTrialUsed', 'true') } catch {}
       setResults(data)
-      setShowBanner(true)
       setPhase('results')
     } catch (err) {
       setError(err.message || 'Something went wrong. Try again.')
     } finally {
       setLoading(false)
     }
-  }
-
-  // Upgrade screen
-  if (phase === 'upgrade') {
-    return (
-      <div className="min-h-screen bg-bg font-inter">
-        <NavBar profile={profile} onDashboard={onBack} />
-        <main className="max-w-lg mx-auto px-4 py-16">
-          <div className="text-center mb-10">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-accent/20 bg-accent/5 mb-5">
-              <div className="w-1.5 h-1.5 rounded-full bg-accent" />
-              <span className="text-[10px] font-inter text-accent uppercase tracking-widest font-bold">Campaign Cartel Pro</span>
-            </div>
-            <h1 className="font-syne font-black text-4xl text-white mb-3">Unlock Unlimited Access</h1>
-            <p className="text-sm font-inter text-muted">You've used your free Press & Blog campaign.</p>
-          </div>
-
-          <div className="bg-surface border border-border rounded-2xl p-6 mb-6 space-y-3">
-            {[
-              'Unlimited Playlist Pitching campaigns',
-              'Unlimited Press & Blog campaigns',
-              'Show Booking (coming soon)',
-              'Social Strategy (coming soon)',
-              'Priority pitch quality',
-            ].map((benefit, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <div className="w-5 h-5 rounded-full bg-accent/15 flex items-center justify-center flex-shrink-0">
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#C8FF57" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                </div>
-                <span className="text-sm font-inter text-text">{benefit}</span>
-              </div>
-            ))}
-          </div>
-
-          <div className="space-y-3">
-            <button type="button"
-              className="w-full py-4 bg-accent text-bg font-syne font-bold text-base rounded-xl hover:bg-accent/90 transition-all duration-150 active:scale-[0.99]">
-              Upgrade to Pro $29/mo →
-            </button>
-            <button type="button" onClick={results ? () => setPhase('results') : onBack}
-              className="w-full py-3 text-sm font-inter text-muted hover:text-text transition-colors">
-              Maybe Later
-            </button>
-          </div>
-        </main>
-      </div>
-    )
   }
 
   // Results
@@ -1533,25 +1482,6 @@ function PressBlogView({ profile, onBack }) {
               <PressPitchCard key={i} pitch={pitch} />
             ))}
           </div>
-
-          {showBanner && (
-            <div className="bg-surface border border-accent/20 rounded-2xl px-5 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div>
-                <p className="text-sm font-syne font-bold text-white">You used your free Press campaign.</p>
-                <p className="text-xs font-inter text-muted mt-0.5">Upgrade to Pro $29/mo for unlimited access.</p>
-              </div>
-              <div className="flex items-center gap-3 flex-shrink-0">
-                <button type="button" onClick={() => setShowBanner(false)}
-                  className="text-xs font-inter text-muted hover:text-text transition-colors">
-                  Maybe Later
-                </button>
-                <button type="button" onClick={() => setPhase('upgrade')}
-                  className="px-4 py-2 bg-accent text-bg text-xs font-syne font-bold rounded-xl hover:bg-accent/90 transition-all">
-                  Upgrade to Pro →
-                </button>
-              </div>
-            </div>
-          )}
         </main>
       </div>
     )
