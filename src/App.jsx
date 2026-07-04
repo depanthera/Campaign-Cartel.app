@@ -166,6 +166,25 @@ function getPlatformAccent(platform) {
   return PLATFORM_ACCENT[platform] || '#8B8FA8'
 }
 
+const PLATFORM_URLS = {
+  'SubmitHub':     'https://www.submithub.com/search',
+  'Groover':       'https://groover.co/en/music-promotion/',
+  'Musosoup':      'https://www.musosoup.com/artists',
+  'Soundplate':    'https://soundplate.com/submit-music/',
+  'Playlist Push': 'https://playlistpush.com/artist',
+  'Instagram':     'https://www.instagram.com',
+  'Direct Email':  'https://www.google.com/search',
+  'YouTube':       'https://www.youtube.com',
+  'TikTok':        'https://www.tiktok.com',
+  'Music Blog':    'https://twostorymelody.com/submit-music/',
+  'SoundCloud':    'https://soundcloud.com',
+  'Bandcamp':      'https://bandcamp.com',
+}
+
+function getPlatformUrl(platform) {
+  return PLATFORM_URLS[platform] || 'https://www.google.com'
+}
+
 function buildPrompt(form) {
   return `You are a world-class music industry coach. You have seen artists blow up and you know exactly what separates the ones who make it. You are speaking directly to ${form.artistName} about their song "${form.songTitle}". Your voice is firm, bold, urgent — but deeply believing in them. Every sentence costs something. No filler, no generic advice. Speak as "you" always — never third person. Create urgency without fear: the window is open, here's how they walk through it.
 
@@ -259,8 +278,7 @@ Return ONLY valid JSON (no markdown, no fences) matching this exact shape:
       "playlistName": "string",
       "followers": "string",
       "platform": "string — one of: SubmitHub, Groover, Musosoup, Soundplate, Playlist Push, Instagram, Direct Email, YouTube, TikTok, Music Blog, SoundCloud, Bandcamp. Vary across all 4 pitches so the artist hits different platforms.",
-      "submissionUrl": "string — the real, deep-link URL to this curator's submission page. For SubmitHub use https://www.submithub.com/submit/[curator-slug], for Groover use https://groover.co/en/curator/[id]/, for Musosoup use https://www.musosoup.com, for Soundplate use https://soundplate.com/submit, for Playlist Push use https://playlistpush.com, for Instagram use https://www.instagram.com/[handle], for YouTube use https://www.youtube.com/@[channel], for TikTok use https://www.tiktok.com/@[handle], for blogs use their known submission page URL, for SoundCloud groups use https://soundcloud.com/groups, for Bandcamp use https://bandcamp.com. Generate a realistic-looking URL for the specific curator.",
-      "submissionMethod": "string — exact one-line instruction for what the artist does on that platform (e.g. 'Paste pitch + Spotify link in the submission form', 'DM your pitch on Instagram', 'Fill out the submission form with your track link')",
+      "submissionMethod": "string — one sentence: what the artist should search for or do when they land on the platform page (e.g. 'Search for Hip-Hop curators, find one matching this playlist style, paste your pitch', 'Search for @curatorname on Instagram and DM your pitch')",
       "matchReason": "string",
       "matchScore": number between 70 and 99,
       "trendingStatus": "string (max 5 words — e.g. 'Active curator lane' or 'High submission window')",
@@ -686,7 +704,7 @@ function SubmitNowModal({ pitch, onClose, onMarkSubmitted }) {
   }
 
   const handleOpen = () => {
-    if (pitch.submissionUrl) window.open(pitch.submissionUrl, '_blank', 'noopener')
+    window.open(getPlatformUrl(platform), '_blank', 'noopener')
     setPhase('opened')
   }
 
@@ -732,6 +750,20 @@ function SubmitNowModal({ pitch, onClose, onMarkSubmitted }) {
         <div className="overflow-y-auto flex-1 px-5 py-5 space-y-5">
           {phase === 'ready' ? (
             <>
+              {/* Match context */}
+              <div
+                className="rounded-xl px-4 py-3 border"
+                style={{ background: `${accent}0d`, borderColor: `${accent}30` }}
+              >
+                <p className="text-xs font-inter text-text/80 leading-relaxed">
+                  We matched you with <span className="font-semibold text-text">{pitch.curatorName}</span> who curates{' '}
+                  <span className="font-semibold text-text">{pitch.playlistName}</span> on{' '}
+                  <span className="font-semibold" style={{ color: accent }}>{platform}</span>.
+                  Click below to open {platform}'s submission page
+                  {pitch.submissionMethod ? ` — then: ${pitch.submissionMethod.replace(/^then:?\s*/i, '')}` : ', find this curator or a similar playlist, paste your pitch and submit'}.
+                </p>
+              </div>
+
               {/* Steps */}
               <div>
                 <p className="text-[10px] font-inter font-semibold text-muted uppercase tracking-wider mb-3">
@@ -782,12 +814,6 @@ function SubmitNowModal({ pitch, onClose, onMarkSubmitted }) {
               </div>
 
               {/* Submission method note */}
-              {pitch.submissionMethod && (
-                <div className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl bg-bg/60 border border-border/40">
-                  <svg className="flex-shrink-0 mt-0.5" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                  <p className="text-[11px] font-inter text-text/60 leading-snug">{pitch.submissionMethod}</p>
-                </div>
-              )}
             </>
           ) : (
             /* ── Opened phase: checklist ── */
@@ -863,7 +889,7 @@ function SubmitNowModal({ pitch, onClose, onMarkSubmitted }) {
               style={{ background: accent, color: '#050505' }}
             >
               <PlatformIcon platform={platform} size={14} />
-              Open Submission Page →
+              Open {platform} →
             </button>
           ) : (
             <button
