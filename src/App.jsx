@@ -1,10 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import './App.css'
 
-if (typeof window !== 'undefined' && window.emailjs) {
-  window.emailjs.init('E_3six6jiHP7vsvUS')
-}
-
 const GENRES = [
   'Pop', 'Hip-Hop', 'R&B', 'Afrobeats', 'Trap', 'Lo-Fi',
   'Electronic', 'House', 'Drill', 'Indie', 'Alternative',
@@ -27,6 +23,148 @@ const LOADING_MESSAGES = [
   'Researching active curators...',
   'Writing your pitches...',
 ]
+
+// ─── Platform icons & submission steps ───────────────────────────────────────
+const PlatformIcon = ({ platform, size = 18 }) => {
+  const cls = `flex-shrink-0`
+  const s = size
+  switch (platform) {
+    case 'SubmitHub':
+      return <svg className={cls} width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    case 'Groover':
+      return <svg className={cls} width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+    case 'Musosoup':
+      return <svg className={cls} width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
+    case 'Soundplate':
+      return <svg className={cls} width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+    case 'Playlist Push':
+      return <svg className={cls} width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+    case 'Instagram':
+      return <svg className={cls} width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+    case 'Direct Email':
+      return <svg className={cls} width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+    case 'YouTube':
+      return <svg className={cls} width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46a2.78 2.78 0 0 0-1.95 1.96A29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58A2.78 2.78 0 0 0 3.41 19.6C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.95A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z"/><polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02"/></svg>
+    case 'TikTok':
+      return <svg className={cls} width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"/></svg>
+    case 'Music Blog':
+      return <svg className={cls} width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+    case 'SoundCloud':
+      return <svg className={cls} width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 17H5a3 3 0 0 1 0-6h.09A5 5 0 1 1 17 17z"/></svg>
+    case 'Bandcamp':
+      return <svg className={cls} width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="4 16.5 12 6 20 16.5"/></svg>
+    default:
+      return <svg className={cls} width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+  }
+}
+
+const PLATFORM_STEPS = {
+  'SubmitHub': [
+    'Copy your pitch using the button below.',
+    'Click "Open Submission Page" — log in or create a free SubmitHub account.',
+    'Locate this curator and click their Submit button.',
+    'Paste your pitch in the message field and add your Spotify track link.',
+    'Submit — most curators respond within 7 days.',
+  ],
+  'Groover': [
+    'Copy your pitch using the button below.',
+    'Click "Open Submission Page" — log in or sign up for Groover.',
+    'Purchase credits if needed (starting from €2 per curator).',
+    'Find this curator, paste your pitch, and add your streaming link.',
+    'Submit — guaranteed feedback within 7 days or credits are refunded.',
+  ],
+  'Musosoup': [
+    'Copy your pitch using the button below.',
+    'Click "Open Submission Page" and create a Musosoup artist account.',
+    'Submit your track and paste your pitch in the artist bio / notes field.',
+    'Curators browse and select — no upfront cost, revenue share on placements.',
+  ],
+  'Soundplate': [
+    'Copy your pitch using the button below.',
+    'Click "Open Submission Page" to reach the Soundplate curator form.',
+    'Fill in your artist name, track link, and paste your pitch in the message field.',
+    'Submit the form — follow up if you hear nothing within 2 weeks.',
+  ],
+  'Playlist Push': [
+    'Copy your pitch using the button below.',
+    'Click "Open Submission Page" — create a Playlist Push artist account.',
+    'Set up a campaign for your track (credit-based system).',
+    'Paste your pitch as your campaign artist bio/note to curators.',
+    'Launch your campaign — curators receive it automatically.',
+  ],
+  'Instagram': [
+    'Copy your pitch using the button below.',
+    'Click "Open Submission Page" to visit this curator\'s Instagram profile.',
+    'Tap "Message" and paste your pitch.',
+    'Add your Spotify or streaming link at the end of the message.',
+    'Send — follow up once if no reply after 5–7 days.',
+  ],
+  'Direct Email': [
+    'Copy your pitch using the button below.',
+    'Click "Open Submission Page" to visit the curator\'s contact page.',
+    'Open your email client and compose a new message to the address listed.',
+    'Paste your pitch as the email body and use the subject line provided.',
+    'Send — follow up once if no reply after 7–10 days.',
+  ],
+  'YouTube': [
+    'Copy your pitch using the button below.',
+    'Click "Open Submission Page" to visit this curator\'s YouTube channel.',
+    'Find their About/Contact section for their submission email or form link.',
+    'Compose a message using your pitch and include your YouTube/Spotify link.',
+    'Send — many YouTube curators also accept pitches via Instagram DM.',
+  ],
+  'TikTok': [
+    'Copy your pitch using the button below.',
+    'Click "Open Submission Page" to visit this curator\'s TikTok profile.',
+    'Check their bio for a submission email or link in bio.',
+    'Send a concise DM or email using a shortened version of your pitch.',
+    'Include a 15–30 second highlight clip link for quick review.',
+  ],
+  'Music Blog': [
+    'Copy your pitch using the button below.',
+    'Click "Open Submission Page" to go to the blog\'s submission form.',
+    'Fill in your artist details, paste your pitch in the message field.',
+    'Add your streaming link and any press photos if requested.',
+    'Submit — blog reviews typically take 1–3 weeks.',
+  ],
+  'SoundCloud': [
+    'Copy your pitch using the button below.',
+    'Click "Open Submission Page" to go to the SoundCloud group or curator profile.',
+    'If it\'s a group: click "Add Track" and paste your pitch in the track description.',
+    'If it\'s a direct curator: send a comment or message with your pitch.',
+    'Follow the curator for reciprocal engagement.',
+  ],
+  'Bandcamp': [
+    'Copy your pitch using the button below.',
+    'Click "Open Submission Page" to visit the curator\'s Bandcamp page.',
+    'Find their contact info in their bio or "About" section.',
+    'Send an email or message using your pitch and include your Bandcamp track link.',
+    'Bandcamp curators often feature independent artists — follow up after 10 days.',
+  ],
+}
+
+function getPlatformSteps(platform) {
+  return PLATFORM_STEPS[platform] || PLATFORM_STEPS['Direct Email']
+}
+
+const PLATFORM_ACCENT = {
+  'SubmitHub':    '#FF6B35',
+  'Groover':      '#00C9A7',
+  'Musosoup':     '#6C63FF',
+  'Soundplate':   '#F7B731',
+  'Playlist Push':'#20BF6B',
+  'Instagram':    '#E1306C',
+  'Direct Email': '#4A90D9',
+  'YouTube':      '#FF0000',
+  'TikTok':       '#69C9D0',
+  'Music Blog':   '#A3CB38',
+  'SoundCloud':   '#FF5500',
+  'Bandcamp':     '#1DA0C3',
+}
+
+function getPlatformAccent(platform) {
+  return PLATFORM_ACCENT[platform] || '#8B8FA8'
+}
 
 function buildPrompt(form) {
   return `You are a world-class music industry coach. You have seen artists blow up and you know exactly what separates the ones who make it. You are speaking directly to ${form.artistName} about their song "${form.songTitle}". Your voice is firm, bold, urgent — but deeply believing in them. Every sentence costs something. No filler, no generic advice. Speak as "you" always — never third person. Create urgency without fear: the window is open, here's how they walk through it.
@@ -118,10 +256,11 @@ Return ONLY valid JSON (no markdown, no fences) matching this exact shape:
   "pitches": [
     {
       "curatorName": "string",
-      "curatorEmail": "string (required — provide the best available contact: for SubmitHub use 'submit@submithub.com', for Groover use 'contact@groover.co', for Spotify editorial use 'pitchtool@spotify.com', for independent curators provide their known public email or best-guess domain email — never return an empty string)",
       "playlistName": "string",
       "followers": "string",
-      "submitVia": "string",
+      "platform": "string — one of: SubmitHub, Groover, Musosoup, Soundplate, Playlist Push, Instagram, Direct Email, YouTube, TikTok, Music Blog, SoundCloud, Bandcamp. Vary across all 4 pitches so the artist hits different platforms.",
+      "submissionUrl": "string — the real, deep-link URL to this curator's submission page. For SubmitHub use https://www.submithub.com/submit/[curator-slug], for Groover use https://groover.co/en/curator/[id]/, for Musosoup use https://www.musosoup.com, for Soundplate use https://soundplate.com/submit, for Playlist Push use https://playlistpush.com, for Instagram use https://www.instagram.com/[handle], for YouTube use https://www.youtube.com/@[channel], for TikTok use https://www.tiktok.com/@[handle], for blogs use their known submission page URL, for SoundCloud groups use https://soundcloud.com/groups, for Bandcamp use https://bandcamp.com. Generate a realistic-looking URL for the specific curator.",
+      "submissionMethod": "string — exact one-line instruction for what the artist does on that platform (e.g. 'Paste pitch + Spotify link in the submission form', 'DM your pitch on Instagram', 'Fill out the submission form with your track link')",
       "matchReason": "string",
       "matchScore": number between 70 and 99,
       "trendingStatus": "string (max 5 words — e.g. 'Active curator lane' or 'High submission window')",
@@ -131,7 +270,7 @@ Return ONLY valid JSON (no markdown, no fences) matching this exact shape:
   ]
 }
 
-Generate exactly 4 pitches. Every word in the artistIntelligence tips must earn its place — this is a coach talking, not a newsletter.\n`
+Generate exactly 4 pitches across 4 different platforms. Every word in the artistIntelligence tips must earn its place — this is a coach talking, not a newsletter.\n`
 }
 
 async function runCampaign(form) {
@@ -526,144 +665,184 @@ function CopyButton({ text, label }) {
   )
 }
 
-function SendPitchModal({ pitch, onClose }) {
-  const [subject, setSubject]         = useState(pitch.subject)
-  const [body, setBody]               = useState(pitch.pitch)
-  const [artistName, setArtistName]   = useState('')
-  const [artistEmail, setArtistEmail] = useState('')
-  const [curatorEmail, setCuratorEmail] = useState(pitch.curatorEmail ?? '')
-  const [status, setStatus] = useState('idle') // idle | sending | success | error
-  const [errorMsg, setErrorMsg] = useState('')
+function SubmitNowModal({ pitch, onClose, onMarkSubmitted }) {
+  const [phase, setPhase] = useState('ready') // 'ready' | 'opened'
+  const [checks, setChecks] = useState([false, false, false])
+  const [copied, setCopied] = useState(false)
 
-  const canSend = artistName.trim() && artistEmail.trim() && curatorEmail.trim() && subject.trim() && body.trim() && status === 'idle'
+  const platform = pitch.platform || 'Direct Email'
+  const steps = getPlatformSteps(platform)
+  const accent = getPlatformAccent(platform)
+  const allChecked = checks.every(Boolean)
 
-  const handleSend = async () => {
-    setStatus('sending')
-    setErrorMsg('')
+  const fullPitch = `Subject: ${pitch.subject}\n\n${pitch.pitch}`
+
+  const handleCopy = async () => {
     try {
-      const ejs = window.emailjs
-      if (!ejs) throw new Error('EmailJS not loaded')
-      ejs.init('E_3six6jiHP7vsvUS')
-      await ejs.send('service_9jggzz7', 'template_cv5q15h', {
-        to_email:   curatorEmail.trim(),
-        from_name:  artistName.trim(),
-        reply_to:   artistEmail.trim(),
-        subject:    subject.trim(),
-        message:    body.trim(),
-      })
-      setStatus('success')
-    } catch (err) {
-      setErrorMsg(err?.text || 'Failed to send. Please try again.')
-      setStatus('error')
-    }
+      await navigator.clipboard.writeText(fullPitch)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1800)
+    } catch {}
   }
+
+  const handleOpen = () => {
+    if (pitch.submissionUrl) window.open(pitch.submissionUrl, '_blank', 'noopener')
+    setPhase('opened')
+  }
+
+  const toggleCheck = (i) =>
+    setChecks((prev) => prev.map((v, idx) => (idx === i ? !v : v)))
+
+  const CHECKLIST = ['Copied your pitch', 'Opened submission page', 'Pasted pitch and submitted']
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: 'rgba(5,5,5,0.88)', backdropFilter: 'blur(8px)' }}
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
+      style={{ background: 'rgba(5,5,5,0.90)', backdropFilter: 'blur(10px)' }}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
-        className="w-full max-w-lg rounded-2xl border border-border bg-surface overflow-hidden"
+        className="w-full sm:max-w-lg rounded-t-3xl sm:rounded-2xl border border-border bg-surface overflow-hidden"
         style={{ maxHeight: '92vh', display: 'flex', flexDirection: 'column' }}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-border flex-shrink-0">
-          <div>
-            <p className="font-syne font-bold text-sm text-text">{pitch.curatorName}</p>
-            <p className="text-xs font-inter text-muted truncate max-w-[320px]">{pitch.playlistName}</p>
+          <div className="flex items-center gap-3">
+            <div
+              className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+              style={{ background: `${accent}18`, color: accent }}
+            >
+              <PlatformIcon platform={platform} size={16} />
+            </div>
+            <div>
+              <p className="font-syne font-bold text-sm text-text">{pitch.curatorName}</p>
+              <p className="text-[11px] font-inter text-muted">{platform} · {pitch.playlistName}</p>
+            </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="text-muted hover:text-text transition-colors text-lg leading-none ml-4"
+            className="text-muted hover:text-text transition-colors text-lg leading-none ml-4 flex-shrink-0"
           >
             ✕
           </button>
         </div>
 
-        {/* Scrollable body */}
-        <div className="overflow-y-auto flex-1 px-5 py-4 space-y-4">
-          {/* Editable email content */}
-          <div className="space-y-3">
-            <div>
-              <label className="block text-[10px] font-inter font-medium text-muted uppercase tracking-wider mb-1">
-                Subject Line <span className="text-accent">*</span>
-              </label>
-              <input
-                type="text"
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                className="w-full bg-bg border border-border rounded-xl px-3 py-2.5 text-sm font-inter text-text placeholder-muted focus:outline-none focus:border-accent/60 transition-colors"
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] font-inter font-medium text-muted uppercase tracking-wider mb-1">
-                Pitch Body <span className="text-accent">*</span>
-              </label>
-              <textarea
-                rows={8}
-                value={body}
-                onChange={(e) => setBody(e.target.value)}
-                className="w-full bg-bg border border-border rounded-xl px-3 py-2.5 text-xs font-inter text-text placeholder-muted focus:outline-none focus:border-accent/60 transition-colors resize-y leading-relaxed"
-              />
-            </div>
-          </div>
+        {/* Body */}
+        <div className="overflow-y-auto flex-1 px-5 py-5 space-y-5">
+          {phase === 'ready' ? (
+            <>
+              {/* Steps */}
+              <div>
+                <p className="text-[10px] font-inter font-semibold text-muted uppercase tracking-wider mb-3">
+                  How to Submit
+                </p>
+                <ol className="space-y-2">
+                  {steps.map((step, i) => (
+                    <li key={i} className="flex items-start gap-3">
+                      <span
+                        className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-syne font-bold mt-0.5"
+                        style={{ background: `${accent}20`, color: accent }}
+                      >
+                        {i + 1}
+                      </span>
+                      <span className="text-xs font-inter text-text/70 leading-relaxed">{step}</span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
 
-          {/* Fields */}
-          <div className="space-y-3 pt-1 border-t border-border/40">
-            <div>
-              <label className="block text-[10px] font-inter font-medium text-muted uppercase tracking-wider mb-1 mt-3">
-                Your Name <span className="text-accent">*</span>
-              </label>
-              <input
-                type="text"
-                placeholder="e.g. Milo James"
-                value={artistName}
-                onChange={(e) => setArtistName(e.target.value)}
-                className="w-full bg-bg border border-border rounded-xl px-3 py-2.5 text-sm font-inter text-text placeholder-muted focus:outline-none focus:border-accent/60 transition-colors"
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] font-inter font-medium text-muted uppercase tracking-wider mb-1">
-                Your Email <span className="text-accent">*</span>
-              </label>
-              <input
-                type="email"
-                placeholder="your@email.com"
-                value={artistEmail}
-                onChange={(e) => setArtistEmail(e.target.value)}
-                className="w-full bg-bg border border-border rounded-xl px-3 py-2.5 text-sm font-inter text-text placeholder-muted focus:outline-none focus:border-accent/60 transition-colors"
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] font-inter font-medium text-muted uppercase tracking-wider mb-1">
-                Curator Email <span className="text-accent">*</span>
-              </label>
-              <input
-                type="email"
-                placeholder="curator@example.com"
-                value={curatorEmail}
-                onChange={(e) => setCuratorEmail(e.target.value)}
-                className="w-full bg-bg border border-border rounded-xl px-3 py-2.5 text-sm font-inter text-text placeholder-muted focus:outline-none focus:border-accent/60 transition-colors"
-              />
-            </div>
-          </div>
+              {/* Pitch preview */}
+              <div className="border border-border/60 rounded-xl overflow-hidden">
+                <div className="flex items-center justify-between px-3 py-2 border-b border-border/40 bg-bg/40">
+                  <span className="text-[10px] font-inter font-semibold text-muted uppercase tracking-wider">Your Pitch</span>
+                  <button
+                    type="button"
+                    onClick={handleCopy}
+                    className={`flex items-center gap-1.5 text-[11px] font-inter font-semibold transition-colors duration-150 ${
+                      copied ? 'text-accent' : 'text-muted hover:text-text'
+                    }`}
+                  >
+                    {copied ? (
+                      <>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        Copied!
+                      </>
+                    ) : (
+                      <>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        Copy Pitch
+                      </>
+                    )}
+                  </button>
+                </div>
+                <div className="px-3 py-3 max-h-36 overflow-y-auto">
+                  <p className="text-[11px] font-inter text-text/60 leading-relaxed whitespace-pre-wrap">{fullPitch}</p>
+                </div>
+              </div>
 
-          {/* Error */}
-          {status === 'error' && (
-            <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3">
-              <p className="text-xs font-inter text-red-400">{errorMsg}</p>
-            </div>
-          )}
+              {/* Submission method note */}
+              {pitch.submissionMethod && (
+                <div className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl bg-bg/60 border border-border/40">
+                  <svg className="flex-shrink-0 mt-0.5" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  <p className="text-[11px] font-inter text-text/60 leading-snug">{pitch.submissionMethod}</p>
+                </div>
+              )}
+            </>
+          ) : (
+            /* ── Opened phase: checklist ── */
+            <>
+              <div className="text-center py-2">
+                <div
+                  className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3"
+                  style={{ background: `${accent}18`, color: accent }}
+                >
+                  <PlatformIcon platform={platform} size={22} />
+                </div>
+                <p className="font-syne font-bold text-base text-text">Submission Page Opened</p>
+                <p className="text-xs font-inter text-muted mt-1">Check off each step as you complete it.</p>
+              </div>
 
-          {/* Success */}
-          {status === 'success' && (
-            <div className="bg-accent/10 border border-accent/30 rounded-xl px-4 py-3 text-center">
-              <p className="text-sm font-syne font-bold text-accent">Pitch sent successfully!</p>
-              <p className="text-xs font-inter text-muted mt-0.5">Check your email for confirmation.</p>
-            </div>
+              <div className="space-y-2.5">
+                {CHECKLIST.map((label, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => toggleCheck(i)}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition-all duration-150 text-left ${
+                      checks[i]
+                        ? 'border-accent/40 bg-accent/8'
+                        : 'border-border bg-bg/40 hover:border-border/80'
+                    }`}
+                  >
+                    <div
+                      className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-150 border ${
+                        checks[i] ? 'border-accent bg-accent' : 'border-border/60 bg-transparent'
+                      }`}
+                    >
+                      {checks[i] && (
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#050505" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      )}
+                    </div>
+                    <span className={`text-sm font-inter transition-colors duration-150 ${checks[i] ? 'text-text line-through text-muted' : 'text-text/80'}`}>
+                      {label}
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Re-copy shortcut */}
+              <div className="border border-border/40 rounded-xl px-3 py-2 flex items-center justify-between gap-2">
+                <span className="text-[11px] font-inter text-muted">Need to re-copy your pitch?</span>
+                <button
+                  type="button"
+                  onClick={handleCopy}
+                  className={`text-[11px] font-inter font-semibold transition-colors ${copied ? 'text-accent' : 'text-muted hover:text-text'}`}
+                >
+                  {copied ? 'Copied!' : 'Copy Pitch'}
+                </button>
+              </div>
+            </>
           )}
         </div>
 
@@ -672,22 +851,32 @@ function SendPitchModal({ pitch, onClose }) {
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 py-2.5 rounded-xl border border-border text-sm font-inter font-medium text-muted hover:border-accent/40 hover:text-text transition-all duration-150"
+            className="px-4 py-2.5 rounded-xl border border-border text-sm font-inter font-medium text-muted hover:border-accent/40 hover:text-text transition-all duration-150"
           >
-            {status === 'success' ? 'Close' : 'Cancel'}
+            Close
           </button>
-          {status !== 'success' && (
+          {phase === 'ready' ? (
             <button
               type="button"
-              onClick={handleSend}
-              disabled={!canSend}
+              onClick={handleOpen}
+              className="flex-1 py-2.5 rounded-xl text-sm font-syne font-bold transition-all duration-150 flex items-center justify-center gap-2"
+              style={{ background: accent, color: '#050505' }}
+            >
+              <PlatformIcon platform={platform} size={14} />
+              Open Submission Page →
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => { onMarkSubmitted(); onClose() }}
+              disabled={!allChecked}
               className={`flex-1 py-2.5 rounded-xl text-sm font-syne font-bold transition-all duration-150 ${
-                canSend
+                allChecked
                   ? 'bg-accent text-bg hover:bg-accent/90 cursor-pointer'
                   : 'bg-accent/20 text-accent/40 cursor-not-allowed'
               }`}
             >
-              {status === 'sending' ? 'Sending…' : 'Confirm & Send'}
+              Mark as Submitted
             </button>
           )}
         </div>
@@ -696,43 +885,60 @@ function SendPitchModal({ pitch, onClose }) {
   )
 }
 
-function PitchCard({ pitch }) {
+function PitchCard({ pitch, isSubmitted, onMarkSubmitted }) {
   const [open, setOpen] = useState(false)
   const [showModal, setShowModal] = useState(false)
-  const [sent, setSent] = useState(false)
   const score = pitch.matchScore ?? 85
   const scoreColor =
     score >= 90 ? 'text-accent' : score >= 80 ? 'text-yellow-400' : 'text-orange-400'
+  const platform = pitch.platform || 'Direct Email'
+  const accent = getPlatformAccent(platform)
 
   return (
     <>
       {showModal && (
-        <SendPitchModal
+        <SubmitNowModal
           pitch={pitch}
-          onClose={() => {
-            setShowModal(false)
-          }}
-          onSent={() => {
-            setSent(true)
-            setShowModal(false)
-          }}
+          onClose={() => setShowModal(false)}
+          onMarkSubmitted={() => { onMarkSubmitted(); setShowModal(false) }}
         />
       )}
-      <div className="bg-surface border border-border rounded-2xl overflow-hidden hover:border-accent/30 transition-colors duration-200">
+      <div className={`bg-surface border rounded-2xl overflow-hidden transition-colors duration-200 ${
+        isSubmitted ? 'border-accent/40' : 'border-border hover:border-accent/30'
+      }`}>
+        {/* Submitted banner */}
+        {isSubmitted && (
+          <div className="px-4 py-1.5 bg-accent/8 border-b border-accent/20 flex items-center gap-2">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-accent flex-shrink-0"><polyline points="20 6 9 17 4 12"/></svg>
+            <span className="text-[11px] font-inter font-semibold text-accent">Submitted</span>
+          </div>
+        )}
+
         <div className="p-4 flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
+            {/* Platform badge */}
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <div
+                className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-inter font-semibold border"
+                style={{ color: accent, borderColor: `${accent}40`, background: `${accent}12` }}
+              >
+                <PlatformIcon platform={platform} size={10} />
+                <span>{platform}</span>
+              </div>
+            </div>
             <div className="flex items-center gap-2 flex-wrap mb-0.5">
               <span className="font-syne font-bold text-sm text-text">{pitch.curatorName}</span>
-              <span className="text-xs font-inter text-muted">via {pitch.submitVia}</span>
             </div>
             <p className="font-syne font-semibold text-base text-text leading-snug truncate">
               {pitch.playlistName}
             </p>
             <div className="flex items-center gap-2 mt-1.5 flex-wrap">
               <span className="text-xs font-inter text-muted">{pitch.followers} followers</span>
-              <span className="text-[10px] font-inter px-1.5 py-0.5 rounded-full bg-accent/10 text-accent border border-accent/20 whitespace-nowrap overflow-hidden max-w-[160px] truncate inline-block align-middle">
-                {pitch.trendingStatus}
-              </span>
+              {pitch.trendingStatus && (
+                <span className="text-[10px] font-inter px-1.5 py-0.5 rounded-full bg-accent/10 text-accent border border-accent/20 whitespace-nowrap overflow-hidden max-w-[160px] truncate inline-block align-middle">
+                  {pitch.trendingStatus}
+                </span>
+              )}
             </div>
           </div>
           <div className="flex-shrink-0 text-right">
@@ -757,17 +963,22 @@ function PitchCard({ pitch }) {
             <div className="flex gap-1.5 flex-wrap justify-end">
               <CopyButton text={pitch.subject} label="Copy Subject" />
               <CopyButton text={pitch.pitch} label="Copy Body" />
-              <CopyButton text={`Subject: ${pitch.subject}\n\n${pitch.pitch}`} label="Copy Full" />
               <button
                 type="button"
-                onClick={() => setShowModal(true)}
-                className={`px-3 py-1.5 text-xs font-inter font-medium rounded border transition-all duration-150 ${
-                  sent
-                    ? 'border-accent text-accent bg-accent/10 cursor-default'
-                    : 'border-accent/60 text-accent bg-accent/10 hover:bg-accent/20 cursor-pointer'
+                onClick={() => !isSubmitted && setShowModal(true)}
+                className={`px-3 py-1.5 text-xs font-inter font-semibold rounded border transition-all duration-150 flex items-center gap-1.5 ${
+                  isSubmitted
+                    ? 'border-accent/40 text-accent bg-accent/8 cursor-default'
+                    : 'border-accent/60 text-bg font-bold cursor-pointer'
                 }`}
+                style={isSubmitted ? {} : { background: accent, borderColor: accent }}
               >
-                {sent ? 'Sent ✓' : 'Send Pitch'}
+                {isSubmitted ? (
+                  <>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    Submitted
+                  </>
+                ) : 'Submit Now →'}
               </button>
             </div>
           </div>
@@ -781,6 +992,36 @@ function PitchCard({ pitch }) {
         </div>
       </div>
     </>
+  )
+}
+
+// ─── Submission tracker ───────────────────────────────────────────────────────
+function SubmissionTracker({ total, submitted }) {
+  const pct = total > 0 ? Math.round((submitted / total) * 100) : 0
+  const allDone = submitted === total && total > 0
+  return (
+    <div className="mb-6 bg-surface border border-border rounded-2xl px-5 py-4">
+      <div className="flex items-center justify-between mb-2.5">
+        <div className="flex items-center gap-2">
+          <div className={`w-1.5 h-1.5 rounded-full ${allDone ? 'bg-accent' : 'bg-accent animate-pulse'}`} />
+          <span className="font-syne font-bold text-sm text-text">Campaign Progress</span>
+        </div>
+        <span className="text-xs font-inter text-muted">
+          <span className="font-semibold text-text">{submitted}</span> of {total} submitted
+        </span>
+      </div>
+      <div className="w-full h-1.5 bg-border rounded-full overflow-hidden">
+        <div
+          className="h-full bg-accent rounded-full transition-all duration-500"
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      {allDone && (
+        <p className="text-xs font-inter text-accent mt-2">
+          Campaign complete — all curators submitted.
+        </p>
+      )}
+    </div>
   )
 }
 
@@ -966,6 +1207,7 @@ export default function App() {
   const [results, setResults] = useState(null)
   const [error, setError] = useState('')
   const [selectedTip, setSelectedTip] = useState(null)
+  const [submittedSet, setSubmittedSet] = useState(new Set())
   const intervalRef = useRef(null)
 
   useEffect(() => {
@@ -1010,6 +1252,7 @@ export default function App() {
   const handleReset = () => {
     setResults(null)
     setSelectedTip(null)
+    setSubmittedSet(new Set())
     setError('')
     setForm({ artistName: '', songTitle: '', genre: '', monthlyListeners: '', songDescription: '', vibes: [] })
   }
@@ -1045,6 +1288,11 @@ export default function App() {
             <ArtistIntelligence tips={results.artistIntelligence} onLearnMore={setSelectedTip} />
           )}
 
+          <SubmissionTracker
+            total={results.pitches?.length ?? 0}
+            submitted={submittedSet.size}
+          />
+
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-syne font-bold text-xl text-text">Your Pitch Pack</h2>
             <span className="text-xs font-inter text-muted">{results.pitches?.length ?? 0} curators targeted</span>
@@ -1052,7 +1300,12 @@ export default function App() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
             {(results.pitches ?? []).map((pitch, i) => (
-              <PitchCard key={i} pitch={pitch} />
+              <PitchCard
+                key={i}
+                pitch={pitch}
+                isSubmitted={submittedSet.has(i)}
+                onMarkSubmitted={() => setSubmittedSet((s) => new Set([...s, i]))}
+              />
             ))}
           </div>
 
