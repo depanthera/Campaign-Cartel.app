@@ -37,6 +37,10 @@ const RELEASE_FREQUENCIES = [
   'Every few months', 'Monthly', 'Every 2-3 weeks', 'Weekly',
 ]
 
+const MAIN_PLATFORMS = [
+  'Spotify', 'Apple Music', 'SoundCloud', 'YouTube', 'TikTok',
+]
+
 const INTAKE_STEPS = [
   { num: 1, label: 'Who are you?' },
   { num: 2, label: 'Where are you at?' },
@@ -1249,13 +1253,202 @@ function GoalChip({ label, selected, onClick }) {
 const inputClass =
   'w-full bg-surface border border-border rounded-xl px-4 py-3 text-sm font-inter text-text placeholder-muted/50 focus:outline-none focus:border-accent/60 transition-colors duration-150'
 
+// ─── Nav bar ──────────────────────────────────────────────────────────────────
+function NavBar({ profile, onDashboard }) {
+  return (
+    <header className="sticky top-0 z-50 bg-bg/80 backdrop-blur-md border-b border-border">
+      <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
+        <span className="font-syne font-black text-xl text-text tracking-tight">Campaign Cartel</span>
+        <div className="flex items-center gap-3">
+          <button type="button" onClick={onDashboard}
+            className="text-xs font-inter text-muted hover:text-text transition-colors uppercase tracking-widest">
+            Dashboard
+          </button>
+          <button type="button" onClick={onDashboard}
+            className="w-8 h-8 rounded-full bg-accent/15 border border-accent/30 flex items-center justify-center">
+            <span className="font-syne font-bold text-xs text-accent uppercase">
+              {(profile?.artistName || '?')[0]}
+            </span>
+          </button>
+        </div>
+      </div>
+    </header>
+  )
+}
+
+// ─── Tool card ────────────────────────────────────────────────────────────────
+const TOOL_ICONS = {
+  pitching: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+    </svg>
+  ),
+  press: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+      <polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+    </svg>
+  ),
+  booking: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 0 0-2 2v3a2 2 0 1 1 0 4v3a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-3a2 2 0 1 1 0-4V7a2 2 0 0 0-2-2H5z"/>
+    </svg>
+  ),
+  social: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>
+    </svg>
+  ),
+}
+
+function ToolCard({ id, title, description, available, onLaunch }) {
+  return (
+    <div className={`relative bg-surface border rounded-2xl p-5 flex flex-col gap-4 transition-all duration-200 ${
+      available ? 'border-border hover:border-accent/40' : 'border-border/50'
+    }`}>
+      {!available && (
+        <div className="absolute top-4 right-4">
+          <span className="text-[10px] font-inter font-semibold px-2 py-1 rounded-full bg-border/80 text-muted/70 uppercase tracking-widest">
+            Soon
+          </span>
+        </div>
+      )}
+      <div className={`flex items-start gap-4 ${!available ? 'opacity-50' : ''}`}>
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+          available ? 'bg-accent/15 text-accent' : 'bg-surface border border-border/60 text-muted/40'
+        }`}>
+          {TOOL_ICONS[id]}
+        </div>
+        <div className="flex-1 min-w-0 pr-6">
+          <h3 className="font-syne font-bold text-[15px] text-text mb-1">{title}</h3>
+          <p className="text-xs font-inter text-muted leading-relaxed">{description}</p>
+        </div>
+      </div>
+      {available && (
+        <button type="button" onClick={onLaunch}
+          className="w-full py-2.5 rounded-xl bg-accent text-bg font-syne font-bold text-sm hover:bg-accent/90 transition-all duration-150 active:scale-[0.99]">
+          Launch →
+        </button>
+      )}
+    </div>
+  )
+}
+
+// ─── Campaign history item ────────────────────────────────────────────────────
+function CampaignHistoryItem({ campaign }) {
+  const d = new Date(campaign.date)
+  const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  return (
+    <div className="bg-surface border border-border rounded-xl px-4 py-3 flex items-center justify-between gap-3">
+      <div className="min-w-0">
+        <p className="font-syne font-bold text-sm text-text truncate">"{campaign.songTitle}"</p>
+        <p className="text-xs font-inter text-muted mt-0.5">
+          {campaign.genre} · {campaign.pitchCount} pitch{campaign.pitchCount !== 1 ? 'es' : ''}
+        </p>
+      </div>
+      <span className="text-xs font-inter text-muted/50 flex-shrink-0">{label}</span>
+    </div>
+  )
+}
+
+// ─── Dashboard ────────────────────────────────────────────────────────────────
+function Dashboard({ profile, campaigns, onLaunchCampaign, onEditProfile }) {
+  return (
+    <div className="min-h-screen bg-bg font-inter">
+      <NavBar profile={profile} onDashboard={() => {}} />
+
+      <main className="max-w-5xl mx-auto px-4 py-10">
+
+        {/* Welcome header */}
+        <div className="flex items-start justify-between gap-4 mb-10">
+          <div>
+            <p className="text-[11px] font-inter text-muted uppercase tracking-[0.18em] mb-2">Welcome back</p>
+            <h1 className="font-syne font-black text-4xl md:text-5xl text-white leading-tight mb-4">
+              {profile.artistName}
+            </h1>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="px-2.5 py-1 rounded-full text-xs font-inter font-semibold bg-accent/10 text-accent border border-accent/20">
+                {profile.genre}
+              </span>
+              {profile.subgenre && (
+                <span className="px-2.5 py-1 rounded-full text-xs font-inter font-medium bg-surface text-muted border border-border">
+                  {profile.subgenre}
+                </span>
+              )}
+              {profile.location && (
+                <span className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-inter font-medium bg-surface text-muted border border-border">
+                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+                  </svg>
+                  {profile.location}
+                </span>
+              )}
+            </div>
+          </div>
+          <button type="button" onClick={onEditProfile}
+            className="flex-shrink-0 text-xs font-inter font-medium text-muted hover:text-text border border-border hover:border-accent/40 px-3 py-2 rounded-lg transition-all duration-150">
+            Edit Profile
+          </button>
+        </div>
+
+        {/* Tools grid */}
+        <div className="mb-10">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-1.5 h-1.5 rounded-full bg-accent" />
+            <h2 className="font-syne font-bold text-base text-text">Your Tools</h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <ToolCard id="pitching" title="Playlist Pitching"
+              description="Find curators & generate personalized pitches for your latest release."
+              available={true} onLaunch={onLaunchCampaign} />
+            <ToolCard id="press" title="Press & Blog"
+              description="Get featured in music blogs & magazines that reach your audience."
+              available={false} />
+            <ToolCard id="booking" title="Show Booking"
+              description="Find venues & festivals to pitch yourself for live performance."
+              available={false} />
+            <ToolCard id="social" title="Social Strategy"
+              description="Get a content plan built specifically for your sound and goals."
+              available={false} />
+          </div>
+        </div>
+
+        {/* Campaign history */}
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-1.5 h-1.5 rounded-full bg-border" />
+            <h2 className="font-syne font-bold text-base text-text">Recent Campaigns</h2>
+          </div>
+          {campaigns.length === 0 ? (
+            <div className="bg-surface border border-border rounded-2xl px-6 py-10 text-center">
+              <p className="text-sm font-inter text-muted mb-3">You haven't run a campaign yet.</p>
+              <button type="button" onClick={onLaunchCampaign}
+                className="text-sm font-inter font-semibold text-accent hover:text-accent/80 transition-colors">
+                Launch Playlist Pitching →
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-2.5">
+              {campaigns.slice(0, 8).map((c, i) => (
+                <CampaignHistoryItem key={i} campaign={c} />
+              ))}
+            </div>
+          )}
+        </div>
+
+      </main>
+    </div>
+  )
+}
+
 // ─── Artist intake ────────────────────────────────────────────────────────────
-function ArtistIntakeFlow({ onComplete }) {
+function ArtistIntakeFlow({ initialData = null, onComplete, onCancel = null }) {
+  const isEdit = !!initialData
   const [step, setStep] = useState(1)
-  const [data, setData] = useState({
+  const [data, setData] = useState(() => initialData ? { ...initialData } : {
     artistName: '', genre: '', subgenre: '', location: '',
     spotifyUrl: '', instagramHandle: '',
-    monthlyListeners: '', releaseDuration: '', releaseFrequency: '',
+    monthlyListeners: '', releaseDuration: '', releaseFrequency: '', mainPlatform: '',
     goals: [], influences: '', extra: '',
   })
 
@@ -1266,12 +1459,13 @@ function ArtistIntakeFlow({ onComplete }) {
   }))
 
   const step1Valid = data.artistName.trim() && data.genre && data.location.trim()
-  const step2Valid = data.monthlyListeners && data.releaseDuration && data.releaseFrequency
+  const step2Valid = data.monthlyListeners && data.releaseDuration && data.releaseFrequency && data.mainPlatform
   const step3Valid = data.goals.length > 0
 
   const handleComplete = () => {
-    try { localStorage.setItem('cc_artist_profile', JSON.stringify(data)) } catch {}
-    onComplete(data)
+    const merged = { ...data }
+    try { localStorage.setItem('cc_artist_profile', JSON.stringify(merged)) } catch {}
+    onComplete(merged)
   }
 
   return (
@@ -1285,15 +1479,26 @@ function ArtistIntakeFlow({ onComplete }) {
           <div className="text-center mb-8">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-accent/20 bg-accent/5 mb-6">
               <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
-              <span className="text-[11px] font-inter text-accent tracking-[0.18em] uppercase">Artist Profile</span>
+              <span className="text-[11px] font-inter text-accent tracking-[0.18em] uppercase">
+                  {isEdit ? 'Edit Profile' : 'Artist Profile'}
+                </span>
             </div>
             <h1 className="neon-title font-syne font-black text-5xl md:text-7xl text-white leading-none tracking-tight mb-3">
               Campaign Cartel
             </h1>
             <p className="font-inter text-base text-white/50 font-normal tracking-wide">
-              Let's build your profile first
+              {isEdit ? 'Update your artist profile' : "Let's build your profile first"}
             </p>
           </div>
+
+          {/* Cancel link (edit mode) */}
+          {isEdit && onCancel && (
+            <button type="button" onClick={onCancel}
+              className="flex items-center gap-1.5 text-sm font-inter text-white/40 hover:text-white/70 transition-colors mb-5 group">
+              <span className="group-hover:-translate-x-0.5 transition-transform">←</span>
+              <span>Back to Dashboard</span>
+            </button>
+          )}
 
           {/* Step progress */}
           <div className="mb-6 flex items-start justify-between">
@@ -1412,6 +1617,14 @@ function ArtistIntakeFlow({ onComplete }) {
                   </select>
                 </FormField>
 
+                <FormField label="Biggest platform right now" required>
+                  <select value={data.mainPlatform || ''} onChange={e => update('mainPlatform', e.target.value)}
+                    className={`${inputClass} cursor-pointer`}>
+                    <option value="" disabled>Select...</option>
+                    {MAIN_PLATFORMS.map(p => <option key={p} value={p}>{p}</option>)}
+                  </select>
+                </FormField>
+
                 <div className="flex gap-3">
                   <button type="button" onClick={() => setStep(1)}
                     className="px-5 py-4 rounded-xl border border-border text-sm font-inter font-medium text-muted hover:border-accent/40 hover:text-text transition-all duration-150">
@@ -1464,7 +1677,7 @@ function ArtistIntakeFlow({ onComplete }) {
                     className={`flex-1 py-4 rounded-xl font-syne font-bold text-base tracking-wide transition-all duration-150 active:scale-[0.99] ${
                       step3Valid ? 'bg-accent text-bg hover:bg-accent/90 cursor-pointer' : 'bg-accent/20 text-accent/40 cursor-not-allowed'
                     }`}>
-                    Enter Campaign Cartel →
+                    {isEdit ? 'Save Profile →' : 'Enter Campaign Cartel →'}
                   </button>
                 </div>
               </div>
@@ -1483,18 +1696,22 @@ export default function App() {
     try {
       const s = localStorage.getItem('cc_artist_profile')
       return s ? JSON.parse(s) : null
-    } catch {
-      return null
-    }
+    } catch { return null }
+  })
+
+  const [view, setView] = useState(() =>
+    localStorage.getItem('cc_artist_profile') ? 'dashboard' : 'intake'
+  )
+  const [editingProfile, setEditingProfile] = useState(false)
+
+  const [campaigns, setCampaigns] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('cc_campaigns') || '[]') }
+    catch { return [] }
   })
 
   const [form, setForm] = useState({
-    artistName: '',
-    songTitle: '',
-    genre: '',
-    monthlyListeners: '',
-    songDescription: '',
-    vibes: [],
+    artistName: '', songTitle: '', genre: '',
+    monthlyListeners: '', songDescription: '', vibes: [],
   })
   const [loading, setLoading] = useState(false)
   const [msgIndex, setMsgIndex] = useState(0)
@@ -1507,26 +1724,40 @@ export default function App() {
   useEffect(() => {
     if (loading) {
       setMsgIndex(0)
-      intervalRef.current = setInterval(() => setMsgIndex((i) => i + 1), 2000)
+      intervalRef.current = setInterval(() => setMsgIndex(i => i + 1), 2000)
     } else {
       clearInterval(intervalRef.current)
     }
     return () => clearInterval(intervalRef.current)
   }, [loading])
 
-  const toggleVibe = (vibe) => {
-    setForm((f) => ({
-      ...f,
-      vibes: f.vibes.includes(vibe) ? f.vibes.filter((v) => v !== vibe) : [...f.vibes, vibe],
-    }))
+  const handleIntakeComplete = (profile) => {
+    setArtistProfile(profile)
+    setEditingProfile(false)
+    setView('dashboard')
   }
 
-  const isValid =
-    form.artistName.trim() &&
-    form.songTitle.trim() &&
-    form.genre &&
-    form.monthlyListeners &&
-    form.songDescription.trim()
+  const enterCampaign = () => {
+    setForm({
+      artistName: artistProfile?.artistName || '',
+      monthlyListeners: artistProfile?.monthlyListeners || '',
+      genre: artistProfile?.genre || '',
+      songTitle: '',
+      songDescription: '',
+      vibes: [],
+    })
+    setResults(null)
+    setError('')
+    setView('campaign')
+  }
+
+  const toggleVibe = (vibe) =>
+    setForm(f => ({
+      ...f,
+      vibes: f.vibes.includes(vibe) ? f.vibes.filter(v => v !== vibe) : [...f.vibes, vibe],
+    }))
+
+  const isValid = form.songTitle.trim() && form.genre && form.songDescription.trim()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -1535,7 +1766,17 @@ export default function App() {
     setLoading(true)
     try {
       const data = await runCampaign(form)
+      const entry = {
+        date: new Date().toISOString(),
+        songTitle: form.songTitle,
+        genre: form.genre,
+        pitchCount: data.pitches?.length || 0,
+      }
+      const updated = [entry, ...campaigns]
+      setCampaigns(updated)
+      try { localStorage.setItem('cc_campaigns', JSON.stringify(updated)) } catch {}
       setResults(data)
+      setView('results')
     } catch (err) {
       setError(err.message || 'Something went wrong. Check your API key and try again.')
     } finally {
@@ -1543,76 +1784,99 @@ export default function App() {
     }
   }
 
-  const handleReset = () => {
-    setResults(null)
+  const handleBackToDashboard = () => {
+    setSelectedTip(null)
+    setSubmittedSet(new Set())
+    setView('dashboard')
+  }
+
+  const handleNewCampaign = () => {
     setSelectedTip(null)
     setSubmittedSet(new Set())
     setError('')
-    setForm({ artistName: '', songTitle: '', genre: '', monthlyListeners: '', songDescription: '', vibes: [] })
+    enterCampaign()
   }
 
-  if (!artistProfile) {
-    return <ArtistIntakeFlow onComplete={setArtistProfile} />
+  // ── Views ──────────────────────────────────────────────────────────────────
+
+  if (view === 'intake' || editingProfile) {
+    return (
+      <ArtistIntakeFlow
+        initialData={editingProfile ? artistProfile : null}
+        onComplete={handleIntakeComplete}
+        onCancel={editingProfile ? () => setEditingProfile(false) : null}
+      />
+    )
   }
 
-  if (results && selectedTip) {
+  if (view === 'dashboard') {
+    return (
+      <Dashboard
+        profile={artistProfile}
+        campaigns={campaigns}
+        onLaunchCampaign={enterCampaign}
+        onEditProfile={() => setEditingProfile(true)}
+      />
+    )
+  }
+
+  if (view === 'results' && selectedTip) {
     return <TipDetailView tip={selectedTip} onBack={() => setSelectedTip(null)} />
   }
 
-  if (results) {
+  if (view === 'results') {
     return (
       <div className="min-h-screen bg-bg font-inter">
         <header className="sticky top-0 z-10 bg-bg/80 backdrop-blur-md border-b border-border">
-          <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
-            <div>
+          <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <button type="button" onClick={handleBackToDashboard}
+                className="flex items-center gap-1.5 text-sm font-inter text-muted hover:text-text transition-colors group">
+                <span className="group-hover:-translate-x-0.5 transition-transform">←</span>
+                <span>Dashboard</span>
+              </button>
+              <div className="w-px h-4 bg-border" />
               <span className="font-syne font-black text-xl text-text tracking-tight">Campaign Cartel</span>
-              <span className="ml-2 text-xs font-inter text-muted">
-                for {form.artistName} — "{form.songTitle}"
-              </span>
             </div>
-            <button
-              onClick={handleReset}
-              className="px-4 py-2 text-sm font-inter font-medium rounded-xl border border-border text-muted hover:border-accent/60 hover:text-text transition-all duration-150"
-            >
-              Run New Campaign
-            </button>
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-inter text-muted hidden sm:block">
+                {form.artistName} — "{form.songTitle}"
+              </span>
+              <button type="button" onClick={handleNewCampaign}
+                className="px-4 py-2 text-sm font-inter font-medium rounded-xl border border-border text-muted hover:border-accent/60 hover:text-text transition-all duration-150">
+                New Campaign
+              </button>
+            </div>
           </div>
         </header>
 
         <main className="max-w-5xl mx-auto px-4 py-8">
           {results.trendReport && <TrendReport report={results.trendReport} />}
-
           {results.artistIntelligence && (
             <ArtistIntelligence tips={results.artistIntelligence} onLearnMore={setSelectedTip} />
           )}
-
           <SubmissionTracker
             total={results.pitches?.length ?? 0}
             submitted={submittedSet.size}
           />
-
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-syne font-bold text-xl text-text">Your Pitch Pack</h2>
             <span className="text-xs font-inter text-muted">{results.pitches?.length ?? 0} curators targeted</span>
           </div>
-
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
             {(results.pitches ?? []).map((pitch, i) => (
               <PitchCard
                 key={i}
                 pitch={pitch}
                 isSubmitted={submittedSet.has(i)}
-                onMarkSubmitted={() => setSubmittedSet((s) => new Set([...s, i]))}
+                onMarkSubmitted={() => setSubmittedSet(s => new Set([...s, i]))}
               />
             ))}
           </div>
-
           <div className="mt-10 text-center">
-            <button
-              onClick={handleReset}
-              className="px-8 py-3.5 bg-accent text-bg font-syne font-bold text-sm rounded-xl hover:bg-accent/90 transition-all duration-150 active:scale-95"
-            >
-              Run New Campaign
+            <button type="button" onClick={handleBackToDashboard}
+              className="px-8 py-3.5 bg-accent text-bg font-syne font-bold text-sm rounded-xl hover:bg-accent/90 transition-all duration-150 active:scale-95">
+              ← Back to Dashboard
             </button>
           </div>
         </main>
@@ -1620,21 +1884,26 @@ export default function App() {
     )
   }
 
+  // view === 'campaign'
   return (
     <div className="film-grain min-h-screen font-inter" style={{ background: '#050505' }}>
       {loading && <LoadingOverlay msgIndex={msgIndex} />}
       <CityScene />
 
-      {/* Content sits in the upper portion, above the skyline */}
       <div className="relative z-10 flex flex-col justify-start px-4 pt-10 md:pt-14"
            style={{ minHeight: '100vh', paddingBottom: '50vh' }}>
         <div className="max-w-xl mx-auto w-full">
 
-          {/* Logo / hero */}
+          <button type="button" onClick={handleBackToDashboard}
+            className="flex items-center gap-1.5 text-sm font-inter text-white/40 hover:text-white/70 transition-colors mb-8 group">
+            <span className="group-hover:-translate-x-0.5 transition-transform">←</span>
+            <span>Back to Dashboard</span>
+          </button>
+
           <div className="text-center mb-8">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-accent/20 bg-accent/5 mb-6">
               <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
-              <span className="text-[11px] font-inter text-accent tracking-[0.18em] uppercase">AI Powered</span>
+              <span className="text-[11px] font-inter text-accent tracking-[0.18em] uppercase">Playlist Pitching</span>
             </div>
             <h1 className="neon-title font-syne font-black text-5xl md:text-7xl text-white leading-none tracking-tight mb-3">
               Campaign Cartel
@@ -1644,66 +1913,49 @@ export default function App() {
             </p>
           </div>
 
-          {/* Frosted glass form card */}
           <div className="glass-card p-6 md:p-8">
             <form onSubmit={handleSubmit} className="space-y-5">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <FormField label="Artist Name" required>
-                  <input
-                    type="text"
-                    placeholder="e.g. Milo James"
-                    value={form.artistName}
-                    onChange={(e) => setForm((f) => ({ ...f, artistName: e.target.value }))}
-                    className={inputClass}
-                  />
-                </FormField>
-                <FormField label="Song Title" required>
-                  <input
-                    type="text"
-                    placeholder="e.g. Golden Hour"
-                    value={form.songTitle}
-                    onChange={(e) => setForm((f) => ({ ...f, songTitle: e.target.value }))}
-                    className={inputClass}
-                  />
-                </FormField>
+
+              {/* Artist info banner */}
+              <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-accent/5 border border-accent/15">
+                <div className="w-7 h-7 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0">
+                  <span className="font-syne font-bold text-[11px] text-accent uppercase">
+                    {(form.artistName || '?')[0]}
+                  </span>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-inter font-semibold text-text truncate">{form.artistName}</p>
+                  <p className="text-[10px] font-inter text-muted">
+                    {artistProfile?.monthlyListeners} monthly listeners
+                    {artistProfile?.location ? ` · ${artistProfile.location}` : ''}
+                  </p>
+                </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <FormField label="Genre" required>
-                  <select
-                    value={form.genre}
-                    onChange={(e) => setForm((f) => ({ ...f, genre: e.target.value }))}
-                    className={`${inputClass} cursor-pointer`}
-                  >
-                    <option value="" disabled>Select genre...</option>
-                    {GENRES.map((g) => <option key={g} value={g}>{g}</option>)}
-                  </select>
-                </FormField>
-                <FormField label="Monthly Listeners" required>
-                  <select
-                    value={form.monthlyListeners}
-                    onChange={(e) => setForm((f) => ({ ...f, monthlyListeners: e.target.value }))}
-                    className={`${inputClass} cursor-pointer`}
-                  >
-                    <option value="" disabled>Select range...</option>
-                    {MONTHLY_LISTENER_RANGES.map((r) => <option key={r} value={r}>{r}</option>)}
-                  </select>
-                </FormField>
-              </div>
+              <FormField label="Song Title" required>
+                <input type="text" placeholder="e.g. Golden Hour" value={form.songTitle}
+                  onChange={e => setForm(f => ({ ...f, songTitle: e.target.value }))}
+                  className={inputClass} />
+              </FormField>
+
+              <FormField label="Genre" required>
+                <select value={form.genre} onChange={e => setForm(f => ({ ...f, genre: e.target.value }))}
+                  className={`${inputClass} cursor-pointer`}>
+                  <option value="" disabled>Select genre...</option>
+                  {GENRES.map(g => <option key={g} value={g}>{g}</option>)}
+                </select>
+              </FormField>
 
               <FormField label="Song Description" required>
-                <textarea
-                  rows={3}
-                  placeholder="Describe the sound, mood, and story of your song..."
+                <textarea rows={3} placeholder="Describe the sound, mood, and story of your song..."
                   value={form.songDescription}
-                  onChange={(e) => setForm((f) => ({ ...f, songDescription: e.target.value }))}
-                  className={`${inputClass} resize-none leading-relaxed`}
-                />
+                  onChange={e => setForm(f => ({ ...f, songDescription: e.target.value }))}
+                  className={`${inputClass} resize-none leading-relaxed`} />
               </FormField>
 
               <FormField label="Vibes (pick any)">
                 <div className="flex flex-wrap gap-2 pt-1">
-                  {VIBES.map((v) => (
+                  {VIBES.map(v => (
                     <VibeChip key={v} label={v} selected={form.vibes.includes(v)} onClick={() => toggleVibe(v)} />
                   ))}
                 </div>
@@ -1715,15 +1967,12 @@ export default function App() {
                 </div>
               )}
 
-              <button
-                type="submit"
-                disabled={!isValid || loading}
+              <button type="submit" disabled={!isValid || loading}
                 className={`w-full py-4 rounded-xl font-syne font-bold text-base tracking-wide transition-all duration-150 active:scale-[0.99] ${
                   isValid && !loading
                     ? 'bg-accent text-bg hover:bg-accent/90 cursor-pointer'
                     : 'bg-accent/20 text-accent/40 cursor-not-allowed'
-                }`}
-              >
+                }`}>
                 Run My Campaign →
               </button>
             </form>
