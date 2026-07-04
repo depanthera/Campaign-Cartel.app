@@ -1546,10 +1546,122 @@ function PressPitchCard({ pitch }) {
 }
 
 // ─── Press & Blog view ────────────────────────────────────────────────────────
-function PressBlogView({ profile, onBack }) {
-  const [phase, setPhase] = useState('form')
+// ─── Quick Confirm Screen ─────────────────────────────────────────────────────
+function QuickConfirmScreen({ song, profile, toolLabel, onLaunch, onEditSong, onBack, loading, msgIndex, error }) {
+  return (
+    <div className="film-grain min-h-screen font-inter" style={{ background: '#050505' }}>
+      {loading && <LoadingOverlay msgIndex={msgIndex} />}
+      <CityScene />
+      <div className="relative z-10 flex flex-col justify-start px-4 pt-10 md:pt-14"
+           style={{ minHeight: '100vh', paddingBottom: '50vh' }}>
+        <div className="max-w-xl mx-auto w-full">
+
+          <button type="button" onClick={onBack}
+            className="flex items-center gap-1.5 text-sm font-inter text-white/40 hover:text-white/70 transition-colors mb-8 group">
+            <span className="group-hover:-translate-x-0.5 transition-transform">←</span>
+            <span>Back to Song</span>
+          </button>
+
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-accent/20 bg-accent/5 mb-6">
+              <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+              <span className="text-[11px] font-inter text-accent tracking-[0.18em] uppercase">{toolLabel}</span>
+            </div>
+            <h1 className="neon-title font-syne font-black text-5xl md:text-7xl text-white leading-none tracking-tight mb-3">
+              Campaign Cartel
+            </h1>
+            <p className="font-inter text-base text-white/40 font-normal tracking-wide">
+              Everything looks good — ready to launch
+            </p>
+          </div>
+
+          <div className="glass-card p-6 md:p-8 space-y-4">
+
+            {/* Song summary */}
+            <div className="rounded-xl bg-accent/5 border border-accent/15 px-4 py-4">
+              <p className="text-[10px] font-inter text-muted/50 uppercase tracking-[0.15em] mb-3">Song</p>
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center flex-shrink-0">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C8FF57" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+                  </svg>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="font-syne font-bold text-base text-white leading-tight mb-2">{song.title}</p>
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-inter font-semibold bg-accent/15 text-accent border border-accent/30">
+                      {song.genre}
+                    </span>
+                    {(song.vibes || []).slice(0, 4).map(v => (
+                      <span key={v} className="px-2 py-0.5 rounded-full text-[10px] font-inter text-white/40 border border-white/10">{v}</span>
+                    ))}
+                    {(song.vibes || []).length > 4 && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-inter text-white/30">+{song.vibes.length - 4}</span>
+                    )}
+                  </div>
+                  {song.description && (
+                    <p className="text-[11px] font-inter text-white/30 leading-relaxed line-clamp-2">{song.description}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Artist summary */}
+            <div className="rounded-xl bg-white/[0.03] border border-white/[0.08] px-4 py-4">
+              <p className="text-[10px] font-inter text-muted/50 uppercase tracking-[0.15em] mb-3">Artist</p>
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-accent/20 border border-accent/20 flex items-center justify-center flex-shrink-0">
+                  <span className="font-syne font-bold text-xs text-accent uppercase">
+                    {(profile.artistName || '?')[0]}
+                  </span>
+                </div>
+                <div className="min-w-0">
+                  <p className="font-syne font-bold text-sm text-white">{profile.artistName}</p>
+                  <p className="text-[10px] font-inter text-white/30 mt-0.5">
+                    {profile.genre}
+                    {profile.location ? ` · ${profile.location}` : ''}
+                    {profile.monthlyListeners ? ` · ${profile.monthlyListeners} listeners` : ''}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3">
+                <p className="text-sm font-inter text-red-400">{error}</p>
+              </div>
+            )}
+
+            {/* Launch button */}
+            <button type="button" onClick={onLaunch} disabled={loading}
+              className="w-full py-4 rounded-xl font-syne font-bold text-base tracking-wide bg-accent text-bg hover:bg-accent/90 transition-all duration-150 active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed">
+              {loading ? 'Running...' : 'Launch Campaign →'}
+            </button>
+
+            {/* Edit link */}
+            <div className="text-center pt-1">
+              <button type="button" onClick={onEditSong}
+                className="text-xs font-inter text-white/30 hover:text-white/60 transition-colors underline underline-offset-2">
+                Edit Song Info
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Press Blog View ──────────────────────────────────────────────────────────
+function PressBlogView({ profile, initialSong = null, onBack, onEditSong = null }) {
+  const [phase, setPhase] = useState(() => initialSong ? 'confirm' : 'form')
   const [form, setForm] = useState({
-    songTitle: '', songDescription: '', vibes: [], storyAngle: '', pressGoals: [],
+    songTitle: initialSong?.title || '',
+    songDescription: initialSong?.description || '',
+    vibes: initialSong?.vibes || [],
+    storyAngle: '',
+    pressGoals: [],
   })
   const [loading, setLoading] = useState(false)
   const [msgIndex, setMsgIndex] = useState(0)
@@ -1577,8 +1689,7 @@ function PressBlogView({ profile, onBack }) {
 
   const isValid = form.songTitle.trim() && form.songDescription.trim()
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
+  const executePressSearch = async () => {
     if (!isValid) return
     setError('')
     setLoading(true)
@@ -1591,6 +1702,28 @@ function PressBlogView({ profile, onBack }) {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    await executePressSearch()
+  }
+
+  // Confirm phase — launched from a song, all info pre-filled
+  if (phase === 'confirm') {
+    return (
+      <QuickConfirmScreen
+        song={initialSong}
+        profile={profile}
+        toolLabel="Press & Blog"
+        onLaunch={executePressSearch}
+        onEditSong={onEditSong || (() => setPhase('form'))}
+        onBack={onBack}
+        loading={loading}
+        msgIndex={msgIndex}
+        error={error}
+      />
+    )
   }
 
   // Results
@@ -2774,6 +2907,7 @@ export default function App() {
   const [showAddSong, setShowAddSong] = useState(false)
   const [selectedSong, setSelectedSong] = useState(null)
   const [editingSong, setEditingSong] = useState(null)
+  const [campaignSong, setCampaignSong] = useState(null)
 
   const [form, setForm] = useState({
     artistName: '', songTitle: '', genre: '',
@@ -2828,6 +2962,7 @@ export default function App() {
   }
 
   const enterCampaignFromSong = (song, tool = 'playlist') => {
+    setCampaignSong(song)
     setForm({
       artistName: artistProfile?.artistName || '',
       monthlyListeners: song.monthlyListeners || artistProfile?.monthlyListeners || '',
@@ -2868,9 +3003,7 @@ export default function App() {
 
   const isValid = form.songTitle.trim() && form.genre && form.songDescription.trim()
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    if (!isValid) return
+  const executeCampaign = async () => {
     setError('')
     setLoading(true)
     try {
@@ -2889,12 +3022,19 @@ export default function App() {
       setCampaigns(updated)
       try { localStorage.setItem('cc_campaigns', JSON.stringify(updated)) } catch {}
       setResults(data)
+      setCampaignSong(null)
       setView('results')
     } catch (err) {
       setError(err.message || 'Something went wrong. Check your API key and try again.')
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (!isValid) return
+    await executeCampaign()
   }
 
   const handleBackToDashboard = () => {
@@ -2955,6 +3095,7 @@ export default function App() {
           onBack={() => setSelectedSong(null)}
           onRunPlaylistPitch={() => enterCampaignFromSong(selectedSong, 'playlist')}
           onRunPressCampaign={() => {
+            setCampaignSong(selectedSong)
             setSelectedSong(null)
             setView('press')
           }}
@@ -3004,7 +3145,20 @@ export default function App() {
     return (
       <PressBlogView
         profile={artistProfile}
-        onBack={() => setView('dashboard')}
+        initialSong={campaignSong}
+        onBack={() => {
+          const s = campaignSong
+          setCampaignSong(null)
+          if (s) setSelectedSong(s)
+          setView('dashboard')
+        }}
+        onEditSong={campaignSong ? () => {
+          const s = campaignSong
+          setCampaignSong(null)
+          setSelectedSong(s)
+          setEditingSong(s)
+          setView('dashboard')
+        } : null}
       />
     )
   }
@@ -3128,6 +3282,34 @@ export default function App() {
   }
 
   // view === 'campaign'
+  // If launched from a song, show the quick confirm screen — no form needed
+  if (campaignSong) {
+    return (
+      <QuickConfirmScreen
+        song={campaignSong}
+        profile={artistProfile}
+        toolLabel="Playlist Pitching"
+        onLaunch={executeCampaign}
+        onEditSong={() => {
+          const s = campaignSong
+          setCampaignSong(null)
+          setSelectedSong(s)
+          setEditingSong(s)
+          setView('dashboard')
+        }}
+        onBack={() => {
+          const s = campaignSong
+          setCampaignSong(null)
+          setSelectedSong(s)
+          setView('dashboard')
+        }}
+        loading={loading}
+        msgIndex={msgIndex}
+        error={error}
+      />
+    )
+  }
+
   return (
     <div className="film-grain min-h-screen font-inter" style={{ background: '#050505' }}>
       {loading && <LoadingOverlay msgIndex={msgIndex} />}
