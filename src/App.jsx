@@ -1824,25 +1824,44 @@ function ToolCard({ id, title, description, available, isPro = false, onLaunch }
 
 // ─── Campaign history item ────────────────────────────────────────────────────
 function CampaignHistoryItem({ campaign, onView, onDelete }) {
+  const [confirming, setConfirming] = useState(false)
   const d = new Date(campaign.date)
   const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
   const count = campaign.pitchCount ?? 0
   const hasResults = !!campaign.results
+
+  const handleDeleteClick = (e) => {
+    e.stopPropagation()
+    setConfirming(true)
+  }
+
+  const handleConfirm = (e) => {
+    e.stopPropagation()
+    onDelete()
+  }
+
+  const handleCancel = (e) => {
+    e.stopPropagation()
+    setConfirming(false)
+  }
+
   return (
     <div className={`relative bg-surface border rounded-xl transition-all duration-150 group ${
-      hasResults
+      confirming
+        ? 'border-red-500/40 bg-red-500/[0.03]'
+        : hasResults
         ? 'border-border hover:border-accent/50 hover:bg-accent/[0.04]'
         : 'border-border/50 opacity-60'
     }`}>
-      <button type="button" onClick={hasResults ? onView : undefined}
-        className={`w-full px-4 py-3.5 flex items-center justify-between gap-3 text-left pr-12 ${
-          hasResults ? 'cursor-pointer' : 'cursor-default'
-        }`}>
+      <button type="button" onClick={hasResults && !confirming ? onView : undefined}
+        className={`w-full px-4 py-3.5 flex items-center justify-between gap-3 text-left ${
+          confirming ? 'pr-4' : 'pr-12'
+        } ${hasResults && !confirming ? 'cursor-pointer' : 'cursor-default'}`}>
         <div className="min-w-0 flex items-center gap-3">
           <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors duration-150 ${
-            hasResults ? 'bg-accent/8 group-hover:bg-accent/15' : 'bg-border/30'
+            confirming ? 'bg-red-500/10' : hasResults ? 'bg-accent/8 group-hover:bg-accent/15' : 'bg-border/30'
           }`}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={hasResults ? '#C8FF57' : '#555'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={confirming ? '#f87171' : hasResults ? '#C8FF57' : '#555'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
             </svg>
           </div>
@@ -1853,27 +1872,45 @@ function CampaignHistoryItem({ campaign, onView, onDelete }) {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-3 flex-shrink-0">
-          <span className="text-xs font-inter text-muted/40">{label}</span>
-          {hasResults && (
-            <span className="text-xs font-inter font-semibold text-accent opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-              View Results →
-            </span>
-          )}
-        </div>
+
+        {confirming ? (
+          /* Inline confirmation */
+          <div className="flex items-center gap-2 flex-shrink-0" onClick={e => e.stopPropagation()}>
+            <span className="text-xs font-inter text-red-400/80">Delete this?</span>
+            <button type="button" onClick={handleConfirm}
+              className="px-2.5 py-1 text-[11px] font-inter font-semibold rounded-lg bg-red-500/15 text-red-400 border border-red-500/30 hover:bg-red-500/25 transition-all duration-150">
+              Delete
+            </button>
+            <button type="button" onClick={handleCancel}
+              className="px-2.5 py-1 text-[11px] font-inter font-semibold rounded-lg bg-surface text-muted border border-border hover:border-border/80 hover:text-text transition-all duration-150">
+              Cancel
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <span className="text-xs font-inter text-muted/40">{label}</span>
+            {hasResults && (
+              <span className="text-xs font-inter font-semibold text-accent opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                View Results →
+              </span>
+            )}
+          </div>
+        )}
       </button>
 
-      {/* Delete button */}
-      <button
-        type="button"
-        onClick={(e) => { e.stopPropagation(); onDelete() }}
-        title="Delete campaign"
-        className="absolute right-3 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg flex items-center justify-center text-muted/30 hover:text-red-400 hover:bg-red-400/10 transition-all duration-150 opacity-0 group-hover:opacity-100"
-      >
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-        </svg>
-      </button>
+      {/* Delete button — hidden when confirming */}
+      {!confirming && (
+        <button
+          type="button"
+          onClick={handleDeleteClick}
+          title="Delete campaign"
+          className="absolute right-3 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg flex items-center justify-center text-red-500/30 hover:text-red-400 hover:bg-red-400/10 transition-all duration-150 opacity-0 group-hover:opacity-100"
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+          </svg>
+        </button>
+      )}
     </div>
   )
 }
