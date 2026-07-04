@@ -930,6 +930,151 @@ function SubmitNowModal({ pitch, onClose, onMarkSubmitted }) {
   )
 }
 
+// ─── Playlist curator card (new results UI) ───────────────────────────────────
+function PlaylistCuratorCard({ pitch, index, checked, onToggle }) {
+  const [expanded, setExpanded] = useState(false)
+  const [copiedSubject, setCopiedSubject] = useState(false)
+  const [copiedBody, setCopiedBody] = useState(false)
+  const [copiedFull, setCopiedFull] = useState(false)
+
+  const score = pitch.matchScore ?? 85
+  const platform = pitch.platform || 'Direct Email'
+  const accent = getPlatformAccent(platform)
+  const fullPitch = `Subject: ${pitch.subject}\n\n${pitch.pitch}`
+  const scoreColor = score >= 90 ? '#C8FF57' : score >= 80 ? '#FACC15' : '#FB923C'
+
+  const copy = async (text, set) => {
+    try { await navigator.clipboard.writeText(text) } catch {}
+    set(true)
+    setTimeout(() => set(false), 1600)
+  }
+
+  const handleCardClick = (e) => {
+    if (e.target.closest('button') || e.target.closest('a')) return
+    setExpanded(v => !v)
+  }
+
+  return (
+    <div
+      className={`rounded-2xl border overflow-hidden transition-all duration-200 cursor-pointer select-none ${
+        checked
+          ? 'border-accent/50 bg-surface'
+          : expanded
+          ? 'border-border/80 bg-surface'
+          : 'border-border bg-surface hover:border-border/80'
+      }`}
+      onClick={handleCardClick}
+    >
+      {/* Card header row */}
+      <div className="p-4 flex items-start gap-3">
+        {/* Cover art placeholder */}
+        <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-bg flex items-center justify-center border border-border/60"
+          style={{ background: `${accent}0d` }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}>
+            <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+          </svg>
+        </div>
+
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <p className="font-syne font-bold text-sm text-text leading-tight truncate">{pitch.playlistName}</p>
+          <p className="text-xs font-inter text-muted mt-0.5 truncate">{pitch.curatorName}</p>
+
+          {/* Stats row */}
+          <div className="flex items-center gap-2 mt-2 flex-wrap">
+            <span className="text-[11px] font-inter font-semibold" style={{ color: scoreColor }}>
+              {score}% match
+            </span>
+            <span className="text-muted/40 text-[10px]">·</span>
+            <span className="text-[11px] font-inter text-muted">{pitch.followers} followers</span>
+            {pitch.trendingStatus && (
+              <span className="text-[10px] font-inter px-1.5 py-0.5 rounded-full bg-accent/10 text-accent border border-accent/20 truncate max-w-[140px]">
+                {pitch.trendingStatus}
+              </span>
+            )}
+          </div>
+
+          {/* Platform badge */}
+          <div className="mt-2">
+            <div
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-inter font-semibold border"
+              style={{ color: accent, borderColor: `${accent}40`, background: `${accent}12` }}
+            >
+              <PlatformIcon platform={platform} size={9} />
+              <span>{platform}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Checkbox */}
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onToggle() }}
+          className={`flex-shrink-0 w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all duration-150 mt-0.5 ${
+            checked ? 'bg-accent border-accent' : 'border-border/60 bg-transparent hover:border-accent/50'
+          }`}
+        >
+          {checked && (
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#050505" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          )}
+        </button>
+      </div>
+
+      {/* Expanded pitch panel */}
+      {expanded && (
+        <div className="border-t border-border/60 bg-bg/40 px-4 py-4 space-y-3" onClick={e => e.stopPropagation()}>
+          {/* Subject line */}
+          <div>
+            <p className="text-[10px] font-inter font-semibold text-muted uppercase tracking-wider mb-1.5">Subject</p>
+            <p className="text-xs font-inter text-text/80 bg-surface rounded-lg px-3 py-2 border border-border/40 leading-snug">
+              {pitch.subject}
+            </p>
+          </div>
+
+          {/* Body */}
+          <div>
+            <p className="text-[10px] font-inter font-semibold text-muted uppercase tracking-wider mb-1.5">Pitch Email</p>
+            <div className="bg-surface rounded-lg px-3 py-3 border border-border/40 max-h-44 overflow-y-auto">
+              <p className="text-xs font-inter text-text/70 leading-relaxed whitespace-pre-wrap">{pitch.pitch}</p>
+            </div>
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex items-center gap-2 flex-wrap pt-0.5">
+            <button type="button" onClick={() => copy(pitch.subject, setCopiedSubject)}
+              className={`px-3 py-1.5 text-xs font-inter font-semibold rounded-lg border transition-all duration-150 ${
+                copiedSubject ? 'border-accent/40 text-accent bg-accent/8' : 'border-border text-muted hover:border-accent/40 hover:text-text'
+              }`}>
+              {copiedSubject ? 'Copied!' : 'Copy Subject'}
+            </button>
+            <button type="button" onClick={() => copy(pitch.pitch, setCopiedBody)}
+              className={`px-3 py-1.5 text-xs font-inter font-semibold rounded-lg border transition-all duration-150 ${
+                copiedBody ? 'border-accent/40 text-accent bg-accent/8' : 'border-border text-muted hover:border-accent/40 hover:text-text'
+              }`}>
+              {copiedBody ? 'Copied!' : 'Copy Body'}
+            </button>
+            <button type="button" onClick={() => copy(fullPitch, setCopiedFull)}
+              className={`px-3 py-1.5 text-xs font-inter font-semibold rounded-lg border transition-all duration-150 ${
+                copiedFull ? 'border-accent/40 text-accent bg-accent/8' : 'border-border text-muted hover:border-accent/40 hover:text-text'
+              }`}>
+              {copiedFull ? 'Copied!' : 'Copy Full Email'}
+            </button>
+            <a
+              href={getPlatformUrl(platform)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-3 py-1.5 text-xs font-inter font-semibold rounded-lg transition-all duration-150 flex items-center gap-1"
+              style={{ background: accent, color: '#050505' }}
+            >
+              Open Submission Page →
+            </a>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function PitchCard({ pitch, isSubmitted, onMarkSubmitted }) {
   const [open, setOpen] = useState(false)
   const [showModal, setShowModal] = useState(false)
@@ -951,7 +1096,6 @@ function PitchCard({ pitch, isSubmitted, onMarkSubmitted }) {
       <div className={`bg-surface border rounded-2xl overflow-hidden transition-colors duration-200 ${
         isSubmitted ? 'border-accent/40' : 'border-border hover:border-accent/30'
       }`}>
-        {/* Submitted banner */}
         {isSubmitted && (
           <div className="px-4 py-1.5 bg-accent/8 border-b border-accent/20 flex items-center gap-2">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-accent flex-shrink-0"><polyline points="20 6 9 17 4 12"/></svg>
@@ -961,7 +1105,6 @@ function PitchCard({ pitch, isSubmitted, onMarkSubmitted }) {
 
         <div className="p-4 flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
-            {/* Platform badge */}
             <div className="flex items-center gap-1.5 mb-1.5">
               <div
                 className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-inter font-semibold border"
@@ -1680,24 +1823,31 @@ function ToolCard({ id, title, description, available, isPro = false, onLaunch }
 }
 
 // ─── Campaign history item ────────────────────────────────────────────────────
-function CampaignHistoryItem({ campaign }) {
+function CampaignHistoryItem({ campaign, onView }) {
   const d = new Date(campaign.date)
   const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  const count = campaign.pitchCount ?? 0
   return (
-    <div className="bg-surface border border-border rounded-xl px-4 py-3 flex items-center justify-between gap-3">
+    <button type="button" onClick={onView}
+      className="w-full bg-surface border border-border rounded-xl px-4 py-3 flex items-center justify-between gap-3 hover:border-accent/30 transition-all duration-150 text-left group">
       <div className="min-w-0">
         <p className="font-syne font-bold text-sm text-text truncate">"{campaign.songTitle}"</p>
         <p className="text-xs font-inter text-muted mt-0.5">
-          {campaign.genre} · {campaign.pitchCount} pitch{campaign.pitchCount !== 1 ? 'es' : ''}
+          {campaign.genre} · {count} curator{count !== 1 ? 's' : ''} targeted
         </p>
       </div>
-      <span className="text-xs font-inter text-muted/50 flex-shrink-0">{label}</span>
-    </div>
+      <div className="flex items-center gap-3 flex-shrink-0">
+        <span className="text-xs font-inter text-muted/50">{label}</span>
+        <span className="text-xs font-inter font-semibold text-accent opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+          View Results →
+        </span>
+      </div>
+    </button>
   )
 }
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
-function Dashboard({ profile, campaigns, onLaunchCampaign, onLaunchPress, onEditProfile }) {
+function Dashboard({ profile, campaigns, onLaunchCampaign, onLaunchPress, onEditProfile, onViewCampaign }) {
   return (
     <div className="min-h-screen bg-bg font-inter">
       <NavBar profile={profile} onDashboard={() => {}} />
@@ -1774,8 +1924,8 @@ function Dashboard({ profile, campaigns, onLaunchCampaign, onLaunchPress, onEdit
             </div>
           ) : (
             <div className="space-y-2.5">
-              {campaigns.slice(0, 8).map((c, i) => (
-                <CampaignHistoryItem key={i} campaign={c} />
+              {campaigns.slice(0, 3).map((c, i) => (
+                <CampaignHistoryItem key={i} campaign={c} onView={() => onViewCampaign(c)} />
               ))}
             </div>
           )}
@@ -2064,6 +2214,7 @@ export default function App() {
   const [error, setError] = useState('')
   const [selectedTip, setSelectedTip] = useState(null)
   const [submittedSet, setSubmittedSet] = useState(new Set())
+  const [checkedSet, setCheckedSet] = useState(new Set())
   const intervalRef = useRef(null)
 
   useEffect(() => {
@@ -2113,9 +2264,11 @@ export default function App() {
       const data = await runCampaign(form)
       const entry = {
         date: new Date().toISOString(),
+        artistName: form.artistName,
         songTitle: form.songTitle,
         genre: form.genre,
         pitchCount: data.pitches?.length || 0,
+        results: data,
       }
       const updated = [entry, ...campaigns]
       setCampaigns(updated)
@@ -2132,7 +2285,25 @@ export default function App() {
   const handleBackToDashboard = () => {
     setSelectedTip(null)
     setSubmittedSet(new Set())
+    setCheckedSet(new Set())
     setView('dashboard')
+  }
+
+  const loadCampaignResults = (campaign) => {
+    if (!campaign.results) return
+    setForm({
+      artistName: campaign.artistName || '',
+      songTitle: campaign.songTitle || '',
+      genre: campaign.genre || '',
+      monthlyListeners: '',
+      songDescription: '',
+      vibes: [],
+    })
+    setResults(campaign.results)
+    setSelectedTip(null)
+    setSubmittedSet(new Set())
+    setCheckedSet(new Set())
+    setView('results')
   }
 
   const handleNewCampaign = () => {
@@ -2162,6 +2333,7 @@ export default function App() {
         onLaunchCampaign={enterCampaign}
         onLaunchPress={() => setView('press')}
         onEditProfile={() => setEditingProfile(true)}
+        onViewCampaign={loadCampaignResults}
       />
     )
   }
@@ -2214,21 +2386,75 @@ export default function App() {
             total={results.pitches?.length ?? 0}
             submitted={submittedSet.size}
           />
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-syne font-bold text-xl text-text">Your Pitch Pack</h2>
-            <span className="text-xs font-inter text-muted">{results.pitches?.length ?? 0} curators targeted</span>
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            {(results.pitches ?? []).map((pitch, i) => (
-              <PitchCard
-                key={i}
-                pitch={pitch}
-                isSubmitted={submittedSet.has(i)}
-                onMarkSubmitted={() => setSubmittedSet(s => new Set([...s, i]))}
-              />
-            ))}
-          </div>
-          <div className="mt-10 text-center">
+
+          {/* Playlist selection header */}
+          {(() => {
+            const pitches = results.pitches ?? []
+            const allChecked = pitches.length > 0 && checkedSet.size === pitches.length
+            const toggleAll = () => {
+              if (allChecked) {
+                setCheckedSet(new Set())
+              } else {
+                setCheckedSet(new Set(pitches.map((_, i) => i)))
+              }
+            }
+            const toggleOne = (i) => setCheckedSet(s => {
+              const next = new Set(s)
+              next.has(i) ? next.delete(i) : next.add(i)
+              return next
+            })
+            return (
+              <>
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h2 className="font-syne font-bold text-xl text-text">
+                      {pitches.length} curator{pitches.length !== 1 ? 's' : ''} matched to "{form.songTitle}"
+                    </h2>
+                    <p className="text-xs font-inter text-muted mt-0.5">Click a card to expand the pitch · check to select</p>
+                  </div>
+                  <button type="button" onClick={toggleAll}
+                    className="text-xs font-inter font-semibold text-accent hover:text-accent/70 transition-colors flex-shrink-0">
+                    {allChecked ? 'Deselect All' : 'Select All'}
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pb-28">
+                  {pitches.map((pitch, i) => (
+                    <PlaylistCuratorCard
+                      key={i}
+                      pitch={pitch}
+                      index={i}
+                      checked={checkedSet.has(i)}
+                      onToggle={() => toggleOne(i)}
+                    />
+                  ))}
+                </div>
+
+                {/* Sticky submit bar */}
+                {checkedSet.size > 0 && (
+                  <div className="fixed bottom-0 left-0 right-0 z-40 bg-bg/95 backdrop-blur-md border-t border-border/60 px-4 py-4">
+                    <div className="max-w-5xl mx-auto flex items-center justify-between gap-4">
+                      <p className="text-sm font-inter text-text">
+                        <span className="font-syne font-bold text-accent">{checkedSet.size}</span>
+                        {' '}selected
+                      </p>
+                      <button type="button"
+                        onClick={() => {
+                          const selected = [...checkedSet].map(i => pitches[i])
+                          const first = selected[0]
+                          if (first) window.open(getPlatformUrl(first.platform || 'Direct Email'), '_blank', 'noopener')
+                        }}
+                        className="px-6 py-2.5 bg-accent text-bg font-syne font-bold text-sm rounded-xl hover:bg-accent/90 transition-all duration-150 active:scale-[0.99]">
+                        Submit Your Pitches →
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
+            )
+          })()}
+
+          <div className="mt-10 text-center pb-10">
             <button type="button" onClick={handleBackToDashboard}
               className="px-8 py-3.5 bg-accent text-bg font-syne font-bold text-sm rounded-xl hover:bg-accent/90 transition-all duration-150 active:scale-95">
               ← Back to Dashboard
