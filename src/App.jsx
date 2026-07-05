@@ -1533,44 +1533,7 @@ const SOCIAL_LOADING_MESSAGES = [
   'Almost done...',
 ]
 
-const SOCIAL_PLATFORMS = ['TikTok', 'Instagram Reels', 'YouTube Shorts']
-const SOCIAL_GOALS = ['Announce Release', 'Grow Following', 'Build Brand', 'Drive Streams', 'Behind the Scenes', 'Fan Engagement']
-
-function buildSocialPrompt(form, profile) {
-  return `You are a music social media expert in 2026. Generate a social strategy for this artist.
-
-Artist: ${profile.artistName}
-Genre: ${profile.genre}${profile.subgenre ? ` / ${profile.subgenre}` : ''}
-Song: ${form.songTitle}
-Description: ${form.songDescription}${form.vibes.length ? `\nVibes: ${form.vibes.join(', ')}` : ''}${form.platforms.length ? `\nPlatforms: ${form.platforms.join(', ')}` : ''}${form.goals.length ? `\nGoals: ${form.goals.join(', ')}` : ''}
-
-Return ONLY this exact JSON with no extra text:
-{
-  "overview": "2-3 sentence strategy summary tailored to this artist and genre",
-  "tiktokTips": ["tip 1", "tip 2", "tip 3", "tip 4", "tip 5"],
-  "instagramTips": ["tip 1", "tip 2", "tip 3", "tip 4", "tip 5"],
-  "postingSchedule": {
-    "tiktok": "posting frequency and best times for TikTok",
-    "instagram": "posting frequency and best times for Instagram"
-  },
-  "contentIdeas": [
-    { "day": 1, "platform": "TikTok", "idea": "post idea", "caption": "example caption", "hook": "opening hook" },
-    { "day": 2, "platform": "Instagram", "idea": "post idea", "caption": "example caption", "hook": "opening hook" },
-    { "day": 3, "platform": "TikTok", "idea": "post idea", "caption": "example caption", "hook": "opening hook" },
-    { "day": 4, "platform": "Instagram", "idea": "post idea", "caption": "example caption", "hook": "opening hook" },
-    { "day": 5, "platform": "TikTok", "idea": "post idea", "caption": "example caption", "hook": "opening hook" },
-    { "day": 6, "platform": "Instagram", "idea": "post idea", "caption": "example caption", "hook": "opening hook" },
-    { "day": 7, "platform": "TikTok", "idea": "post idea", "caption": "example caption", "hook": "opening hook" },
-    { "day": 8, "platform": "Instagram", "idea": "post idea", "caption": "example caption", "hook": "opening hook" },
-    { "day": 9, "platform": "TikTok", "idea": "post idea", "caption": "example caption", "hook": "opening hook" },
-    { "day": 10, "platform": "Instagram", "idea": "post idea", "caption": "example caption", "hook": "opening hook" }
-  ]
-}
-
-Generate exactly 10 contentIdeas alternating TikTok and Instagram. All text must be specific to this artist — no generic placeholders.`
-}
-
-async function runSocialStrategy(form, profile) {
+async function runSocialStrategy(artistName, songTitle, genre, description) {
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -1581,43 +1544,11 @@ async function runSocialStrategy(form, profile) {
     },
     body: JSON.stringify({
       model: 'claude-sonnet-4-6',
-      max_tokens: 2000,
-      messages: [{ role: 'user', content: buildSocialPrompt(form, profile) }],
-    }),
-  })
-  if (!response.ok) {
-    const err = await response.text()
-    throw new Error(`API error ${response.status}: ${err}`)
-  }
-  const data = await response.json()
-  const raw = data.content
-    .filter(b => b.type === 'text')
-    .map(b => b.text)
-    .join('')
-  const stripped = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim()
-  try {
-    return JSON.parse(stripped)
-  } catch {
-    const match = stripped.match(/\{[\s\S]*\}/)
-    if (match) { try { return JSON.parse(match[0]) } catch {} }
-    throw new Error('The AI response was incomplete. Please try again.')
-  }
-}
-
-// helper used by retry button — kept for potential future use
-async function fetchClaudeJson(prompt, maxTokens) {
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': import.meta.env.VITE_ANTHROPIC_API_KEY,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true',
-    },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-6',
-      max_tokens: maxTokens,
-      messages: [{ role: 'user', content: prompt }],
+      max_tokens: 1500,
+      messages: [{
+        role: 'user',
+        content: `You are a music social media strategist. Generate a social strategy for ${artistName} - "${songTitle}" (${genre}, ${description}). Return ONLY valid JSON: {"overview":"string","tiktok":["5 short tips"],"instagram":["5 short tips"],"ideas":[{"platform":"TikTok or Instagram","idea":"string","caption":"string"}]}`,
+      }],
     }),
   })
   if (!response.ok) {
@@ -2070,171 +2001,54 @@ function PressBlogView({ profile, initialSong = null, onBack, onEditSong = null,
   )
 }
 
-// ─── Social Strategy results sub-components ───────────────────────────────────
-const PLATFORM_COLORS = {
-  'TikTok':          { bg: 'bg-sky-500/10',   border: 'border-sky-500/25',   text: 'text-sky-400' },
-  'Instagram Reels': { bg: 'bg-pink-500/10',  border: 'border-pink-500/25',  text: 'text-pink-400' },
-  'Both':            { bg: 'bg-accent/10',    border: 'border-accent/25',    text: 'text-accent' },
-}
-
-function PlatformBadge({ platform }) {
-  const c = PLATFORM_COLORS[platform] ?? PLATFORM_COLORS['Both']
-  return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-inter font-semibold border ${c.bg} ${c.border} ${c.text}`}>
-      {platform}
-    </span>
-  )
-}
-
-function CalendarDayCard({ entry }) {
-  const [open, setOpen] = useState(false)
-  const hashtagStr = (entry.hashtags ?? []).join(' ')
-  return (
-    <div className="bg-surface border border-border rounded-2xl overflow-hidden hover:border-accent/20 transition-colors duration-150 flex flex-col">
-      <div className="px-4 pt-4 pb-3 flex items-start justify-between gap-2">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-accent/8 border border-accent/15 font-syne font-bold text-xs text-accent flex-shrink-0">
-            {entry.day}
-          </span>
-          <PlatformBadge platform={entry.platform} />
-          <span className="text-xs font-inter font-semibold text-text">{entry.contentType}</span>
-        </div>
-      </div>
-      <div className="px-4 pb-4 space-y-3 flex-1 flex flex-col">
-        {/* Hook */}
-        <div className="rounded-lg bg-bg/60 border border-border/50 px-3 py-2.5">
-          <p className="text-[9px] font-inter text-muted/40 uppercase tracking-widest mb-1">Hook (first 3 sec)</p>
-          <p className="text-xs font-inter font-semibold text-accent leading-snug">{entry.hook}</p>
-        </div>
-        {/* Caption */}
-        <div className="space-y-1.5">
-          <button type="button" onClick={() => setOpen(v => !v)}
-            className="text-xs font-inter text-muted hover:text-accent transition-colors flex items-center gap-1">
-            <span>{open ? 'Hide Caption' : 'Read Caption'}</span>
-            <span className={`transition-transform duration-200 inline-block ${open ? 'rotate-180' : ''}`}>▾</span>
-          </button>
-          {open && (
-            <div className="bg-bg/50 rounded-xl px-3 py-3 border border-border/40 max-h-32 overflow-y-auto">
-              <p className="text-xs font-inter text-text/70 leading-relaxed whitespace-pre-wrap">{entry.caption}</p>
-            </div>
-          )}
-        </div>
-        {/* Action row */}
-        <div className="flex items-center gap-2 flex-wrap mt-auto pt-1">
-          <CopyButton text={entry.hook} label="Copy Hook" />
-          <CopyButton text={entry.caption} label="Copy Caption" />
-          <CopyButton text={hashtagStr} label="Copy Tags" />
-        </div>
-        {/* Hashtags */}
-        {entry.hashtags?.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {entry.hashtags.map((h, i) => (
-              <span key={i} className="text-[10px] font-inter text-muted/50 bg-bg/60 border border-border/30 rounded-full px-1.5 py-0.5">{h}</span>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-function ContentBankCard({ item }) {
-  const [open, setOpen] = useState(false)
-  return (
-    <div className="bg-surface border border-border rounded-2xl overflow-hidden hover:border-accent/20 transition-colors duration-150 flex flex-col">
-      <div className="px-4 pt-4 pb-2 flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 flex-wrap mb-1.5">
-            <span className="text-[10px] font-inter font-semibold text-muted/50 uppercase tracking-wider border border-border/50 rounded-full px-2 py-0.5">{item.type}</span>
-            <PlatformBadge platform={item.platform} />
-          </div>
-          <p className="font-syne font-bold text-sm text-text">{item.title}</p>
-        </div>
-      </div>
-      <div className="px-4 pb-4 space-y-3 flex-1 flex flex-col">
-        {item.tip && (
-          <p className="text-[11px] font-inter text-muted/60 leading-relaxed italic">"{item.tip}"</p>
-        )}
-        <button type="button" onClick={() => setOpen(v => !v)}
-          className="text-xs font-inter text-muted hover:text-accent transition-colors flex items-center gap-1 self-start">
-          <span>{open ? 'Hide Content' : 'Show Content'}</span>
-          <span className={`transition-transform duration-200 inline-block ${open ? 'rotate-180' : ''}`}>▾</span>
-        </button>
-        {open && (
-          <div className="bg-bg/50 rounded-xl px-3 py-3 border border-border/40 max-h-40 overflow-y-auto">
-            <p className="text-xs font-inter text-text/70 leading-relaxed whitespace-pre-wrap">{item.content}</p>
-          </div>
-        )}
-        <div className="mt-auto pt-1">
-          <CopyButton text={item.content} label="Copy" />
-        </div>
-      </div>
-    </div>
-  )
-}
-
 // ─── Social Strategy view ─────────────────────────────────────────────────────
-function ContentIdeaCard({ idea }) {
+function SocialIdeaCard({ idea }) {
   const [open, setOpen] = useState(false)
   const isTikTok = idea.platform === 'TikTok'
-  const platformColor = isTikTok
-    ? { dot: 'bg-sky-400', border: 'border-sky-500/20', bg: 'bg-sky-500/8', text: 'text-sky-400' }
-    : { dot: 'bg-pink-400', border: 'border-pink-500/20', bg: 'bg-pink-500/8', text: 'text-pink-400' }
+  const color = isTikTok
+    ? { bg: 'bg-sky-500/10', border: 'border-sky-500/20', text: 'text-sky-400', dot: 'bg-sky-400' }
+    : { bg: 'bg-pink-500/10', border: 'border-pink-500/20', text: 'text-pink-400', dot: 'bg-pink-400' }
 
   return (
     <div className="bg-surface border border-border rounded-2xl overflow-hidden hover:border-accent/20 transition-colors duration-150 flex flex-col">
-      <div className="px-4 pt-4 pb-3 flex items-start gap-3">
-        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-inter font-semibold border ${platformColor.bg} ${platformColor.border} ${platformColor.text} flex-shrink-0`}>
-          <span className={`w-1.5 h-1.5 rounded-full ${platformColor.dot}`} />
+      <div className="px-4 pt-4 pb-2">
+        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-inter font-semibold border ${color.bg} ${color.border} ${color.text}`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${color.dot}`} />
           {idea.platform}
         </span>
-        <span className="text-[10px] font-inter text-muted/50 border border-border/40 rounded-full px-2 py-0.5 flex-shrink-0">Day {idea.day}</span>
       </div>
-      <div className="px-4 pb-4 space-y-3 flex-1 flex flex-col">
+      <div className="px-4 pb-4 space-y-2.5 flex-1 flex flex-col">
         <p className="text-sm font-inter font-semibold text-text leading-snug">{idea.idea}</p>
-        {idea.hook && (
-          <div className="rounded-lg bg-accent/5 border border-accent/15 px-3 py-2">
-            <p className="text-[9px] font-inter text-muted/40 uppercase tracking-widest mb-1">Hook</p>
-            <p className="text-xs font-inter font-semibold text-accent leading-snug">{idea.hook}</p>
-          </div>
-        )}
         <button type="button" onClick={() => setOpen(v => !v)}
           className="text-xs font-inter text-muted hover:text-accent transition-colors flex items-center gap-1 self-start">
-          <span>{open ? 'Hide Caption' : 'Read Caption'}</span>
+          <span>{open ? 'Hide Caption' : 'Show Caption'}</span>
           <span className={`transition-transform duration-200 inline-block ${open ? 'rotate-180' : ''}`}>▾</span>
         </button>
         {open && (
           <div className="bg-bg/50 rounded-xl px-3 py-2.5 border border-border/40">
-            <p className="text-xs font-inter text-text/70 leading-relaxed whitespace-pre-wrap">{idea.caption}</p>
+            <p className="text-xs font-inter text-text/70 leading-relaxed">{idea.caption}</p>
           </div>
         )}
-        <div className="flex gap-2 flex-wrap mt-auto pt-1">
-          {idea.hook && <CopyButton text={idea.hook} label="Copy Hook" />}
-          {idea.caption && <CopyButton text={idea.caption} label="Copy Caption" />}
-        </div>
+        {open && idea.caption && (
+          <CopyButton text={idea.caption} label="Copy Caption" />
+        )}
       </div>
     </div>
   )
 }
 
-function SocialStrategyView({ profile, initialSong = null, onBack, onEditSong = null, onSaveCampaign = null, initialResults = null, initialSongTitle = '' }) {
-  const [phase, setPhase] = useState(() => {
-    if (initialResults) return 'results'
-    if (initialSong) return 'confirm'
-    return 'form'
-  })
-  const [form, setForm] = useState({
-    songTitle: initialSongTitle || initialSong?.title || '',
-    songDescription: initialSong?.description || '',
-    vibes: initialSong?.vibes || [],
-    platforms: [],
-    goals: [],
-  })
+function SocialStrategyView({ profile, initialSong = null, onBack, onSaveCampaign = null, initialResults = null, initialSongTitle = '' }) {
+  const [phase, setPhase] = useState(() => initialResults ? 'results' : 'confirm')
   const [loading, setLoading] = useState(false)
   const [msgIndex, setMsgIndex] = useState(0)
   const [results, setResults] = useState(initialResults)
   const [error, setError] = useState('')
   const intervalRef = useRef(null)
+
+  const song = initialSong
+  const songTitle = song?.title || initialSongTitle || ''
+  const genre = song?.genre || profile.genre || ''
+  const description = song?.description || ''
 
   useEffect(() => {
     if (loading) {
@@ -2246,33 +2060,20 @@ function SocialStrategyView({ profile, initialSong = null, onBack, onEditSong = 
     return () => clearInterval(intervalRef.current)
   }, [loading])
 
-  const togglePlatform = p => setForm(f => ({
-    ...f, platforms: f.platforms.includes(p) ? f.platforms.filter(x => x !== p) : [...f.platforms, p],
-  }))
-  const toggleGoal = g => setForm(f => ({
-    ...f, goals: f.goals.includes(g) ? f.goals.filter(x => x !== g) : [...f.goals, g],
-  }))
-  const toggleVibe = v => setForm(f => ({
-    ...f, vibes: f.vibes.includes(v) ? f.vibes.filter(x => x !== v) : [...f.vibes, v],
-  }))
-
-  const isValid = form.songTitle.trim() && form.songDescription.trim()
-
   const execute = async () => {
-    if (!isValid) return
     setError('')
     setLoading(true)
     try {
-      const data = await runSocialStrategy(form, profile)
+      const data = await runSocialStrategy(profile.artistName, songTitle, genre, description)
       setResults(data)
       setPhase('results')
       if (onSaveCampaign) {
         onSaveCampaign({
           date: new Date().toISOString(),
           artistName: profile.artistName,
-          songTitle: form.songTitle,
-          genre: profile.genre,
-          pitchCount: data.contentIdeas?.length || 0,
+          songTitle,
+          genre,
+          pitchCount: data.ideas?.length || 0,
           results: data,
           tool: 'social',
         })
@@ -2288,11 +2089,11 @@ function SocialStrategyView({ profile, initialSong = null, onBack, onEditSong = 
   if (phase === 'confirm') {
     return (
       <QuickConfirmScreen
-        song={initialSong}
+        song={song}
         profile={profile}
         toolLabel="Social Strategy"
         onLaunch={execute}
-        onEditSong={onEditSong || (() => setPhase('form'))}
+        onEditSong={null}
         onBack={onBack}
         loading={loading}
         msgIndex={msgIndex}
@@ -2304,13 +2105,14 @@ function SocialStrategyView({ profile, initialSong = null, onBack, onEditSong = 
 
   // Results phase
   if (phase === 'results' && results) {
-    const ideas = results.contentIdeas ?? []
-    const schedule = results.postingSchedule ?? {}
+    const tiktok = results.tiktok ?? []
+    const instagram = results.instagram ?? []
+    const ideas = results.ideas ?? []
 
     return (
       <div className="min-h-screen bg-bg font-inter">
         <header className="sticky top-0 z-10 bg-bg/80 backdrop-blur-md border-b border-border">
-          <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
+          <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <button type="button" onClick={onBack}
                 className="flex items-center gap-1.5 text-sm font-inter text-muted hover:text-text transition-colors group">
@@ -2321,12 +2123,12 @@ function SocialStrategyView({ profile, initialSong = null, onBack, onEditSong = 
               <span className="font-syne font-black text-xl text-text tracking-tight">Social Strategy</span>
             </div>
             <span className="text-xs font-inter text-muted hidden sm:block">
-              {profile.artistName} — "{form.songTitle || initialSongTitle}"
+              {profile.artistName}{songTitle ? ` — "${songTitle}"` : ''}
             </span>
           </div>
         </header>
 
-        <main className="max-w-5xl mx-auto px-4 py-8 space-y-8">
+        <main className="max-w-4xl mx-auto px-4 py-8 space-y-6">
 
           {/* Overview */}
           {results.overview && (
@@ -2339,18 +2141,20 @@ function SocialStrategyView({ profile, initialSong = null, onBack, onEditSong = 
             </div>
           )}
 
-          {/* Platform Tips */}
+          {/* TikTok + Instagram Tips */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {/* TikTok Tips */}
+            {/* TikTok */}
             <div className="bg-surface border border-border rounded-2xl p-5">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-6 h-6 rounded-lg bg-sky-500/10 border border-sky-500/20 flex items-center justify-center flex-shrink-0">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"/></svg>
+              <div className="flex items-center gap-2.5 mb-4">
+                <div className="w-7 h-7 rounded-lg bg-sky-500/10 border border-sky-500/20 flex items-center justify-center flex-shrink-0">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"/>
+                  </svg>
                 </div>
                 <h3 className="font-syne font-bold text-sm text-text">TikTok Tips</h3>
               </div>
-              <ul className="space-y-2.5">
-                {(results.tiktokTips ?? []).map((tip, i) => (
+              <ul className="space-y-3">
+                {tiktok.map((tip, i) => (
                   <li key={i} className="flex items-start gap-2.5">
                     <span className="w-4 h-4 rounded-full bg-sky-500/10 border border-sky-500/20 text-[9px] font-syne font-bold text-sky-400 flex items-center justify-center flex-shrink-0 mt-0.5">{i + 1}</span>
                     <p className="text-xs font-inter text-text/70 leading-relaxed">{tip}</p>
@@ -2359,16 +2163,20 @@ function SocialStrategyView({ profile, initialSong = null, onBack, onEditSong = 
               </ul>
             </div>
 
-            {/* Instagram Tips */}
+            {/* Instagram */}
             <div className="bg-surface border border-border rounded-2xl p-5">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-6 h-6 rounded-lg bg-pink-500/10 border border-pink-500/20 flex items-center justify-center flex-shrink-0">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f472b6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+              <div className="flex items-center gap-2.5 mb-4">
+                <div className="w-7 h-7 rounded-lg bg-pink-500/10 border border-pink-500/20 flex items-center justify-center flex-shrink-0">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f472b6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+                  </svg>
                 </div>
                 <h3 className="font-syne font-bold text-sm text-text">Instagram Tips</h3>
               </div>
-              <ul className="space-y-2.5">
-                {(results.instagramTips ?? []).map((tip, i) => (
+              <ul className="space-y-3">
+                {instagram.map((tip, i) => (
                   <li key={i} className="flex items-start gap-2.5">
                     <span className="w-4 h-4 rounded-full bg-pink-500/10 border border-pink-500/20 text-[9px] font-syne font-bold text-pink-400 flex items-center justify-center flex-shrink-0 mt-0.5">{i + 1}</span>
                     <p className="text-xs font-inter text-text/70 leading-relaxed">{tip}</p>
@@ -2378,33 +2186,9 @@ function SocialStrategyView({ profile, initialSong = null, onBack, onEditSong = 
             </div>
           </div>
 
-          {/* Posting Schedule */}
-          {(schedule.tiktok || schedule.instagram) && (
-            <div className="bg-surface border border-border rounded-2xl p-5">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-1.5 h-1.5 rounded-full bg-border" />
-                <h2 className="font-syne font-bold text-base text-text">Posting Schedule</h2>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {schedule.tiktok && (
-                  <div className="bg-bg/60 border border-sky-500/15 rounded-xl px-4 py-3">
-                    <p className="text-[9px] font-inter text-sky-400/60 uppercase tracking-widest mb-1.5">TikTok</p>
-                    <p className="text-xs font-inter text-text/80 leading-relaxed">{schedule.tiktok}</p>
-                  </div>
-                )}
-                {schedule.instagram && (
-                  <div className="bg-bg/60 border border-pink-500/15 rounded-xl px-4 py-3">
-                    <p className="text-[9px] font-inter text-pink-400/60 uppercase tracking-widest mb-1.5">Instagram</p>
-                    <p className="text-xs font-inter text-text/80 leading-relaxed">{schedule.instagram}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
           {/* Content Ideas */}
           {ideas.length > 0 && (
-            <section>
+            <div>
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-1.5 h-1.5 rounded-full bg-border" />
                 <h2 className="font-syne font-bold text-base text-text">Content Ideas</h2>
@@ -2412,10 +2196,10 @@ function SocialStrategyView({ profile, initialSong = null, onBack, onEditSong = 
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {ideas.map((idea, i) => (
-                  <ContentIdeaCard key={i} idea={idea} />
+                  <SocialIdeaCard key={i} idea={idea} />
                 ))}
               </div>
-            </section>
+            </div>
           )}
 
         </main>
@@ -2423,785 +2207,10 @@ function SocialStrategyView({ profile, initialSong = null, onBack, onEditSong = 
     )
   }
 
-  // Form phase
-  return (
-    <div className="film-grain min-h-screen font-inter" style={{ background: '#050505' }}>
-      {loading && <LoadingOverlay msgIndex={msgIndex} messages={SOCIAL_LOADING_MESSAGES} />}
-      <CityScene />
-      <div className="relative z-10 flex flex-col justify-start px-4 pt-10 md:pt-14"
-           style={{ minHeight: '100vh', paddingBottom: '50vh' }}>
-        <div className="max-w-xl mx-auto w-full">
-
-          <button type="button" onClick={onBack}
-            className="flex items-center gap-1.5 text-sm font-inter text-white/40 hover:text-white/70 transition-colors mb-8 group">
-            <span className="group-hover:-translate-x-0.5 transition-transform">←</span>
-            <span>Back to Dashboard</span>
-          </button>
-
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-accent/20 bg-accent/5 mb-6">
-              <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
-              <span className="text-[11px] font-inter text-accent tracking-[0.18em] uppercase">Social Strategy</span>
-            </div>
-            <h1 className="neon-title font-syne font-black text-5xl md:text-7xl text-white leading-none tracking-tight mb-3">
-              Campaign Cartel
-            </h1>
-            <p className="font-inter text-base md:text-lg text-white/50 font-normal tracking-wide">
-              Your AI Promotion Team
-            </p>
-          </div>
-
-          <div className="glass-card p-6 md:p-8">
-            <form onSubmit={e => { e.preventDefault(); execute() }} className="space-y-5">
-
-              {/* Artist banner */}
-              <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-accent/5 border border-accent/15">
-                <div className="w-7 h-7 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0">
-                  <span className="font-syne font-bold text-[11px] text-accent uppercase">
-                    {(profile.artistName || '?')[0]}
-                  </span>
-                </div>
-                <div className="min-w-0">
-                  <p className="text-xs font-inter font-semibold text-text truncate">{profile.artistName}</p>
-                  <p className="text-[10px] font-inter text-muted">
-                    {profile.genre}{profile.subgenre ? ` · ${profile.subgenre}` : ''}
-                    {profile.location ? ` · ${profile.location}` : ''}
-                  </p>
-                </div>
-              </div>
-
-              <FormField label="Song Title" required>
-                <input type="text" placeholder="e.g. Golden Hour" value={form.songTitle}
-                  onChange={e => setForm(f => ({ ...f, songTitle: e.target.value }))}
-                  className={inputClass} />
-              </FormField>
-
-              <FormField label="Song Description" required>
-                <textarea rows={3} placeholder="Describe the sound, mood, and feel of your song..."
-                  value={form.songDescription}
-                  onChange={e => setForm(f => ({ ...f, songDescription: e.target.value }))}
-                  className={`${inputClass} resize-none leading-relaxed`} />
-              </FormField>
-
-              <FormField label="Vibes (pick any)">
-                <div className="flex flex-wrap gap-2 pt-1">
-                  {VIBES.map(v => (
-                    <VibeChip key={v} label={v} selected={form.vibes.includes(v)} onClick={() => toggleVibe(v)} />
-                  ))}
-                </div>
-              </FormField>
-
-              <FormField label="Platforms">
-                <div className="flex flex-wrap gap-2 pt-1">
-                  {SOCIAL_PLATFORMS.map(p => (
-                    <VibeChip key={p} label={p} selected={form.platforms.includes(p)} onClick={() => togglePlatform(p)} />
-                  ))}
-                </div>
-              </FormField>
-
-              <FormField label="Goals (pick any)">
-                <div className="flex flex-wrap gap-2 pt-1">
-                  {SOCIAL_GOALS.map(g => (
-                    <VibeChip key={g} label={g} selected={form.goals.includes(g)} onClick={() => toggleGoal(g)} />
-                  ))}
-                </div>
-              </FormField>
-
-              {error && (
-                <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3">
-                  <p className="text-sm font-inter text-red-400">{error}</p>
-                </div>
-              )}
-
-              <button type="submit" disabled={!isValid || loading}
-                className={`w-full py-4 rounded-xl font-syne font-bold text-base tracking-wide transition-all duration-150 active:scale-[0.99] ${
-                  isValid && !loading ? 'bg-accent text-bg hover:bg-accent/90 cursor-pointer' : 'bg-accent/20 text-accent/40 cursor-not-allowed'
-                }`}>
-                Build My Strategy →
-              </button>
-            </form>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
+  return null
 }
 
-// ─── Nav bar ──────────────────────────────────────────────────────────────────
-function NavBar({ profile, onDashboard }) {
-  return (
-    <header className="sticky top-0 z-50 bg-bg/80 backdrop-blur-md border-b border-border">
-      <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
-        <span className="font-syne font-black text-xl text-text tracking-tight">Campaign Cartel</span>
-        <div className="flex items-center gap-3">
-          <button type="button" onClick={onDashboard}
-            className="text-xs font-inter text-muted hover:text-text transition-colors uppercase tracking-widest">
-            Dashboard
-          </button>
-          <button type="button" onClick={onDashboard}
-            className="w-8 h-8 rounded-full bg-accent/15 border border-accent/30 flex items-center justify-center">
-            <span className="font-syne font-bold text-xs text-accent uppercase">
-              {(profile?.artistName || '?')[0]}
-            </span>
-          </button>
-        </div>
-      </div>
-    </header>
-  )
-}
 
-// ─── Tool card ────────────────────────────────────────────────────────────────
-const TOOL_ICONS = {
-  pitching: (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
-    </svg>
-  ),
-  press: (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-      <polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
-    </svg>
-  ),
-  booking: (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 0 0-2 2v3a2 2 0 1 1 0 4v3a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-3a2 2 0 1 1 0-4V7a2 2 0 0 0-2-2H5z"/>
-    </svg>
-  ),
-  social: (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>
-    </svg>
-  ),
-}
-
-function ToolCard({ id, title, description, available, isPro = false, onLaunch }) {
-  return (
-    <div className={`relative bg-surface border rounded-2xl p-5 flex flex-col gap-4 transition-all duration-200 ${
-      available ? 'border-border hover:border-accent/40' : 'border-border/50'
-    }`}>
-      {!available && (
-        <div className="absolute top-4 right-4">
-          <span className="text-[10px] font-inter font-semibold px-2 py-1 rounded-full bg-border/80 text-muted/70 uppercase tracking-widest">
-            Soon
-          </span>
-        </div>
-      )}
-      <div className={`flex items-start gap-4 ${!available ? 'opacity-50' : ''}`}>
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-          available ? 'bg-accent/15 text-accent' : 'bg-surface border border-border/60 text-muted/40'
-        }`}>
-          {TOOL_ICONS[id]}
-        </div>
-        <div className="flex-1 min-w-0 pr-6">
-          <div className="flex items-center gap-2 mb-1">
-            <h3 className="font-syne font-bold text-[15px] text-text">{title}</h3>
-            {isPro && (
-              <span className="text-[9px] font-inter font-bold px-1.5 py-0.5 rounded-full bg-accent/15 text-accent border border-accent/30 uppercase tracking-widest">
-                PRO
-              </span>
-            )}
-          </div>
-          <p className="text-xs font-inter text-muted leading-relaxed">{description}</p>
-        </div>
-      </div>
-      {available && (
-        <button type="button" onClick={onLaunch}
-          className="w-full py-2.5 rounded-xl bg-accent text-bg font-syne font-bold text-sm hover:bg-accent/90 transition-all duration-150 active:scale-[0.99]">
-          Launch →
-        </button>
-      )}
-    </div>
-  )
-}
-
-// ─── Campaign history item ────────────────────────────────────────────────────
-function CampaignHistoryItem({ campaign, onView, onDelete }) {
-  const [confirming, setConfirming] = useState(false)
-  const d = new Date(campaign.date)
-  const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-  const count = campaign.pitchCount ?? 0
-  const hasResults = !!campaign.results
-
-  const handleDeleteClick = (e) => {
-    e.stopPropagation()
-    setConfirming(true)
-  }
-
-  const handleConfirm = (e) => {
-    e.stopPropagation()
-    onDelete()
-  }
-
-  const handleCancel = (e) => {
-    e.stopPropagation()
-    setConfirming(false)
-  }
-
-  return (
-    <div className={`relative bg-surface border rounded-xl transition-all duration-150 group ${
-      confirming
-        ? 'border-red-500/40 bg-red-500/[0.03]'
-        : hasResults
-        ? 'border-border hover:border-accent/50 hover:bg-accent/[0.04]'
-        : 'border-border/50 opacity-60'
-    }`}>
-      <button type="button" onClick={hasResults && !confirming ? onView : undefined}
-        className={`w-full px-4 py-3.5 flex items-center justify-between gap-3 text-left ${
-          confirming ? 'pr-4' : 'pr-12'
-        } ${hasResults && !confirming ? 'cursor-pointer' : 'cursor-default'}`}>
-        <div className="min-w-0 flex items-center gap-3">
-          <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors duration-150 ${
-            confirming ? 'bg-red-500/10' : hasResults ? 'bg-accent/8 group-hover:bg-accent/15' : 'bg-border/30'
-          }`}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={confirming ? '#f87171' : hasResults ? '#C8FF57' : '#555'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
-            </svg>
-          </div>
-          <div className="min-w-0">
-            <p className="font-syne font-bold text-sm text-text truncate">"{campaign.songTitle}"</p>
-            <p className="text-xs font-inter text-muted mt-0.5">
-              {campaign.genre} · {count} curator{count !== 1 ? 's' : ''} targeted
-            </p>
-          </div>
-        </div>
-
-        {confirming ? (
-          /* Inline confirmation */
-          <div className="flex items-center gap-2 flex-shrink-0" onClick={e => e.stopPropagation()}>
-            <span className="text-xs font-inter text-red-400/80">Delete this?</span>
-            <button type="button" onClick={handleConfirm}
-              className="px-2.5 py-1 text-[11px] font-inter font-semibold rounded-lg bg-red-500/15 text-red-400 border border-red-500/30 hover:bg-red-500/25 transition-all duration-150">
-              Delete
-            </button>
-            <button type="button" onClick={handleCancel}
-              className="px-2.5 py-1 text-[11px] font-inter font-semibold rounded-lg bg-surface text-muted border border-border hover:border-border/80 hover:text-text transition-all duration-150">
-              Cancel
-            </button>
-          </div>
-        ) : (
-          <div className="flex items-center gap-3 flex-shrink-0">
-            <span className="text-xs font-inter text-muted/40">{label}</span>
-            {hasResults && (
-              <span className="text-xs font-inter font-semibold text-accent opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                View Results →
-              </span>
-            )}
-          </div>
-        )}
-      </button>
-
-      {/* Delete button — hidden when confirming */}
-      {!confirming && (
-        <button
-          type="button"
-          onClick={handleDeleteClick}
-          title="Delete campaign"
-          className="absolute right-3 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg flex items-center justify-center text-red-500/30 hover:text-red-400 hover:bg-red-400/10 transition-all duration-150 opacity-0 group-hover:opacity-100"
-        >
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-          </svg>
-        </button>
-      )}
-    </div>
-  )
-}
-
-// ─── Add Song Modal ───────────────────────────────────────────────────────────
-function AddSongModal({ profile, initialSong = null, onSave, onClose }) {
-  const isEdit = !!initialSong
-  const [data, setData] = useState(() => initialSong
-    ? { title: initialSong.title, description: initialSong.description, vibes: initialSong.vibes || [], spotifyLink: initialSong.spotifyLink || '' }
-    : { title: '', description: '', vibes: [], spotifyLink: '' }
-  )
-  const update = (k, v) => setData(d => ({ ...d, [k]: v }))
-  const toggleVibe = (v) => setData(d => ({
-    ...d,
-    vibes: d.vibes.includes(v) ? d.vibes.filter(x => x !== v) : [...d.vibes, v],
-  }))
-  const isValid = data.title.trim() && data.description.trim()
-
-  const handleSave = () => {
-    if (!isValid) return
-    if (isEdit) {
-      onSave({ ...initialSong, title: data.title.trim(), description: data.description.trim(), vibes: data.vibes, spotifyLink: data.spotifyLink.trim() })
-    } else {
-      onSave({
-        id: Date.now().toString(),
-        title: data.title.trim(),
-        description: data.description.trim(),
-        vibes: data.vibes,
-        spotifyLink: data.spotifyLink.trim(),
-        genre: profile.genre,
-        monthlyListeners: profile.monthlyListeners,
-        dateAdded: new Date().toISOString(),
-      })
-    }
-  }
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
-      onClick={e => { if (e.target === e.currentTarget) onClose() }}>
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-lg bg-surface border border-border rounded-2xl shadow-2xl overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-border/60">
-          <div>
-            <h2 className="font-syne font-bold text-lg text-text">{isEdit ? 'Edit Song' : 'Add a Song'}</h2>
-            <p className="text-xs font-inter text-muted mt-0.5">
-              <span className="text-accent font-medium">{profile.genre}</span> · {profile.monthlyListeners} monthly listeners (from your profile)
-            </p>
-          </div>
-          <button type="button" onClick={onClose}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-muted hover:text-text hover:bg-border/40 transition-all duration-150">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </button>
-        </div>
-
-        <div className="px-6 py-5 space-y-5 max-h-[70vh] overflow-y-auto">
-          {/* Song title */}
-          <div>
-            <label className="block text-xs font-inter font-medium text-muted uppercase tracking-wider mb-2">Song Title *</label>
-            <input
-              type="text"
-              value={data.title}
-              onChange={e => update('title', e.target.value)}
-              placeholder="e.g. Midnight Drive"
-              className="w-full bg-bg border border-border rounded-xl px-4 py-3 text-sm font-inter text-text placeholder:text-muted/40 focus:outline-none focus:border-accent/50 transition-colors"
-            />
-          </div>
-
-          {/* Song description */}
-          <div>
-            <label className="block text-xs font-inter font-medium text-muted uppercase tracking-wider mb-2">Song Description *</label>
-            <textarea
-              value={data.description}
-              onChange={e => update('description', e.target.value)}
-              placeholder="Describe the sound, energy, and emotion of this track..."
-              rows={3}
-              className="w-full bg-bg border border-border rounded-xl px-4 py-3 text-sm font-inter text-text placeholder:text-muted/40 focus:outline-none focus:border-accent/50 transition-colors resize-none"
-            />
-          </div>
-
-          {/* Vibe chips */}
-          <div>
-            <label className="block text-xs font-inter font-medium text-muted uppercase tracking-wider mb-2">Vibes</label>
-            <div className="flex flex-wrap gap-2">
-              {VIBES.map(v => (
-                <button key={v} type="button" onClick={() => toggleVibe(v)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-inter font-medium border transition-all duration-150 ${
-                    data.vibes.includes(v)
-                      ? 'bg-accent/15 text-accent border-accent/40'
-                      : 'bg-bg text-muted border-border hover:border-accent/30 hover:text-text'
-                  }`}>
-                  {v}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Spotify link */}
-          <div>
-            <label className="block text-xs font-inter font-medium text-muted uppercase tracking-wider mb-2">Spotify Link <span className="text-muted/50 normal-case tracking-normal">(optional)</span></label>
-            <input
-              type="url"
-              value={data.spotifyLink}
-              onChange={e => update('spotifyLink', e.target.value)}
-              placeholder="https://open.spotify.com/track/..."
-              className="w-full bg-bg border border-border rounded-xl px-4 py-3 text-sm font-inter text-text placeholder:text-muted/40 focus:outline-none focus:border-accent/50 transition-colors"
-            />
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="px-6 py-4 border-t border-border/60 flex gap-3">
-          <button type="button" onClick={onClose}
-            className="flex-1 py-3 rounded-xl border border-border text-sm font-syne font-bold text-muted hover:text-text hover:border-border/80 transition-all duration-150">
-            Cancel
-          </button>
-          <button type="button" onClick={handleSave} disabled={!isValid}
-            className={`flex-1 py-3 rounded-xl text-sm font-syne font-bold transition-all duration-150 active:scale-[0.99] ${
-              isValid ? 'bg-accent text-bg hover:bg-accent/90 cursor-pointer' : 'bg-accent/20 text-accent/40 cursor-not-allowed'
-            }`}>
-            {isEdit ? 'Save Changes →' : 'Save Song →'}
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// ─── Song card ────────────────────────────────────────────────────────────────
-function SongCard({ song, campaigns = [], onClick }) {
-  const songCampaigns = campaigns.filter(c =>
-    (c.songId && c.songId === song.id) ||
-    (!c.songId && c.songTitle?.toLowerCase() === song.title?.toLowerCase())
-  )
-  const lastCampaign = [...songCampaigns].sort((a, b) => new Date(b.date) - new Date(a.date))[0]
-
-  function timeAgo(dateStr) {
-    const diff = Date.now() - new Date(dateStr).getTime()
-    const days = Math.floor(diff / 86400000)
-    if (days === 0) return 'Today'
-    if (days === 1) return 'Yesterday'
-    return `${days}d ago`
-  }
-
-  const d = new Date(song.dateAdded)
-  const added = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-  return (
-    <button type="button" onClick={onClick}
-      className="flex-shrink-0 w-44 bg-surface border border-border rounded-2xl p-4 text-left hover:border-accent/50 hover:bg-accent/[0.04] transition-all duration-150 group">
-      <div className="w-9 h-9 rounded-xl bg-accent/8 group-hover:bg-accent/15 flex items-center justify-center mb-3 transition-colors duration-150">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#C8FF57" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
-        </svg>
-      </div>
-      <p className="font-syne font-bold text-sm text-text leading-tight mb-2 line-clamp-2">{song.title}</p>
-      <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-inter font-semibold bg-accent/10 text-accent border border-accent/20 mb-2">
-        {song.genre}
-      </span>
-      {song.vibes.length > 0 && (
-        <div className="flex flex-wrap gap-1 mb-2">
-          {song.vibes.slice(0, 2).map(v => (
-            <span key={v} className="px-1.5 py-0.5 rounded text-[9px] font-inter text-muted/60 bg-border/30">{v}</span>
-          ))}
-          {song.vibes.length > 2 && (
-            <span className="px-1.5 py-0.5 rounded text-[9px] font-inter text-muted/40">+{song.vibes.length - 2}</span>
-          )}
-        </div>
-      )}
-      {lastCampaign ? (
-        <p className="text-[10px] font-inter text-accent/60">Campaign: {timeAgo(lastCampaign.date)}</p>
-      ) : (
-        <p className="text-[10px] font-inter text-muted/40">Added {added}</p>
-      )}
-    </button>
-  )
-}
-
-// ─── My Songs row ─────────────────────────────────────────────────────────────
-function MySongsRow({ songs, campaigns = [], onAddSong, onSelectSong }) {
-  return (
-    <div className="mb-10">
-      <div className="flex items-center gap-2 mb-4">
-        <div className="w-1.5 h-1.5 rounded-full bg-accent" />
-        <h2 className="font-syne font-bold text-base text-text">My Songs</h2>
-        <span className="text-xs font-inter text-muted/40 ml-1">{songs.length > 0 ? `${songs.length} saved` : ''}</span>
-      </div>
-      <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4" style={{ scrollbarWidth: 'none' }}>
-        <button type="button" onClick={onAddSong}
-          className="flex-shrink-0 w-44 bg-surface border border-dashed border-border/60 rounded-2xl p-4 text-left hover:border-accent/50 hover:bg-accent/[0.03] transition-all duration-150 group flex flex-col items-center justify-center gap-2 min-h-[148px]">
-          <div className="w-9 h-9 rounded-xl border border-border/60 group-hover:border-accent/40 flex items-center justify-center transition-colors duration-150">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="text-muted group-hover:text-accent transition-colors duration-150">
-              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-            </svg>
-          </div>
-          <span className="text-xs font-inter font-medium text-muted group-hover:text-text transition-colors duration-150">Add Song</span>
-        </button>
-        {songs.map(song => (
-          <SongCard key={song.id} song={song} campaigns={campaigns} onClick={() => onSelectSong(song)} />
-        ))}
-      </div>
-    </div>
-  )
-}
-
-// ─── Song Detail View — Kanban progress tracker ───────────────────────────────
-function SongDetailView({ song, campaigns, onBack, onRunPlaylistPitch, onRunPressCampaign, onRunSocialCampaign, onViewCampaign, onEditSong, onDeleteSong }) {
-  const [confirmDelete, setConfirmDelete] = useState(false)
-
-  function timeAgo(dateStr) {
-    const diff = Date.now() - new Date(dateStr).getTime()
-    const days = Math.floor(diff / 86400000)
-    if (days === 0) return 'Today'
-    if (days === 1) return 'Yesterday'
-    return `${days}d ago`
-  }
-
-  // Filter campaigns for this song by songId (new) or title match (legacy)
-  const songCampaigns = campaigns.filter(c =>
-    (c.songId && c.songId === song.id) ||
-    (!c.songId && c.songTitle?.toLowerCase() === song.title?.toLowerCase())
-  )
-  const playlistCampaigns = [...songCampaigns.filter(c => !c.tool || c.tool === 'playlist')].sort((a, b) => new Date(b.date) - new Date(a.date))
-  const pressCampaigns = [...songCampaigns.filter(c => c.tool === 'press')].sort((a, b) => new Date(b.date) - new Date(a.date))
-  const socialCampaigns = [...songCampaigns.filter(c => c.tool === 'social')].sort((a, b) => new Date(b.date) - new Date(a.date))
-  const allSorted = [...songCampaigns].sort((a, b) => new Date(b.date) - new Date(a.date))
-
-  const TOOL_ICONS = {
-    playlist: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>,
-    press: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>,
-    venue: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
-    social: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"/></svg>,
-  }
-
-  const columns = [
-    { id: 'playlist', label: 'Playlist Pitching', sub: 'Curator placements', available: true, campaigns: playlistCampaigns, onRun: onRunPlaylistPitch, unit: 'curators' },
-    { id: 'press',    label: 'Press & Blog',      sub: 'Blogs & magazines',  available: true, campaigns: pressCampaigns,    onRun: onRunPressCampaign, unit: 'publications' },
-    { id: 'venue',    label: 'Show Booking',       sub: 'Venues & festivals', available: false, campaigns: [], unit: 'venues' },
-    { id: 'social',   label: 'Social Strategy',    sub: 'Content & growth',   available: true, campaigns: socialCampaigns,  onRun: onRunSocialCampaign, unit: 'posts' },
-  ]
-
-  return (
-    <div className="min-h-screen bg-bg font-inter">
-      {/* Sticky header */}
-      <header className="sticky top-0 z-50 bg-bg/95 backdrop-blur-md border-b border-border">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
-          <button type="button" onClick={onBack}
-            className="flex items-center gap-1.5 text-sm font-inter text-muted hover:text-text transition-colors group">
-            <span className="group-hover:-translate-x-0.5 transition-transform">←</span>
-            <span>Dashboard</span>
-          </button>
-          <span className="font-syne font-black text-xl text-text tracking-tight">Campaign Cartel</span>
-        </div>
-      </header>
-
-      <main className="max-w-6xl mx-auto px-4 py-8 pb-20">
-
-        {/* ── Song header ── */}
-        <div className="flex items-start justify-between gap-4 mb-10">
-          <div className="flex items-start gap-4 min-w-0 flex-1">
-            <div className="w-14 h-14 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center flex-shrink-0 text-accent">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C8FF57" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
-              </svg>
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-[11px] font-inter text-muted uppercase tracking-[0.18em] mb-1">Song</p>
-              <h1 className="font-syne font-black text-3xl md:text-4xl text-white leading-tight mb-3">{song.title}</h1>
-              <div className="flex flex-wrap items-center gap-2 mb-2">
-                <span className="px-2.5 py-1 rounded-full text-xs font-inter font-semibold bg-accent/10 text-accent border border-accent/20">{song.genre}</span>
-                {(song.vibes || []).map(v => (
-                  <span key={v} className="px-2.5 py-1 rounded-full text-xs font-inter font-medium bg-surface text-muted border border-border">{v}</span>
-                ))}
-              </div>
-              {song.description && (
-                <p className="text-sm font-inter text-muted leading-relaxed max-w-xl mt-1">{song.description}</p>
-              )}
-              {song.spotifyLink && (
-                <a href={song.spotifyLink} target="_blank" rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 mt-3 text-xs font-inter text-muted hover:text-accent transition-colors">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
-                  Open on Spotify
-                </a>
-              )}
-            </div>
-          </div>
-
-          {/* Edit / Delete */}
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <button type="button" onClick={onEditSong}
-              className="px-3 py-1.5 text-xs font-inter font-medium rounded-lg border border-border text-muted hover:text-text hover:border-accent/40 transition-all duration-150">
-              Edit
-            </button>
-            {!confirmDelete ? (
-              <button type="button" onClick={() => setConfirmDelete(true)}
-                className="px-3 py-1.5 text-xs font-inter font-medium rounded-lg border border-border text-red-500/50 hover:text-red-400 hover:border-red-500/40 transition-all duration-150">
-                Delete
-              </button>
-            ) : (
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-inter text-red-400/80">Delete song?</span>
-                <button type="button" onClick={onDeleteSong}
-                  className="px-2.5 py-1 text-[11px] font-inter font-semibold rounded-lg bg-red-500/15 text-red-400 border border-red-500/30 hover:bg-red-500/25 transition-all duration-150">
-                  Delete
-                </button>
-                <button type="button" onClick={() => setConfirmDelete(false)}
-                  className="px-2.5 py-1 text-[11px] font-inter font-semibold rounded-lg bg-surface text-muted border border-border hover:text-text transition-all duration-150">
-                  Cancel
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* ── Kanban columns ── */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
-          {columns.map(col => {
-            const hasCampaigns = col.campaigns.length > 0
-            const latest = col.campaigns[0]
-            const status = !col.available ? 'coming_soon' : hasCampaigns ? 'has_campaigns' : 'not_started'
-
-            return (
-              <div key={col.id} className={`flex flex-col rounded-2xl border overflow-hidden transition-all duration-150 ${
-                col.available ? 'bg-surface border-border' : 'bg-surface/50 border-border/40 opacity-55'
-              }`}>
-                {/* Column header */}
-                <div className="px-4 pt-4 pb-3 border-b border-border/50">
-                  <div className="flex items-start justify-between gap-2 mb-1">
-                    <div className="flex items-center gap-2">
-                      <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                        col.available ? 'bg-accent/8 text-accent' : 'bg-border/20 text-muted/30'
-                      }`}>
-                        {TOOL_ICONS[col.id]}
-                      </div>
-                      <p className="font-syne font-bold text-sm text-text leading-tight">{col.label}</p>
-                    </div>
-                    {!col.available && (
-                      <span className="text-[9px] font-inter font-bold text-muted/40 border border-border/40 rounded-full px-1.5 py-0.5 uppercase tracking-wider flex-shrink-0">Soon</span>
-                    )}
-                  </div>
-                  <p className="text-[10px] font-inter text-muted/40 mb-2 pl-9">{col.sub}</p>
-                  {/* Status pill */}
-                  <div className="flex items-center gap-1.5 pl-9">
-                    <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-                      status === 'has_campaigns' ? 'bg-accent' :
-                      status === 'not_started' ? 'bg-muted/30' : 'bg-border'
-                    }`} />
-                    <span className="text-[10px] font-inter font-medium uppercase tracking-wider text-muted/50">
-                      {status === 'has_campaigns' ? 'In Progress' : status === 'not_started' ? 'Not Started' : 'Coming Soon'}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Column body */}
-                <div className="flex-1 px-4 py-3 flex flex-col gap-3">
-                  {status === 'coming_soon' && (
-                    <div className="flex-1 flex flex-col items-center justify-center py-6 gap-3">
-                      <div className="w-8 h-8 rounded-xl bg-border/15 flex items-center justify-center">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted/25">
-                          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                        </svg>
-                      </div>
-                      <p className="text-xs font-inter text-muted/30 text-center">Available soon</p>
-                    </div>
-                  )}
-
-                  {status === 'not_started' && (
-                    <div className="flex-1 flex flex-col items-center justify-center py-6 gap-1 text-center">
-                      <p className="text-xs font-inter text-muted/40">No campaigns run yet</p>
-                    </div>
-                  )}
-
-                  {status === 'has_campaigns' && latest && (
-                    <div className="flex-1 flex flex-col gap-2.5">
-                      {/* Latest campaign card */}
-                      <div className="bg-bg rounded-xl p-3 border border-border/50">
-                        <div className="flex items-center justify-between mb-1.5">
-                          <p className="text-[10px] font-inter text-muted/50 uppercase tracking-wider">Last run</p>
-                          <p className="text-[10px] font-inter font-semibold text-accent">{timeAgo(latest.date)}</p>
-                        </div>
-                        <p className="text-xs font-inter font-semibold text-text">
-                          {latest.pitchCount ?? 0} {col.unit} targeted
-                        </p>
-                        <div className="mt-2.5">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-[9px] font-inter text-muted/40 uppercase tracking-wider">Submitted</span>
-                            <span className="text-[9px] font-inter text-muted/40">0 / {latest.pitchCount ?? 0}</span>
-                          </div>
-                          <div className="h-1 bg-border/30 rounded-full overflow-hidden">
-                            <div className="h-full bg-accent/60 rounded-full transition-all" style={{ width: '0%' }} />
-                          </div>
-                        </div>
-                      </div>
-
-                      {col.campaigns.length > 1 && (
-                        <p className="text-[10px] font-inter text-muted/40 text-center">
-                          {col.campaigns.length} campaigns total
-                        </p>
-                      )}
-
-                      {latest.results && (
-                        <button type="button" onClick={() => onViewCampaign(latest)}
-                          className="w-full py-2 text-xs font-inter font-semibold text-accent border border-accent/25 rounded-xl hover:bg-accent/8 transition-all duration-150">
-                          View Results →
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Run button footer */}
-                {col.available && (
-                  <div className="px-4 pb-4 pt-1">
-                    <button type="button" onClick={col.onRun}
-                      className={`w-full py-2.5 rounded-xl font-syne font-bold text-sm transition-all duration-150 active:scale-[0.99] ${
-                        status === 'not_started'
-                          ? 'bg-accent text-bg hover:bg-accent/90'
-                          : 'bg-accent/10 text-accent border border-accent/20 hover:bg-accent/18'
-                      }`}>
-                      {status === 'not_started' ? 'Run Now →' : 'Run Again →'}
-                    </button>
-                  </div>
-                )}
-              </div>
-            )
-          })}
-        </div>
-
-        {/* ── Campaign Timeline ── */}
-        <div>
-          <div className="flex items-center gap-2 mb-5">
-            <div className="w-1.5 h-1.5 rounded-full bg-border" />
-            <h2 className="font-syne font-bold text-base text-text">Campaign History</h2>
-            {allSorted.length > 0 && (
-              <span className="text-xs font-inter text-muted/40">{allSorted.length} total</span>
-            )}
-          </div>
-
-          {allSorted.length === 0 ? (
-            <div className="bg-surface border border-border rounded-2xl px-6 py-12 text-center">
-              <div className="w-10 h-10 rounded-2xl bg-border/15 flex items-center justify-center mx-auto mb-4 text-muted/25">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
-                </svg>
-              </div>
-              <p className="text-sm font-inter text-muted mb-1">No campaigns run for this song yet.</p>
-              <p className="text-xs font-inter text-muted/50">Pick a tool above to launch your first one.</p>
-            </div>
-          ) : (
-            <div className="relative pl-10">
-              {/* Vertical timeline line */}
-              <div className="absolute left-4 top-4 bottom-4 w-px bg-border/40 pointer-events-none" />
-              <div className="space-y-3">
-                {allSorted.map((c, i) => {
-                  const isPlaylist = !c.tool || c.tool === 'playlist'
-                  const isSocial = c.tool === 'social'
-                  const toolLabel = isPlaylist ? 'Playlist Pitching' : isSocial ? 'Social Strategy' : 'Press & Blog'
-                  const toolUnit = isPlaylist ? 'curators' : isSocial ? 'posts' : 'publications'
-                  const iconKey = isPlaylist ? 'playlist' : isSocial ? 'social' : 'press'
-                  const d = new Date(c.date)
-                  const dateLabel = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-                  return (
-                    <div key={i} className="relative flex items-center gap-4">
-                      {/* Timeline dot */}
-                      <div className="absolute -left-10 w-8 h-8 rounded-xl bg-surface border border-border flex items-center justify-center text-muted/50 flex-shrink-0 z-10">
-                        {TOOL_ICONS[iconKey]}
-                      </div>
-                      {/* Row */}
-                      <div className="flex-1 bg-surface border border-border rounded-xl px-4 py-3 flex items-center justify-between gap-3 min-w-0">
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <p className="font-syne font-bold text-xs text-text">
-                              {toolLabel}
-                            </p>
-                            <span className="text-[9px] font-inter text-muted/40 border border-border/50 rounded-full px-1.5 py-0.5">{dateLabel}</span>
-                          </div>
-                          <p className="text-xs font-inter text-muted mt-0.5">
-                            {c.pitchCount ?? 0} {toolUnit} targeted
-                          </p>
-                        </div>
-                        {c.results && (
-                          <button type="button" onClick={() => onViewCampaign(c)}
-                            className="text-xs font-inter font-semibold text-accent hover:text-accent/70 transition-colors whitespace-nowrap flex-shrink-0">
-                            View Results →
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-
-      </main>
-    </div>
-  )
-}
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 function Dashboard({ profile, campaigns, songs, onLaunchCampaign, onLaunchPress, onEditProfile, onViewCampaign, onDeleteCampaign, onAddSong, onSelectSong }) {
@@ -3263,7 +2272,7 @@ function Dashboard({ profile, campaigns, songs, onLaunchCampaign, onLaunchPress,
               description="Find venues & festivals to pitch yourself for live performance."
               available={false} />
             <ToolCard id="social" title="Social Strategy"
-              description="Get a 30-day content calendar built on live algorithm research."
+              description="Get TikTok and Instagram tips plus 5 content ideas tailored to your song."
               available={true}
               onLaunch={() => { setSocialViewCampaign(null); setCampaignSong(null); setView('social') }} />
           </div>
