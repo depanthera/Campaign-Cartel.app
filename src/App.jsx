@@ -1527,88 +1527,84 @@ async function runPressSearch(form, profile) {
 // ─── Social Strategy API ──────────────────────────────────────────────────────
 
 const SOCIAL_LOADING_MESSAGES = [
-  'Searching for current TikTok strategies...',
-  'Checking Instagram algorithm updates...',
-  'Analyzing what\'s working right now...',
-  'Writing your strategy overview...',
-  'Building your content bank...',
-]
-
-const SOCIAL_CAL_LOADING_MESSAGES = [
-  'Building your 30-day calendar...',
-  'Scheduling content for each day...',
-  'Writing hooks and captions...',
-  'Almost there...',
+  'Analyzing your sound...',
+  'Building your strategy...',
+  'Writing content ideas...',
+  'Almost done...',
 ]
 
 const SOCIAL_PLATFORMS = ['TikTok', 'Instagram Reels', 'YouTube Shorts']
 const SOCIAL_GOALS = ['Announce Release', 'Grow Following', 'Build Brand', 'Drive Streams', 'Behind the Scenes', 'Fan Engagement']
 
-function buildSocialOverviewPrompt(form, profile) {
-  return `You are an expert social media strategist for musicians in 2026. You know that:
-- TikTok currently favors videos 21-34 seconds with a hook in the first 2 seconds, posting 1-3x daily, using 3-5 niche hashtags not broad ones, text overlays that tease the story, and sounds that are trending in the last 7 days.
-- Instagram Reels currently favors 7-15 second clips, carousels for saves, Stories for daily engagement, posting 4-5x per week, and original audio over trending sounds.
-- On both platforms, the hook (first 2 seconds) determines everything. A question, a surprising visual, or a bold statement outperforms polished intros.
-- For music artists specifically: lip sync to your own track on TikTok, "making of" content drives curiosity, and posting the same clip twice in one week with a different hook can double reach.
-Use this knowledge to build a strategy tailored to this artist.
+function buildSocialPrompt(form, profile) {
+  return `You are a music social media expert in 2026. Generate a social strategy for this artist.
 
 Artist: ${profile.artistName}
 Genre: ${profile.genre}${profile.subgenre ? ` / ${profile.subgenre}` : ''}
-Location: ${profile.location || ''}
 Song: ${form.songTitle}
 Description: ${form.songDescription}${form.vibes.length ? `\nVibes: ${form.vibes.join(', ')}` : ''}${form.platforms.length ? `\nPlatforms: ${form.platforms.join(', ')}` : ''}${form.goals.length ? `\nGoals: ${form.goals.join(', ')}` : ''}
 
-Return ONLY valid JSON (no markdown, no code fences):
+Return ONLY this exact JSON with no extra text:
 {
-  "strategy": {
-    "overview": "2-3 sentence summary of the approach tailored to this artist and genre",
-    "currentInsights": [
-      { "label": "string e.g. Optimal TikTok Length", "value": "string e.g. 21-34 seconds" }
-    ],
-    "postingFrequency": "string e.g. 1-3x daily on TikTok, 4-5x per week on Reels",
-    "hookFormula": "string — describe what hooks are performing best for this genre right now",
-    "hashtagStrategy": "string — 3-5 niche hashtags, avoid broad tags, mix genre and mood tags",
-    "bestPostingTimes": "string — e.g. 6-9pm local time on weekdays, noon on weekends"
+  "overview": "2-3 sentence strategy summary tailored to this artist and genre",
+  "tiktokTips": ["tip 1", "tip 2", "tip 3", "tip 4", "tip 5"],
+  "instagramTips": ["tip 1", "tip 2", "tip 3", "tip 4", "tip 5"],
+  "postingSchedule": {
+    "tiktok": "posting frequency and best times for TikTok",
+    "instagram": "posting frequency and best times for Instagram"
   },
-  "contentBank": [
-    {
-      "type": "string e.g. Caption Template, Hook Formula, Story Script, Engagement Prompt",
-      "platform": "string e.g. TikTok, Instagram Reels, Both",
-      "title": "string — short punchy name for this piece",
-      "content": "string — the full ready-to-use text",
-      "tip": "string — one sentence on when or how to use this"
-    }
+  "contentIdeas": [
+    { "day": 1, "platform": "TikTok", "idea": "post idea", "caption": "example caption", "hook": "opening hook" },
+    { "day": 2, "platform": "Instagram", "idea": "post idea", "caption": "example caption", "hook": "opening hook" },
+    { "day": 3, "platform": "TikTok", "idea": "post idea", "caption": "example caption", "hook": "opening hook" },
+    { "day": 4, "platform": "Instagram", "idea": "post idea", "caption": "example caption", "hook": "opening hook" },
+    { "day": 5, "platform": "TikTok", "idea": "post idea", "caption": "example caption", "hook": "opening hook" },
+    { "day": 6, "platform": "Instagram", "idea": "post idea", "caption": "example caption", "hook": "opening hook" },
+    { "day": 7, "platform": "TikTok", "idea": "post idea", "caption": "example caption", "hook": "opening hook" },
+    { "day": 8, "platform": "Instagram", "idea": "post idea", "caption": "example caption", "hook": "opening hook" },
+    { "day": 9, "platform": "TikTok", "idea": "post idea", "caption": "example caption", "hook": "opening hook" },
+    { "day": 10, "platform": "Instagram", "idea": "post idea", "caption": "example caption", "hook": "opening hook" }
   ]
 }
 
-Generate exactly 10 content bank items: 3 caption templates, 3 hook formulas, 2 engagement prompts, 2 story scripts. Tailor every item to this artist's genre and song.`
+Generate exactly 10 contentIdeas alternating TikTok and Instagram. All text must be specific to this artist — no generic placeholders.`
 }
 
-function buildSocialCalendarPrompt(form, profile) {
-  return `You are an expert social media strategist for musicians in 2026. Generate a 14-day social media content calendar for this artist. Mix TikTok and Instagram Reels posts. Vary content types across the 14 days (Hook Clip, Behind the Scenes, Lyric Reveal, Day in the Life, Fan Q&A, Studio Session, Teaser, Reaction, etc). Each caption must be ready to post — no placeholders.
-
-Artist: ${profile.artistName}
-Genre: ${profile.genre}${profile.subgenre ? ` / ${profile.subgenre}` : ''}
-Song: ${form.songTitle}
-Description: ${form.songDescription}${form.vibes.length ? `\nVibes: ${form.vibes.join(', ')}` : ''}${form.platforms.length ? `\nPlatforms: ${form.platforms.join(', ')}` : ''}${form.goals.length ? `\nGoals: ${form.goals.join(', ')}` : ''}
-
-Return ONLY valid JSON (no markdown, no code fences):
-{
-  "calendar": [
-    {
-      "day": number 1-14,
-      "platform": "TikTok" or "Instagram Reels" or "Both",
-      "contentType": "string",
-      "hook": "string — exact first 2 seconds script or visual",
-      "caption": "string — ready-to-post caption",
-      "hashtags": ["#tag1", "#tag2", "#tag3", "#tag4"]
-    }
-  ]
+async function runSocialStrategy(form, profile) {
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': import.meta.env.VITE_ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 2000,
+      messages: [{ role: 'user', content: buildSocialPrompt(form, profile) }],
+    }),
+  })
+  if (!response.ok) {
+    const err = await response.text()
+    throw new Error(`API error ${response.status}: ${err}`)
+  }
+  const data = await response.json()
+  const raw = data.content
+    .filter(b => b.type === 'text')
+    .map(b => b.text)
+    .join('')
+  const stripped = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim()
+  try {
+    return JSON.parse(stripped)
+  } catch {
+    const match = stripped.match(/\{[\s\S]*\}/)
+    if (match) { try { return JSON.parse(match[0]) } catch {} }
+    throw new Error('The AI response was incomplete. Please try again.')
+  }
 }
 
-Generate exactly 14 entries. Days 1-7 build awareness, days 8-14 drive engagement and streams.`
-}
-
+// helper used by retry button — kept for potential future use
 async function fetchClaudeJson(prompt, maxTokens) {
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -2178,6 +2174,49 @@ function ContentBankCard({ item }) {
 }
 
 // ─── Social Strategy view ─────────────────────────────────────────────────────
+function ContentIdeaCard({ idea }) {
+  const [open, setOpen] = useState(false)
+  const isTikTok = idea.platform === 'TikTok'
+  const platformColor = isTikTok
+    ? { dot: 'bg-sky-400', border: 'border-sky-500/20', bg: 'bg-sky-500/8', text: 'text-sky-400' }
+    : { dot: 'bg-pink-400', border: 'border-pink-500/20', bg: 'bg-pink-500/8', text: 'text-pink-400' }
+
+  return (
+    <div className="bg-surface border border-border rounded-2xl overflow-hidden hover:border-accent/20 transition-colors duration-150 flex flex-col">
+      <div className="px-4 pt-4 pb-3 flex items-start gap-3">
+        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-inter font-semibold border ${platformColor.bg} ${platformColor.border} ${platformColor.text} flex-shrink-0`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${platformColor.dot}`} />
+          {idea.platform}
+        </span>
+        <span className="text-[10px] font-inter text-muted/50 border border-border/40 rounded-full px-2 py-0.5 flex-shrink-0">Day {idea.day}</span>
+      </div>
+      <div className="px-4 pb-4 space-y-3 flex-1 flex flex-col">
+        <p className="text-sm font-inter font-semibold text-text leading-snug">{idea.idea}</p>
+        {idea.hook && (
+          <div className="rounded-lg bg-accent/5 border border-accent/15 px-3 py-2">
+            <p className="text-[9px] font-inter text-muted/40 uppercase tracking-widest mb-1">Hook</p>
+            <p className="text-xs font-inter font-semibold text-accent leading-snug">{idea.hook}</p>
+          </div>
+        )}
+        <button type="button" onClick={() => setOpen(v => !v)}
+          className="text-xs font-inter text-muted hover:text-accent transition-colors flex items-center gap-1 self-start">
+          <span>{open ? 'Hide Caption' : 'Read Caption'}</span>
+          <span className={`transition-transform duration-200 inline-block ${open ? 'rotate-180' : ''}`}>▾</span>
+        </button>
+        {open && (
+          <div className="bg-bg/50 rounded-xl px-3 py-2.5 border border-border/40">
+            <p className="text-xs font-inter text-text/70 leading-relaxed whitespace-pre-wrap">{idea.caption}</p>
+          </div>
+        )}
+        <div className="flex gap-2 flex-wrap mt-auto pt-1">
+          {idea.hook && <CopyButton text={idea.hook} label="Copy Hook" />}
+          {idea.caption && <CopyButton text={idea.caption} label="Copy Caption" />}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function SocialStrategyView({ profile, initialSong = null, onBack, onEditSong = null, onSaveCampaign = null, initialResults = null, initialSongTitle = '' }) {
   const [phase, setPhase] = useState(() => {
     if (initialResults) return 'results'
@@ -2195,12 +2234,7 @@ function SocialStrategyView({ profile, initialSong = null, onBack, onEditSong = 
   const [msgIndex, setMsgIndex] = useState(0)
   const [results, setResults] = useState(initialResults)
   const [error, setError] = useState('')
-  const [calFilter, setCalFilter] = useState('All')
-  const [calendarLoading, setCalendarLoading] = useState(false)
-  const [calendarError, setCalendarError] = useState('')
   const intervalRef = useRef(null)
-  const calIntervalRef = useRef(null)
-  const [calMsgIndex, setCalMsgIndex] = useState(0)
 
   useEffect(() => {
     if (loading) {
@@ -2211,16 +2245,6 @@ function SocialStrategyView({ profile, initialSong = null, onBack, onEditSong = 
     }
     return () => clearInterval(intervalRef.current)
   }, [loading])
-
-  useEffect(() => {
-    if (calendarLoading) {
-      setCalMsgIndex(0)
-      calIntervalRef.current = setInterval(() => setCalMsgIndex(i => i + 1), 2400)
-    } else {
-      clearInterval(calIntervalRef.current)
-    }
-    return () => clearInterval(calIntervalRef.current)
-  }, [calendarLoading])
 
   const togglePlatform = p => setForm(f => ({
     ...f, platforms: f.platforms.includes(p) ? f.platforms.filter(x => x !== p) : [...f.platforms, p],
@@ -2239,31 +2263,20 @@ function SocialStrategyView({ profile, initialSong = null, onBack, onEditSong = 
     setError('')
     setLoading(true)
     try {
-      // Call 1: overview + content bank (fast to render)
-      const overview = await fetchClaudeJson(buildSocialOverviewPrompt(form, profile), 2000)
-      setResults(overview)
+      const data = await runSocialStrategy(form, profile)
+      setResults(data)
       setPhase('results')
-
-      // Call 2: calendar — fires immediately, results trickle in below overview
-      setCalendarLoading(true)
-      setCalendarError('')
-      fetchClaudeJson(buildSocialCalendarPrompt(form, profile), 4000)
-        .then(calData => {
-          setResults(prev => ({ ...prev, calendar: calData.calendar ?? [] }))
-          if (onSaveCampaign) {
-            onSaveCampaign({
-              date: new Date().toISOString(),
-              artistName: profile.artistName,
-              songTitle: form.songTitle,
-              genre: profile.genre,
-              pitchCount: calData.calendar?.length || 0,
-              results: { ...overview, calendar: calData.calendar ?? [] },
-              tool: 'social',
-            })
-          }
+      if (onSaveCampaign) {
+        onSaveCampaign({
+          date: new Date().toISOString(),
+          artistName: profile.artistName,
+          songTitle: form.songTitle,
+          genre: profile.genre,
+          pitchCount: data.contentIdeas?.length || 0,
+          results: data,
+          tool: 'social',
         })
-        .catch(err => setCalendarError(err.message || 'Calendar failed to load. Try again.'))
-        .finally(() => setCalendarLoading(false))
+      }
     } catch (err) {
       setError(err.message || 'Something went wrong. Try again.')
     } finally {
@@ -2291,16 +2304,13 @@ function SocialStrategyView({ profile, initialSong = null, onBack, onEditSong = 
 
   // Results phase
   if (phase === 'results' && results) {
-    const s = results.strategy ?? {}
-    const calendar = results.calendar ?? []
-    const bank = results.contentBank ?? []
-    const calPlatforms = ['All', ...new Set(calendar.map(e => e.platform).filter(Boolean))]
-    const filtered = calFilter === 'All' ? calendar : calendar.filter(e => e.platform === calFilter)
+    const ideas = results.contentIdeas ?? []
+    const schedule = results.postingSchedule ?? {}
 
     return (
       <div className="min-h-screen bg-bg font-inter">
         <header className="sticky top-0 z-10 bg-bg/80 backdrop-blur-md border-b border-border">
-          <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
+          <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <button type="button" onClick={onBack}
                 className="flex items-center gap-1.5 text-sm font-inter text-muted hover:text-text transition-colors group">
@@ -2316,142 +2326,97 @@ function SocialStrategyView({ profile, initialSong = null, onBack, onEditSong = 
           </div>
         </header>
 
-        <main className="max-w-6xl mx-auto px-4 py-8 space-y-10">
+        <main className="max-w-5xl mx-auto px-4 py-8 space-y-8">
 
-          {/* Strategy Overview */}
-          <section>
-            <div className="flex items-center gap-2 mb-5">
-              <div className="w-1.5 h-1.5 rounded-full bg-accent" />
-              <h2 className="font-syne font-bold text-lg text-text">Strategy Overview</h2>
-              <span className="text-xs font-inter text-muted/40">powered by live web search</span>
-            </div>
-            <div className="bg-surface border border-border rounded-2xl p-5 mb-4">
-              {s.overview && (
-                <p className="text-sm font-inter text-text/80 leading-relaxed mb-5">{s.overview}</p>
-              )}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {(s.currentInsights ?? []).map((ins, i) => (
-                  <div key={i} className="bg-bg/60 border border-border/50 rounded-xl px-3 py-2.5">
-                    <p className="text-[9px] font-inter text-muted/40 uppercase tracking-widest mb-1">{ins.label}</p>
-                    <p className="text-xs font-inter font-semibold text-accent leading-snug">{ins.value}</p>
-                  </div>
-                ))}
+          {/* Overview */}
+          {results.overview && (
+            <div className="bg-surface border border-border rounded-2xl p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-1.5 h-1.5 rounded-full bg-accent" />
+                <h2 className="font-syne font-bold text-base text-text">Strategy Overview</h2>
               </div>
+              <p className="text-sm font-inter text-text/80 leading-relaxed">{results.overview}</p>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              {[
-                { label: 'Posting Frequency', value: s.postingFrequency },
-                { label: 'Best Posting Times', value: s.bestPostingTimes },
-                { label: 'Hook Formula', value: s.hookFormula },
-                { label: 'Hashtag Strategy', value: s.hashtagStrategy },
-              ].filter(x => x.value).map((x, i) => (
-                <div key={i} className="bg-surface border border-border rounded-xl px-4 py-3">
-                  <p className="text-[9px] font-inter text-muted/40 uppercase tracking-widest mb-2">{x.label}</p>
-                  <p className="text-xs font-inter text-text/80 leading-relaxed">{x.value}</p>
-                </div>
-              ))}
-            </div>
-          </section>
+          )}
 
-          {/* 30-Day Calendar */}
-          <section>
-            <div className="flex items-center justify-between gap-4 mb-5 flex-wrap">
-              <div className="flex items-center gap-2">
+          {/* Platform Tips */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {/* TikTok Tips */}
+            <div className="bg-surface border border-border rounded-2xl p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-6 h-6 rounded-lg bg-sky-500/10 border border-sky-500/20 flex items-center justify-center flex-shrink-0">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"/></svg>
+                </div>
+                <h3 className="font-syne font-bold text-sm text-text">TikTok Tips</h3>
+              </div>
+              <ul className="space-y-2.5">
+                {(results.tiktokTips ?? []).map((tip, i) => (
+                  <li key={i} className="flex items-start gap-2.5">
+                    <span className="w-4 h-4 rounded-full bg-sky-500/10 border border-sky-500/20 text-[9px] font-syne font-bold text-sky-400 flex items-center justify-center flex-shrink-0 mt-0.5">{i + 1}</span>
+                    <p className="text-xs font-inter text-text/70 leading-relaxed">{tip}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Instagram Tips */}
+            <div className="bg-surface border border-border rounded-2xl p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-6 h-6 rounded-lg bg-pink-500/10 border border-pink-500/20 flex items-center justify-center flex-shrink-0">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f472b6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+                </div>
+                <h3 className="font-syne font-bold text-sm text-text">Instagram Tips</h3>
+              </div>
+              <ul className="space-y-2.5">
+                {(results.instagramTips ?? []).map((tip, i) => (
+                  <li key={i} className="flex items-start gap-2.5">
+                    <span className="w-4 h-4 rounded-full bg-pink-500/10 border border-pink-500/20 text-[9px] font-syne font-bold text-pink-400 flex items-center justify-center flex-shrink-0 mt-0.5">{i + 1}</span>
+                    <p className="text-xs font-inter text-text/70 leading-relaxed">{tip}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          {/* Posting Schedule */}
+          {(schedule.tiktok || schedule.instagram) && (
+            <div className="bg-surface border border-border rounded-2xl p-5">
+              <div className="flex items-center gap-2 mb-4">
                 <div className="w-1.5 h-1.5 rounded-full bg-border" />
-                <h2 className="font-syne font-bold text-lg text-text">14-Day Calendar</h2>
-                {!calendarLoading && calendar.length > 0 && (
-                  <span className="text-xs font-inter text-muted/40">{calendar.length} posts</span>
+                <h2 className="font-syne font-bold text-base text-text">Posting Schedule</h2>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {schedule.tiktok && (
+                  <div className="bg-bg/60 border border-sky-500/15 rounded-xl px-4 py-3">
+                    <p className="text-[9px] font-inter text-sky-400/60 uppercase tracking-widest mb-1.5">TikTok</p>
+                    <p className="text-xs font-inter text-text/80 leading-relaxed">{schedule.tiktok}</p>
+                  </div>
+                )}
+                {schedule.instagram && (
+                  <div className="bg-bg/60 border border-pink-500/15 rounded-xl px-4 py-3">
+                    <p className="text-[9px] font-inter text-pink-400/60 uppercase tracking-widest mb-1.5">Instagram</p>
+                    <p className="text-xs font-inter text-text/80 leading-relaxed">{schedule.instagram}</p>
+                  </div>
                 )}
               </div>
-              {!calendarLoading && calendar.length > 0 && (
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  {calPlatforms.map(p => (
-                    <button key={p} type="button"
-                      onClick={() => setCalFilter(p)}
-                      className={`px-3 py-1 rounded-full text-[11px] font-inter font-semibold transition-all duration-150 ${
-                        calFilter === p
-                          ? 'bg-accent text-bg'
-                          : 'bg-surface border border-border text-muted hover:text-text hover:border-accent/40'
-                      }`}>
-                      {p}
-                    </button>
-                  ))}
-                </div>
-              )}
             </div>
+          )}
 
-            {calendarLoading && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-surface border border-border/50">
-                  <div className="relative w-5 h-5 flex-shrink-0">
-                    <div className="absolute inset-0 rounded-full border border-border" />
-                    <div className="absolute inset-0 rounded-full border border-t-accent border-r-transparent border-b-transparent border-l-transparent animate-spin" />
-                  </div>
-                  <p className="text-xs font-inter text-muted transition-all duration-500">
-                    {SOCIAL_CAL_LOADING_MESSAGES[calMsgIndex % SOCIAL_CAL_LOADING_MESSAGES.length]}
-                  </p>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {Array.from({ length: 6 }).map((_, i) => (
-                    <div key={i} className="bg-surface border border-border/50 rounded-2xl p-4 animate-pulse">
-                      <div className="flex items-center gap-2 mb-3">
-                        <div className="w-7 h-7 rounded-lg bg-border/30" />
-                        <div className="h-3 w-20 rounded bg-border/30" />
-                        <div className="h-3 w-14 rounded bg-border/30" />
-                      </div>
-                      <div className="h-10 rounded-lg bg-border/20 mb-3" />
-                      <div className="h-3 w-24 rounded bg-border/20 mb-2" />
-                      <div className="flex gap-1.5">
-                        <div className="h-6 w-16 rounded-lg bg-border/20" />
-                        <div className="h-6 w-16 rounded-lg bg-border/20" />
-                        <div className="h-6 w-16 rounded-lg bg-border/20" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
+          {/* Content Ideas */}
+          {ideas.length > 0 && (
+            <section>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-1.5 h-1.5 rounded-full bg-border" />
+                <h2 className="font-syne font-bold text-base text-text">Content Ideas</h2>
+                <span className="text-xs font-inter text-muted/40">{ideas.length} posts</span>
               </div>
-            )}
-
-            {!calendarLoading && calendarError && (
-              <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 flex items-center justify-between gap-3">
-                <p className="text-sm font-inter text-red-400">{calendarError}</p>
-                <button type="button"
-                  onClick={() => {
-                    setCalendarError('')
-                    setCalendarLoading(true)
-                    fetchClaudeJson(buildSocialCalendarPrompt(form, profile), 4000)
-                      .then(calData => setResults(prev => ({ ...prev, calendar: calData.calendar ?? [] })))
-                      .catch(err => setCalendarError(err.message || 'Calendar failed to load.'))
-                      .finally(() => setCalendarLoading(false))
-                  }}
-                  className="text-xs font-inter font-semibold text-red-400 border border-red-500/30 rounded-lg px-3 py-1.5 hover:bg-red-500/10 transition-colors whitespace-nowrap">
-                  Retry →
-                </button>
-              </div>
-            )}
-
-            {!calendarLoading && calendar.length > 0 && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filtered.map((entry, i) => (
-                  <CalendarDayCard key={i} entry={entry} />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {ideas.map((idea, i) => (
+                  <ContentIdeaCard key={i} idea={idea} />
                 ))}
               </div>
-            )}
-          </section>
-
-          {/* Content Bank */}
-          <section>
-            <div className="flex items-center gap-2 mb-5">
-              <div className="w-1.5 h-1.5 rounded-full bg-border" />
-              <h2 className="font-syne font-bold text-lg text-text">Content Bank</h2>
-              <span className="text-xs font-inter text-muted/40">{bank.length} pieces</span>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {bank.map((item, i) => (
-                <ContentBankCard key={i} item={item} />
-              ))}
-            </div>
-          </section>
+            </section>
+          )}
 
         </main>
       </div>
