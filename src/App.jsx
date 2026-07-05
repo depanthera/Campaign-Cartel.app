@@ -1524,6 +1524,114 @@ async function runPressSearch(form, profile) {
   }
 }
 
+// ─── Social Strategy API ──────────────────────────────────────────────────────
+
+const SOCIAL_LOADING_MESSAGES = [
+  'Searching for current TikTok strategies...',
+  'Checking Instagram algorithm updates...',
+  'Analyzing what\'s working right now...',
+  'Building your 30-day calendar...',
+  'Writing your content bank...',
+]
+
+const SOCIAL_PLATFORMS = ['TikTok', 'Instagram Reels', 'YouTube Shorts']
+const SOCIAL_GOALS = ['Announce Release', 'Grow Following', 'Build Brand', 'Drive Streams', 'Behind the Scenes', 'Fan Engagement']
+
+function buildSocialPrompt(form, profile) {
+  return `You are a music marketing specialist with deep expertise in TikTok and Instagram Reels algorithms.
+
+Before generating the strategy, search the web for:
+"TikTok algorithm strategy for musicians 2026"
+"Instagram Reels algorithm tips for artists 2026"
+"best time to post music on TikTok and Instagram 2026"
+
+Use what you find to inform the strategy. The calendar and tips must reflect what is actually working RIGHT NOW on these platforms — not generic advice. Include specific current strategies like:
+- Current optimal video lengths on TikTok and Reels
+- What hooks are performing best this month
+- Whether TikTok is favoring certain content types right now
+- Current hashtag strategy (how many, which types)
+- Current best posting frequency for music artists
+- Any recent algorithm changes that affect musicians
+
+Artist: ${profile.artistName}
+Genre: ${profile.genre}${profile.subgenre ? ` / ${profile.subgenre}` : ''}
+Location: ${profile.location || ''}
+Song: ${form.songTitle}
+Description: ${form.songDescription}${form.vibes.length ? `\nVibes: ${form.vibes.join(', ')}` : ''}${form.platforms.length ? `\nPlatforms: ${form.platforms.join(', ')}` : ''}${form.goals.length ? `\nGoals: ${form.goals.join(', ')}` : ''}
+
+Then generate the full 30 day calendar and content bank using this current intelligence. Every piece of advice must feel like it came from someone who studied the platform this week not last year.
+
+Return ONLY valid JSON (no markdown, no code fences):
+{
+  "strategy": {
+    "overview": "2-3 sentence summary of the approach tailored to this artist and genre",
+    "currentInsights": [
+      { "label": "string e.g. Optimal TikTok Length", "value": "string e.g. 21-34 seconds" }
+    ],
+    "postingFrequency": "string e.g. 1x daily on TikTok, 4x per week on Reels",
+    "hookFormula": "string — describe what hooks are performing best RIGHT NOW",
+    "hashtagStrategy": "string — specific current hashtag guidance including count and types",
+    "bestPostingTimes": "string — specific current best times based on your search"
+  },
+  "calendar": [
+    {
+      "day": number 1-30,
+      "platform": "TikTok" or "Instagram Reels" or "Both",
+      "contentType": "string e.g. Hook Clip, Behind the Scenes, Lyric Reveal, Day in the Life",
+      "hook": "string — exact first 3 seconds script or visual description",
+      "caption": "string — ready-to-post caption with personality",
+      "hashtags": ["#tag1", "#tag2", "#tag3", "#tag4", "#tag5"]
+    }
+  ],
+  "contentBank": [
+    {
+      "type": "string e.g. Caption Template, Hook Formula, Story Script, Engagement Prompt",
+      "platform": "string e.g. TikTok, Instagram Reels, Both",
+      "title": "string — short punchy name for this piece",
+      "content": "string — the full ready-to-use text",
+      "tip": "string — one sentence on when or how to use this"
+    }
+  ]
+}
+
+Generate exactly 30 calendar entries spread across TikTok and Instagram Reels. Generate at least 10 content bank items covering caption templates, hook formulas, engagement prompts, and story scripts.`
+}
+
+async function runSocialStrategy(form, profile) {
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': import.meta.env.VITE_ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 4000,
+      tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+      messages: [{ role: 'user', content: buildSocialPrompt(form, profile) }],
+    }),
+  })
+  if (!response.ok) {
+    const err = await response.text()
+    throw new Error(`API error ${response.status}: ${err}`)
+  }
+  const data = await response.json()
+  const raw = data.content
+    .filter(b => b.type === 'text')
+    .map(b => b.text)
+    .join('')
+  const stripped = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim()
+  try {
+    return JSON.parse(stripped)
+  } catch {
+    const match = stripped.match(/\{[\s\S]*\}/)
+    if (match) { try { return JSON.parse(match[0]) } catch {} }
+    throw new Error('The AI response was incomplete. Please try again.')
+  }
+}
+
 // ─── Press pitch card ─────────────────────────────────────────────────────────
 function PressPitchCard({ pitch }) {
   const [open, setOpen] = useState(false)
@@ -1620,10 +1728,10 @@ function PressPitchCard({ pitch }) {
 
 // ─── Press & Blog view ────────────────────────────────────────────────────────
 // ─── Quick Confirm Screen ─────────────────────────────────────────────────────
-function QuickConfirmScreen({ song, profile, toolLabel, onLaunch, onEditSong, onBack, loading, msgIndex, error }) {
+function QuickConfirmScreen({ song, profile, toolLabel, onLaunch, onEditSong, onBack, loading, msgIndex, messages, error }) {
   return (
     <div className="film-grain min-h-screen font-inter" style={{ background: '#050505' }}>
-      {loading && <LoadingOverlay msgIndex={msgIndex} />}
+      {loading && <LoadingOverlay msgIndex={msgIndex} messages={messages} />}
       <CityScene />
       <div className="relative z-10 flex flex-col justify-start px-4 pt-10 md:pt-14"
            style={{ minHeight: '100vh', paddingBottom: '50vh' }}>
@@ -1946,6 +2054,412 @@ function PressBlogView({ profile, initialSong = null, onBack, onEditSong = null,
                   isValid && !loading ? 'bg-accent text-bg hover:bg-accent/90 cursor-pointer' : 'bg-accent/20 text-accent/40 cursor-not-allowed'
                 }`}>
                 Find My Press →
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Social Strategy results sub-components ───────────────────────────────────
+const PLATFORM_COLORS = {
+  'TikTok':          { bg: 'bg-sky-500/10',   border: 'border-sky-500/25',   text: 'text-sky-400' },
+  'Instagram Reels': { bg: 'bg-pink-500/10',  border: 'border-pink-500/25',  text: 'text-pink-400' },
+  'Both':            { bg: 'bg-accent/10',    border: 'border-accent/25',    text: 'text-accent' },
+}
+
+function PlatformBadge({ platform }) {
+  const c = PLATFORM_COLORS[platform] ?? PLATFORM_COLORS['Both']
+  return (
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-inter font-semibold border ${c.bg} ${c.border} ${c.text}`}>
+      {platform}
+    </span>
+  )
+}
+
+function CalendarDayCard({ entry }) {
+  const [open, setOpen] = useState(false)
+  const hashtagStr = (entry.hashtags ?? []).join(' ')
+  return (
+    <div className="bg-surface border border-border rounded-2xl overflow-hidden hover:border-accent/20 transition-colors duration-150 flex flex-col">
+      <div className="px-4 pt-4 pb-3 flex items-start justify-between gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-accent/8 border border-accent/15 font-syne font-bold text-xs text-accent flex-shrink-0">
+            {entry.day}
+          </span>
+          <PlatformBadge platform={entry.platform} />
+          <span className="text-xs font-inter font-semibold text-text">{entry.contentType}</span>
+        </div>
+      </div>
+      <div className="px-4 pb-4 space-y-3 flex-1 flex flex-col">
+        {/* Hook */}
+        <div className="rounded-lg bg-bg/60 border border-border/50 px-3 py-2.5">
+          <p className="text-[9px] font-inter text-muted/40 uppercase tracking-widest mb-1">Hook (first 3 sec)</p>
+          <p className="text-xs font-inter font-semibold text-accent leading-snug">{entry.hook}</p>
+        </div>
+        {/* Caption */}
+        <div className="space-y-1.5">
+          <button type="button" onClick={() => setOpen(v => !v)}
+            className="text-xs font-inter text-muted hover:text-accent transition-colors flex items-center gap-1">
+            <span>{open ? 'Hide Caption' : 'Read Caption'}</span>
+            <span className={`transition-transform duration-200 inline-block ${open ? 'rotate-180' : ''}`}>▾</span>
+          </button>
+          {open && (
+            <div className="bg-bg/50 rounded-xl px-3 py-3 border border-border/40 max-h-32 overflow-y-auto">
+              <p className="text-xs font-inter text-text/70 leading-relaxed whitespace-pre-wrap">{entry.caption}</p>
+            </div>
+          )}
+        </div>
+        {/* Action row */}
+        <div className="flex items-center gap-2 flex-wrap mt-auto pt-1">
+          <CopyButton text={entry.hook} label="Copy Hook" />
+          <CopyButton text={entry.caption} label="Copy Caption" />
+          <CopyButton text={hashtagStr} label="Copy Tags" />
+        </div>
+        {/* Hashtags */}
+        {entry.hashtags?.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {entry.hashtags.map((h, i) => (
+              <span key={i} className="text-[10px] font-inter text-muted/50 bg-bg/60 border border-border/30 rounded-full px-1.5 py-0.5">{h}</span>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function ContentBankCard({ item }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="bg-surface border border-border rounded-2xl overflow-hidden hover:border-accent/20 transition-colors duration-150 flex flex-col">
+      <div className="px-4 pt-4 pb-2 flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 flex-wrap mb-1.5">
+            <span className="text-[10px] font-inter font-semibold text-muted/50 uppercase tracking-wider border border-border/50 rounded-full px-2 py-0.5">{item.type}</span>
+            <PlatformBadge platform={item.platform} />
+          </div>
+          <p className="font-syne font-bold text-sm text-text">{item.title}</p>
+        </div>
+      </div>
+      <div className="px-4 pb-4 space-y-3 flex-1 flex flex-col">
+        {item.tip && (
+          <p className="text-[11px] font-inter text-muted/60 leading-relaxed italic">"{item.tip}"</p>
+        )}
+        <button type="button" onClick={() => setOpen(v => !v)}
+          className="text-xs font-inter text-muted hover:text-accent transition-colors flex items-center gap-1 self-start">
+          <span>{open ? 'Hide Content' : 'Show Content'}</span>
+          <span className={`transition-transform duration-200 inline-block ${open ? 'rotate-180' : ''}`}>▾</span>
+        </button>
+        {open && (
+          <div className="bg-bg/50 rounded-xl px-3 py-3 border border-border/40 max-h-40 overflow-y-auto">
+            <p className="text-xs font-inter text-text/70 leading-relaxed whitespace-pre-wrap">{item.content}</p>
+          </div>
+        )}
+        <div className="mt-auto pt-1">
+          <CopyButton text={item.content} label="Copy" />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Social Strategy view ─────────────────────────────────────────────────────
+function SocialStrategyView({ profile, initialSong = null, onBack, onEditSong = null, onSaveCampaign = null, initialResults = null, initialSongTitle = '' }) {
+  const [phase, setPhase] = useState(() => {
+    if (initialResults) return 'results'
+    if (initialSong) return 'confirm'
+    return 'form'
+  })
+  const [form, setForm] = useState({
+    songTitle: initialSongTitle || initialSong?.title || '',
+    songDescription: initialSong?.description || '',
+    vibes: initialSong?.vibes || [],
+    platforms: [],
+    goals: [],
+  })
+  const [loading, setLoading] = useState(false)
+  const [msgIndex, setMsgIndex] = useState(0)
+  const [results, setResults] = useState(initialResults)
+  const [error, setError] = useState('')
+  const [calFilter, setCalFilter] = useState('All')
+  const intervalRef = useRef(null)
+
+  useEffect(() => {
+    if (loading) {
+      setMsgIndex(0)
+      intervalRef.current = setInterval(() => setMsgIndex(i => i + 1), 2200)
+    } else {
+      clearInterval(intervalRef.current)
+    }
+    return () => clearInterval(intervalRef.current)
+  }, [loading])
+
+  const togglePlatform = p => setForm(f => ({
+    ...f, platforms: f.platforms.includes(p) ? f.platforms.filter(x => x !== p) : [...f.platforms, p],
+  }))
+  const toggleGoal = g => setForm(f => ({
+    ...f, goals: f.goals.includes(g) ? f.goals.filter(x => x !== g) : [...f.goals, g],
+  }))
+  const toggleVibe = v => setForm(f => ({
+    ...f, vibes: f.vibes.includes(v) ? f.vibes.filter(x => x !== v) : [...f.vibes, v],
+  }))
+
+  const isValid = form.songTitle.trim() && form.songDescription.trim()
+
+  const execute = async () => {
+    if (!isValid) return
+    setError('')
+    setLoading(true)
+    try {
+      const data = await runSocialStrategy(form, profile)
+      setResults(data)
+      setPhase('results')
+      if (onSaveCampaign) {
+        onSaveCampaign({
+          date: new Date().toISOString(),
+          artistName: profile.artistName,
+          songTitle: form.songTitle,
+          genre: profile.genre,
+          pitchCount: data.calendar?.length || 0,
+          results: data,
+          tool: 'social',
+        })
+      }
+    } catch (err) {
+      setError(err.message || 'Something went wrong. Try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Confirm phase
+  if (phase === 'confirm') {
+    return (
+      <QuickConfirmScreen
+        song={initialSong}
+        profile={profile}
+        toolLabel="Social Strategy"
+        onLaunch={execute}
+        onEditSong={onEditSong || (() => setPhase('form'))}
+        onBack={onBack}
+        loading={loading}
+        msgIndex={msgIndex}
+        messages={SOCIAL_LOADING_MESSAGES}
+        error={error}
+      />
+    )
+  }
+
+  // Results phase
+  if (phase === 'results' && results) {
+    const s = results.strategy ?? {}
+    const calendar = results.calendar ?? []
+    const bank = results.contentBank ?? []
+    const calPlatforms = ['All', ...new Set(calendar.map(e => e.platform).filter(Boolean))]
+    const filtered = calFilter === 'All' ? calendar : calendar.filter(e => e.platform === calFilter)
+
+    return (
+      <div className="min-h-screen bg-bg font-inter">
+        <header className="sticky top-0 z-10 bg-bg/80 backdrop-blur-md border-b border-border">
+          <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <button type="button" onClick={onBack}
+                className="flex items-center gap-1.5 text-sm font-inter text-muted hover:text-text transition-colors group">
+                <span className="group-hover:-translate-x-0.5 transition-transform">←</span>
+                <span>Dashboard</span>
+              </button>
+              <div className="w-px h-4 bg-border" />
+              <span className="font-syne font-black text-xl text-text tracking-tight">Social Strategy</span>
+            </div>
+            <span className="text-xs font-inter text-muted hidden sm:block">
+              {profile.artistName} — "{form.songTitle || initialSongTitle}"
+            </span>
+          </div>
+        </header>
+
+        <main className="max-w-6xl mx-auto px-4 py-8 space-y-10">
+
+          {/* Strategy Overview */}
+          <section>
+            <div className="flex items-center gap-2 mb-5">
+              <div className="w-1.5 h-1.5 rounded-full bg-accent" />
+              <h2 className="font-syne font-bold text-lg text-text">Strategy Overview</h2>
+              <span className="text-xs font-inter text-muted/40">powered by live web search</span>
+            </div>
+            <div className="bg-surface border border-border rounded-2xl p-5 mb-4">
+              {s.overview && (
+                <p className="text-sm font-inter text-text/80 leading-relaxed mb-5">{s.overview}</p>
+              )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {(s.currentInsights ?? []).map((ins, i) => (
+                  <div key={i} className="bg-bg/60 border border-border/50 rounded-xl px-3 py-2.5">
+                    <p className="text-[9px] font-inter text-muted/40 uppercase tracking-widest mb-1">{ins.label}</p>
+                    <p className="text-xs font-inter font-semibold text-accent leading-snug">{ins.value}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {[
+                { label: 'Posting Frequency', value: s.postingFrequency },
+                { label: 'Best Posting Times', value: s.bestPostingTimes },
+                { label: 'Hook Formula', value: s.hookFormula },
+                { label: 'Hashtag Strategy', value: s.hashtagStrategy },
+              ].filter(x => x.value).map((x, i) => (
+                <div key={i} className="bg-surface border border-border rounded-xl px-4 py-3">
+                  <p className="text-[9px] font-inter text-muted/40 uppercase tracking-widest mb-2">{x.label}</p>
+                  <p className="text-xs font-inter text-text/80 leading-relaxed">{x.value}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* 30-Day Calendar */}
+          <section>
+            <div className="flex items-center justify-between gap-4 mb-5 flex-wrap">
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-border" />
+                <h2 className="font-syne font-bold text-lg text-text">30-Day Calendar</h2>
+                <span className="text-xs font-inter text-muted/40">{calendar.length} posts</span>
+              </div>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {calPlatforms.map(p => (
+                  <button key={p} type="button"
+                    onClick={() => setCalFilter(p)}
+                    className={`px-3 py-1 rounded-full text-[11px] font-inter font-semibold transition-all duration-150 ${
+                      calFilter === p
+                        ? 'bg-accent text-bg'
+                        : 'bg-surface border border-border text-muted hover:text-text hover:border-accent/40'
+                    }`}>
+                    {p}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filtered.map((entry, i) => (
+                <CalendarDayCard key={i} entry={entry} />
+              ))}
+            </div>
+          </section>
+
+          {/* Content Bank */}
+          <section>
+            <div className="flex items-center gap-2 mb-5">
+              <div className="w-1.5 h-1.5 rounded-full bg-border" />
+              <h2 className="font-syne font-bold text-lg text-text">Content Bank</h2>
+              <span className="text-xs font-inter text-muted/40">{bank.length} pieces</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {bank.map((item, i) => (
+                <ContentBankCard key={i} item={item} />
+              ))}
+            </div>
+          </section>
+
+        </main>
+      </div>
+    )
+  }
+
+  // Form phase
+  return (
+    <div className="film-grain min-h-screen font-inter" style={{ background: '#050505' }}>
+      {loading && <LoadingOverlay msgIndex={msgIndex} messages={SOCIAL_LOADING_MESSAGES} />}
+      <CityScene />
+      <div className="relative z-10 flex flex-col justify-start px-4 pt-10 md:pt-14"
+           style={{ minHeight: '100vh', paddingBottom: '50vh' }}>
+        <div className="max-w-xl mx-auto w-full">
+
+          <button type="button" onClick={onBack}
+            className="flex items-center gap-1.5 text-sm font-inter text-white/40 hover:text-white/70 transition-colors mb-8 group">
+            <span className="group-hover:-translate-x-0.5 transition-transform">←</span>
+            <span>Back to Dashboard</span>
+          </button>
+
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-accent/20 bg-accent/5 mb-6">
+              <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+              <span className="text-[11px] font-inter text-accent tracking-[0.18em] uppercase">Social Strategy</span>
+            </div>
+            <h1 className="neon-title font-syne font-black text-5xl md:text-7xl text-white leading-none tracking-tight mb-3">
+              Campaign Cartel
+            </h1>
+            <p className="font-inter text-base md:text-lg text-white/50 font-normal tracking-wide">
+              Your AI Promotion Team
+            </p>
+          </div>
+
+          <div className="glass-card p-6 md:p-8">
+            <form onSubmit={e => { e.preventDefault(); execute() }} className="space-y-5">
+
+              {/* Artist banner */}
+              <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-accent/5 border border-accent/15">
+                <div className="w-7 h-7 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0">
+                  <span className="font-syne font-bold text-[11px] text-accent uppercase">
+                    {(profile.artistName || '?')[0]}
+                  </span>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-inter font-semibold text-text truncate">{profile.artistName}</p>
+                  <p className="text-[10px] font-inter text-muted">
+                    {profile.genre}{profile.subgenre ? ` · ${profile.subgenre}` : ''}
+                    {profile.location ? ` · ${profile.location}` : ''}
+                  </p>
+                </div>
+              </div>
+
+              <FormField label="Song Title" required>
+                <input type="text" placeholder="e.g. Golden Hour" value={form.songTitle}
+                  onChange={e => setForm(f => ({ ...f, songTitle: e.target.value }))}
+                  className={inputClass} />
+              </FormField>
+
+              <FormField label="Song Description" required>
+                <textarea rows={3} placeholder="Describe the sound, mood, and feel of your song..."
+                  value={form.songDescription}
+                  onChange={e => setForm(f => ({ ...f, songDescription: e.target.value }))}
+                  className={`${inputClass} resize-none leading-relaxed`} />
+              </FormField>
+
+              <FormField label="Vibes (pick any)">
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {VIBES.map(v => (
+                    <VibeChip key={v} label={v} selected={form.vibes.includes(v)} onClick={() => toggleVibe(v)} />
+                  ))}
+                </div>
+              </FormField>
+
+              <FormField label="Platforms">
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {SOCIAL_PLATFORMS.map(p => (
+                    <VibeChip key={p} label={p} selected={form.platforms.includes(p)} onClick={() => togglePlatform(p)} />
+                  ))}
+                </div>
+              </FormField>
+
+              <FormField label="Goals (pick any)">
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {SOCIAL_GOALS.map(g => (
+                    <VibeChip key={g} label={g} selected={form.goals.includes(g)} onClick={() => toggleGoal(g)} />
+                  ))}
+                </div>
+              </FormField>
+
+              {error && (
+                <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3">
+                  <p className="text-sm font-inter text-red-400">{error}</p>
+                </div>
+              )}
+
+              <button type="submit" disabled={!isValid || loading}
+                className={`w-full py-4 rounded-xl font-syne font-bold text-base tracking-wide transition-all duration-150 active:scale-[0.99] ${
+                  isValid && !loading ? 'bg-accent text-bg hover:bg-accent/90 cursor-pointer' : 'bg-accent/20 text-accent/40 cursor-not-allowed'
+                }`}>
+                Build My Strategy →
               </button>
             </form>
           </div>
@@ -2337,7 +2851,7 @@ function MySongsRow({ songs, campaigns = [], onAddSong, onSelectSong }) {
 }
 
 // ─── Song Detail View — Kanban progress tracker ───────────────────────────────
-function SongDetailView({ song, campaigns, onBack, onRunPlaylistPitch, onRunPressCampaign, onViewCampaign, onEditSong, onDeleteSong }) {
+function SongDetailView({ song, campaigns, onBack, onRunPlaylistPitch, onRunPressCampaign, onRunSocialCampaign, onViewCampaign, onEditSong, onDeleteSong }) {
   const [confirmDelete, setConfirmDelete] = useState(false)
 
   function timeAgo(dateStr) {
@@ -2355,6 +2869,7 @@ function SongDetailView({ song, campaigns, onBack, onRunPlaylistPitch, onRunPres
   )
   const playlistCampaigns = [...songCampaigns.filter(c => !c.tool || c.tool === 'playlist')].sort((a, b) => new Date(b.date) - new Date(a.date))
   const pressCampaigns = [...songCampaigns.filter(c => c.tool === 'press')].sort((a, b) => new Date(b.date) - new Date(a.date))
+  const socialCampaigns = [...songCampaigns.filter(c => c.tool === 'social')].sort((a, b) => new Date(b.date) - new Date(a.date))
   const allSorted = [...songCampaigns].sort((a, b) => new Date(b.date) - new Date(a.date))
 
   const TOOL_ICONS = {
@@ -2368,7 +2883,7 @@ function SongDetailView({ song, campaigns, onBack, onRunPlaylistPitch, onRunPres
     { id: 'playlist', label: 'Playlist Pitching', sub: 'Curator placements', available: true, campaigns: playlistCampaigns, onRun: onRunPlaylistPitch, unit: 'curators' },
     { id: 'press',    label: 'Press & Blog',      sub: 'Blogs & magazines',  available: true, campaigns: pressCampaigns,    onRun: onRunPressCampaign, unit: 'publications' },
     { id: 'venue',    label: 'Show Booking',       sub: 'Venues & festivals', available: false, campaigns: [], unit: 'venues' },
-    { id: 'social',   label: 'Social Strategy',    sub: 'Content & growth',   available: false, campaigns: [], unit: 'posts' },
+    { id: 'social',   label: 'Social Strategy',    sub: 'Content & growth',   available: true, campaigns: socialCampaigns,  onRun: onRunSocialCampaign, unit: 'posts' },
   ]
 
   return (
@@ -2585,25 +3100,29 @@ function SongDetailView({ song, campaigns, onBack, onRunPlaylistPitch, onRunPres
               <div className="space-y-3">
                 {allSorted.map((c, i) => {
                   const isPlaylist = !c.tool || c.tool === 'playlist'
+                  const isSocial = c.tool === 'social'
+                  const toolLabel = isPlaylist ? 'Playlist Pitching' : isSocial ? 'Social Strategy' : 'Press & Blog'
+                  const toolUnit = isPlaylist ? 'curators' : isSocial ? 'posts' : 'publications'
+                  const iconKey = isPlaylist ? 'playlist' : isSocial ? 'social' : 'press'
                   const d = new Date(c.date)
                   const dateLabel = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
                   return (
                     <div key={i} className="relative flex items-center gap-4">
                       {/* Timeline dot */}
                       <div className="absolute -left-10 w-8 h-8 rounded-xl bg-surface border border-border flex items-center justify-center text-muted/50 flex-shrink-0 z-10">
-                        {isPlaylist ? TOOL_ICONS['playlist'] : TOOL_ICONS['press']}
+                        {TOOL_ICONS[iconKey]}
                       </div>
                       {/* Row */}
                       <div className="flex-1 bg-surface border border-border rounded-xl px-4 py-3 flex items-center justify-between gap-3 min-w-0">
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
                             <p className="font-syne font-bold text-xs text-text">
-                              {isPlaylist ? 'Playlist Pitching' : 'Press & Blog'}
+                              {toolLabel}
                             </p>
                             <span className="text-[9px] font-inter text-muted/40 border border-border/50 rounded-full px-1.5 py-0.5">{dateLabel}</span>
                           </div>
                           <p className="text-xs font-inter text-muted mt-0.5">
-                            {c.pitchCount ?? 0} {isPlaylist ? 'curators' : 'publications'} targeted
+                            {c.pitchCount ?? 0} {toolUnit} targeted
                           </p>
                         </div>
                         {c.results && (
@@ -2686,8 +3205,9 @@ function Dashboard({ profile, campaigns, songs, onLaunchCampaign, onLaunchPress,
               description="Find venues & festivals to pitch yourself for live performance."
               available={false} />
             <ToolCard id="social" title="Social Strategy"
-              description="Get a content plan built specifically for your sound and goals."
-              available={false} />
+              description="Get a 30-day content calendar built on live algorithm research."
+              available={true}
+              onLaunch={() => { setSocialViewCampaign(null); setCampaignSong(null); setView('social') }} />
           </div>
         </div>
 
@@ -2997,6 +3517,7 @@ export default function App() {
   const [editingSong, setEditingSong] = useState(null)
   const [campaignSong, setCampaignSong] = useState(null)
   const [pressViewCampaign, setPressViewCampaign] = useState(null)
+  const [socialViewCampaign, setSocialViewCampaign] = useState(null)
 
   const [form, setForm] = useState({
     artistName: '', songTitle: '', genre: '',
@@ -3053,6 +3574,7 @@ export default function App() {
   const enterCampaignFromSong = (song, tool = 'playlist') => {
     setCampaignSong(song)
     setPressViewCampaign(null)
+    setSocialViewCampaign(null)
     setForm({
       artistName: artistProfile?.artistName || '',
       monthlyListeners: song.monthlyListeners || artistProfile?.monthlyListeners || '',
@@ -3147,6 +3669,11 @@ export default function App() {
       setView('press')
       return
     }
+    if (campaign.tool === 'social') {
+      setSocialViewCampaign(campaign)
+      setView('social')
+      return
+    }
     setForm({
       artistName: campaign.artistName || '',
       songTitle: campaign.songTitle || '',
@@ -3192,8 +3719,16 @@ export default function App() {
           onRunPressCampaign={() => {
             setCampaignSong(selectedSong)
             setPressViewCampaign(null)
+            setSocialViewCampaign(null)
             setSelectedSong(null)
             setView('press')
+          }}
+          onRunSocialCampaign={() => {
+            setCampaignSong(selectedSong)
+            setSocialViewCampaign(null)
+            setPressViewCampaign(null)
+            setSelectedSong(null)
+            setView('social')
           }}
           onViewCampaign={loadCampaignResults}
           onEditSong={() => setEditingSong(selectedSong)}
@@ -3249,6 +3784,38 @@ export default function App() {
           const s = campaignSong
           setCampaignSong(null)
           setPressViewCampaign(null)
+          if (s) setSelectedSong(s)
+          setView('dashboard')
+        }}
+        onEditSong={campaignSong ? () => {
+          const s = campaignSong
+          setCampaignSong(null)
+          setSelectedSong(s)
+          setEditingSong(s)
+          setView('dashboard')
+        } : null}
+        onSaveCampaign={(entry) => {
+          const withSongId = { ...entry, songId: campaignSong?.id ?? null }
+          const updated = [withSongId, ...campaigns]
+          setCampaigns(updated)
+          try { localStorage.setItem('cc_campaigns', JSON.stringify(updated)) } catch {}
+        }}
+      />
+    )
+  }
+
+  if (view === 'social') {
+    const viewingCampaign = socialViewCampaign
+    return (
+      <SocialStrategyView
+        profile={artistProfile}
+        initialSong={campaignSong}
+        initialResults={viewingCampaign?.results ?? null}
+        initialSongTitle={viewingCampaign?.songTitle ?? ''}
+        onBack={() => {
+          const s = campaignSong
+          setCampaignSong(null)
+          setSocialViewCampaign(null)
           if (s) setSelectedSong(s)
           setView('dashboard')
         }}
