@@ -1545,20 +1545,12 @@ const SOCIAL_PLATFORMS = ['TikTok', 'Instagram Reels', 'YouTube Shorts']
 const SOCIAL_GOALS = ['Announce Release', 'Grow Following', 'Build Brand', 'Drive Streams', 'Behind the Scenes', 'Fan Engagement']
 
 function buildSocialOverviewPrompt(form, profile) {
-  return `You are a music marketing specialist with deep expertise in TikTok and Instagram Reels algorithms.
-
-Before generating the strategy, search the web for:
-"TikTok algorithm strategy for musicians 2026"
-"Instagram Reels algorithm tips for artists 2026"
-"best time to post music on TikTok and Instagram 2026"
-
-Use what you find to inform the strategy. Every piece of advice must reflect what is actually working RIGHT NOW — not generic advice. Include specific current strategies like:
-- Current optimal video lengths on TikTok and Reels
-- What hooks are performing best this month
-- Whether TikTok is favoring certain content types right now
-- Current hashtag strategy (how many, which types)
-- Current best posting frequency for music artists
-- Any recent algorithm changes that affect musicians
+  return `You are an expert social media strategist for musicians in 2026. You know that:
+- TikTok currently favors videos 21-34 seconds with a hook in the first 2 seconds, posting 1-3x daily, using 3-5 niche hashtags not broad ones, text overlays that tease the story, and sounds that are trending in the last 7 days.
+- Instagram Reels currently favors 7-15 second clips, carousels for saves, Stories for daily engagement, posting 4-5x per week, and original audio over trending sounds.
+- On both platforms, the hook (first 2 seconds) determines everything. A question, a surprising visual, or a bold statement outperforms polished intros.
+- For music artists specifically: lip sync to your own track on TikTok, "making of" content drives curiosity, and posting the same clip twice in one week with a different hook can double reach.
+Use this knowledge to build a strategy tailored to this artist.
 
 Artist: ${profile.artistName}
 Genre: ${profile.genre}${profile.subgenre ? ` / ${profile.subgenre}` : ''}
@@ -1573,10 +1565,10 @@ Return ONLY valid JSON (no markdown, no code fences):
     "currentInsights": [
       { "label": "string e.g. Optimal TikTok Length", "value": "string e.g. 21-34 seconds" }
     ],
-    "postingFrequency": "string e.g. 1x daily on TikTok, 4x per week on Reels",
-    "hookFormula": "string — describe what hooks are performing best RIGHT NOW",
-    "hashtagStrategy": "string — specific current hashtag guidance including count and types",
-    "bestPostingTimes": "string — specific current best times based on your search"
+    "postingFrequency": "string e.g. 1-3x daily on TikTok, 4-5x per week on Reels",
+    "hookFormula": "string — describe what hooks are performing best for this genre right now",
+    "hashtagStrategy": "string — 3-5 niche hashtags, avoid broad tags, mix genre and mood tags",
+    "bestPostingTimes": "string — e.g. 6-9pm local time on weekdays, noon on weekends"
   },
   "contentBank": [
     {
@@ -1589,11 +1581,11 @@ Return ONLY valid JSON (no markdown, no code fences):
   ]
 }
 
-Generate exactly 10 content bank items covering caption templates, hook formulas, engagement prompts, and story scripts.`
+Generate exactly 10 content bank items: 3 caption templates, 3 hook formulas, 2 engagement prompts, 2 story scripts. Tailor every item to this artist's genre and song.`
 }
 
 function buildSocialCalendarPrompt(form, profile) {
-  return `You are a music marketing specialist. Generate a 30-day social media content calendar for this artist.
+  return `You are an expert social media strategist for musicians in 2026. Generate a 14-day social media content calendar for this artist. Mix TikTok and Instagram Reels posts. Vary content types across the 14 days (Hook Clip, Behind the Scenes, Lyric Reveal, Day in the Life, Fan Q&A, Studio Session, Teaser, Reaction, etc). Each caption must be ready to post — no placeholders.
 
 Artist: ${profile.artistName}
 Genre: ${profile.genre}${profile.subgenre ? ` / ${profile.subgenre}` : ''}
@@ -1604,26 +1596,20 @@ Return ONLY valid JSON (no markdown, no code fences):
 {
   "calendar": [
     {
-      "day": number 1-30,
+      "day": number 1-14,
       "platform": "TikTok" or "Instagram Reels" or "Both",
-      "contentType": "string e.g. Hook Clip, Behind the Scenes, Lyric Reveal, Day in the Life",
-      "hook": "string — exact first 3 seconds script or visual description",
-      "caption": "string — ready-to-post caption with personality",
-      "hashtags": ["#tag1", "#tag2", "#tag3", "#tag4", "#tag5"]
+      "contentType": "string",
+      "hook": "string — exact first 2 seconds script or visual",
+      "caption": "string — ready-to-post caption",
+      "hashtags": ["#tag1", "#tag2", "#tag3", "#tag4"]
     }
   ]
 }
 
-Generate exactly 30 calendar entries spread evenly across TikTok and Instagram Reels. Vary the content types. Each caption must be ready to post with no placeholders.`
+Generate exactly 14 entries. Days 1-7 build awareness, days 8-14 drive engagement and streams.`
 }
 
-async function fetchClaudeJson(prompt, { maxTokens, webSearch = false }) {
-  const body = {
-    model: 'claude-sonnet-4-6',
-    max_tokens: maxTokens,
-    messages: [{ role: 'user', content: prompt }],
-  }
-  if (webSearch) body.tools = [{ type: 'web_search_20250305', name: 'web_search' }]
+async function fetchClaudeJson(prompt, maxTokens) {
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -1632,7 +1618,11 @@ async function fetchClaudeJson(prompt, { maxTokens, webSearch = false }) {
       'anthropic-version': '2023-06-01',
       'anthropic-dangerous-direct-browser-access': 'true',
     },
-    body: JSON.stringify(body),
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: maxTokens,
+      messages: [{ role: 'user', content: prompt }],
+    }),
   })
   if (!response.ok) {
     const err = await response.text()
@@ -2249,15 +2239,15 @@ function SocialStrategyView({ profile, initialSong = null, onBack, onEditSong = 
     setError('')
     setLoading(true)
     try {
-      // Call 1: overview + content bank (with web search, fast to render)
-      const overview = await fetchClaudeJson(buildSocialOverviewPrompt(form, profile), { maxTokens: 2000, webSearch: true })
+      // Call 1: overview + content bank (fast to render)
+      const overview = await fetchClaudeJson(buildSocialOverviewPrompt(form, profile), 2000)
       setResults(overview)
       setPhase('results')
 
       // Call 2: calendar — fires immediately, results trickle in below overview
       setCalendarLoading(true)
       setCalendarError('')
-      fetchClaudeJson(buildSocialCalendarPrompt(form, profile), { maxTokens: 4000 })
+      fetchClaudeJson(buildSocialCalendarPrompt(form, profile), 4000)
         .then(calData => {
           setResults(prev => ({ ...prev, calendar: calData.calendar ?? [] }))
           if (onSaveCampaign) {
@@ -2368,7 +2358,7 @@ function SocialStrategyView({ profile, initialSong = null, onBack, onEditSong = 
             <div className="flex items-center justify-between gap-4 mb-5 flex-wrap">
               <div className="flex items-center gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-border" />
-                <h2 className="font-syne font-bold text-lg text-text">30-Day Calendar</h2>
+                <h2 className="font-syne font-bold text-lg text-text">14-Day Calendar</h2>
                 {!calendarLoading && calendar.length > 0 && (
                   <span className="text-xs font-inter text-muted/40">{calendar.length} posts</span>
                 )}
@@ -2429,7 +2419,7 @@ function SocialStrategyView({ profile, initialSong = null, onBack, onEditSong = 
                   onClick={() => {
                     setCalendarError('')
                     setCalendarLoading(true)
-                    fetchClaudeJson(buildSocialCalendarPrompt(form, profile), { maxTokens: 4000 })
+                    fetchClaudeJson(buildSocialCalendarPrompt(form, profile), 4000)
                       .then(calData => setResults(prev => ({ ...prev, calendar: calData.calendar ?? [] })))
                       .catch(err => setCalendarError(err.message || 'Calendar failed to load.'))
                       .finally(() => setCalendarLoading(false))
