@@ -1530,14 +1530,21 @@ const SOCIAL_LOADING_MESSAGES = [
   'Searching for current TikTok strategies...',
   'Checking Instagram algorithm updates...',
   'Analyzing what\'s working right now...',
+  'Writing your strategy overview...',
+  'Building your content bank...',
+]
+
+const SOCIAL_CAL_LOADING_MESSAGES = [
   'Building your 30-day calendar...',
-  'Writing your content bank...',
+  'Scheduling content for each day...',
+  'Writing hooks and captions...',
+  'Almost there...',
 ]
 
 const SOCIAL_PLATFORMS = ['TikTok', 'Instagram Reels', 'YouTube Shorts']
 const SOCIAL_GOALS = ['Announce Release', 'Grow Following', 'Build Brand', 'Drive Streams', 'Behind the Scenes', 'Fan Engagement']
 
-function buildSocialPrompt(form, profile) {
+function buildSocialOverviewPrompt(form, profile) {
   return `You are a music marketing specialist with deep expertise in TikTok and Instagram Reels algorithms.
 
 Before generating the strategy, search the web for:
@@ -1545,7 +1552,7 @@ Before generating the strategy, search the web for:
 "Instagram Reels algorithm tips for artists 2026"
 "best time to post music on TikTok and Instagram 2026"
 
-Use what you find to inform the strategy. The calendar and tips must reflect what is actually working RIGHT NOW on these platforms — not generic advice. Include specific current strategies like:
+Use what you find to inform the strategy. Every piece of advice must reflect what is actually working RIGHT NOW — not generic advice. Include specific current strategies like:
 - Current optimal video lengths on TikTok and Reels
 - What hooks are performing best this month
 - Whether TikTok is favoring certain content types right now
@@ -1559,8 +1566,6 @@ Location: ${profile.location || ''}
 Song: ${form.songTitle}
 Description: ${form.songDescription}${form.vibes.length ? `\nVibes: ${form.vibes.join(', ')}` : ''}${form.platforms.length ? `\nPlatforms: ${form.platforms.join(', ')}` : ''}${form.goals.length ? `\nGoals: ${form.goals.join(', ')}` : ''}
 
-Then generate the full 30 day calendar and content bank using this current intelligence. Every piece of advice must feel like it came from someone who studied the platform this week not last year.
-
 Return ONLY valid JSON (no markdown, no code fences):
 {
   "strategy": {
@@ -1573,16 +1578,6 @@ Return ONLY valid JSON (no markdown, no code fences):
     "hashtagStrategy": "string — specific current hashtag guidance including count and types",
     "bestPostingTimes": "string — specific current best times based on your search"
   },
-  "calendar": [
-    {
-      "day": number 1-30,
-      "platform": "TikTok" or "Instagram Reels" or "Both",
-      "contentType": "string e.g. Hook Clip, Behind the Scenes, Lyric Reveal, Day in the Life",
-      "hook": "string — exact first 3 seconds script or visual description",
-      "caption": "string — ready-to-post caption with personality",
-      "hashtags": ["#tag1", "#tag2", "#tag3", "#tag4", "#tag5"]
-    }
-  ],
   "contentBank": [
     {
       "type": "string e.g. Caption Template, Hook Formula, Story Script, Engagement Prompt",
@@ -1594,10 +1589,41 @@ Return ONLY valid JSON (no markdown, no code fences):
   ]
 }
 
-Generate exactly 30 calendar entries spread across TikTok and Instagram Reels. Generate at least 10 content bank items covering caption templates, hook formulas, engagement prompts, and story scripts.`
+Generate exactly 10 content bank items covering caption templates, hook formulas, engagement prompts, and story scripts.`
 }
 
-async function runSocialStrategy(form, profile) {
+function buildSocialCalendarPrompt(form, profile) {
+  return `You are a music marketing specialist. Generate a 30-day social media content calendar for this artist.
+
+Artist: ${profile.artistName}
+Genre: ${profile.genre}${profile.subgenre ? ` / ${profile.subgenre}` : ''}
+Song: ${form.songTitle}
+Description: ${form.songDescription}${form.vibes.length ? `\nVibes: ${form.vibes.join(', ')}` : ''}${form.platforms.length ? `\nPlatforms: ${form.platforms.join(', ')}` : ''}${form.goals.length ? `\nGoals: ${form.goals.join(', ')}` : ''}
+
+Return ONLY valid JSON (no markdown, no code fences):
+{
+  "calendar": [
+    {
+      "day": number 1-30,
+      "platform": "TikTok" or "Instagram Reels" or "Both",
+      "contentType": "string e.g. Hook Clip, Behind the Scenes, Lyric Reveal, Day in the Life",
+      "hook": "string — exact first 3 seconds script or visual description",
+      "caption": "string — ready-to-post caption with personality",
+      "hashtags": ["#tag1", "#tag2", "#tag3", "#tag4", "#tag5"]
+    }
+  ]
+}
+
+Generate exactly 30 calendar entries spread evenly across TikTok and Instagram Reels. Vary the content types. Each caption must be ready to post with no placeholders.`
+}
+
+async function fetchClaudeJson(prompt, { maxTokens, webSearch = false }) {
+  const body = {
+    model: 'claude-sonnet-4-6',
+    max_tokens: maxTokens,
+    messages: [{ role: 'user', content: prompt }],
+  }
+  if (webSearch) body.tools = [{ type: 'web_search_20250305', name: 'web_search' }]
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -1606,12 +1632,7 @@ async function runSocialStrategy(form, profile) {
       'anthropic-version': '2023-06-01',
       'anthropic-dangerous-direct-browser-access': 'true',
     },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 4000,
-      tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-      messages: [{ role: 'user', content: buildSocialPrompt(form, profile) }],
-    }),
+    body: JSON.stringify(body),
   })
   if (!response.ok) {
     const err = await response.text()
@@ -2185,7 +2206,11 @@ function SocialStrategyView({ profile, initialSong = null, onBack, onEditSong = 
   const [results, setResults] = useState(initialResults)
   const [error, setError] = useState('')
   const [calFilter, setCalFilter] = useState('All')
+  const [calendarLoading, setCalendarLoading] = useState(false)
+  const [calendarError, setCalendarError] = useState('')
   const intervalRef = useRef(null)
+  const calIntervalRef = useRef(null)
+  const [calMsgIndex, setCalMsgIndex] = useState(0)
 
   useEffect(() => {
     if (loading) {
@@ -2196,6 +2221,16 @@ function SocialStrategyView({ profile, initialSong = null, onBack, onEditSong = 
     }
     return () => clearInterval(intervalRef.current)
   }, [loading])
+
+  useEffect(() => {
+    if (calendarLoading) {
+      setCalMsgIndex(0)
+      calIntervalRef.current = setInterval(() => setCalMsgIndex(i => i + 1), 2400)
+    } else {
+      clearInterval(calIntervalRef.current)
+    }
+    return () => clearInterval(calIntervalRef.current)
+  }, [calendarLoading])
 
   const togglePlatform = p => setForm(f => ({
     ...f, platforms: f.platforms.includes(p) ? f.platforms.filter(x => x !== p) : [...f.platforms, p],
@@ -2214,20 +2249,31 @@ function SocialStrategyView({ profile, initialSong = null, onBack, onEditSong = 
     setError('')
     setLoading(true)
     try {
-      const data = await runSocialStrategy(form, profile)
-      setResults(data)
+      // Call 1: overview + content bank (with web search, fast to render)
+      const overview = await fetchClaudeJson(buildSocialOverviewPrompt(form, profile), { maxTokens: 2000, webSearch: true })
+      setResults(overview)
       setPhase('results')
-      if (onSaveCampaign) {
-        onSaveCampaign({
-          date: new Date().toISOString(),
-          artistName: profile.artistName,
-          songTitle: form.songTitle,
-          genre: profile.genre,
-          pitchCount: data.calendar?.length || 0,
-          results: data,
-          tool: 'social',
+
+      // Call 2: calendar — fires immediately, results trickle in below overview
+      setCalendarLoading(true)
+      setCalendarError('')
+      fetchClaudeJson(buildSocialCalendarPrompt(form, profile), { maxTokens: 4000 })
+        .then(calData => {
+          setResults(prev => ({ ...prev, calendar: calData.calendar ?? [] }))
+          if (onSaveCampaign) {
+            onSaveCampaign({
+              date: new Date().toISOString(),
+              artistName: profile.artistName,
+              songTitle: form.songTitle,
+              genre: profile.genre,
+              pitchCount: calData.calendar?.length || 0,
+              results: { ...overview, calendar: calData.calendar ?? [] },
+              tool: 'social',
+            })
+          }
         })
-      }
+        .catch(err => setCalendarError(err.message || 'Calendar failed to load. Try again.'))
+        .finally(() => setCalendarLoading(false))
     } catch (err) {
       setError(err.message || 'Something went wrong. Try again.')
     } finally {
@@ -2323,27 +2369,84 @@ function SocialStrategyView({ profile, initialSong = null, onBack, onEditSong = 
               <div className="flex items-center gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-border" />
                 <h2 className="font-syne font-bold text-lg text-text">30-Day Calendar</h2>
-                <span className="text-xs font-inter text-muted/40">{calendar.length} posts</span>
+                {!calendarLoading && calendar.length > 0 && (
+                  <span className="text-xs font-inter text-muted/40">{calendar.length} posts</span>
+                )}
               </div>
-              <div className="flex items-center gap-1.5 flex-wrap">
-                {calPlatforms.map(p => (
-                  <button key={p} type="button"
-                    onClick={() => setCalFilter(p)}
-                    className={`px-3 py-1 rounded-full text-[11px] font-inter font-semibold transition-all duration-150 ${
-                      calFilter === p
-                        ? 'bg-accent text-bg'
-                        : 'bg-surface border border-border text-muted hover:text-text hover:border-accent/40'
-                    }`}>
-                    {p}
-                  </button>
+              {!calendarLoading && calendar.length > 0 && (
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {calPlatforms.map(p => (
+                    <button key={p} type="button"
+                      onClick={() => setCalFilter(p)}
+                      className={`px-3 py-1 rounded-full text-[11px] font-inter font-semibold transition-all duration-150 ${
+                        calFilter === p
+                          ? 'bg-accent text-bg'
+                          : 'bg-surface border border-border text-muted hover:text-text hover:border-accent/40'
+                      }`}>
+                      {p}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {calendarLoading && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-surface border border-border/50">
+                  <div className="relative w-5 h-5 flex-shrink-0">
+                    <div className="absolute inset-0 rounded-full border border-border" />
+                    <div className="absolute inset-0 rounded-full border border-t-accent border-r-transparent border-b-transparent border-l-transparent animate-spin" />
+                  </div>
+                  <p className="text-xs font-inter text-muted transition-all duration-500">
+                    {SOCIAL_CAL_LOADING_MESSAGES[calMsgIndex % SOCIAL_CAL_LOADING_MESSAGES.length]}
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="bg-surface border border-border/50 rounded-2xl p-4 animate-pulse">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="w-7 h-7 rounded-lg bg-border/30" />
+                        <div className="h-3 w-20 rounded bg-border/30" />
+                        <div className="h-3 w-14 rounded bg-border/30" />
+                      </div>
+                      <div className="h-10 rounded-lg bg-border/20 mb-3" />
+                      <div className="h-3 w-24 rounded bg-border/20 mb-2" />
+                      <div className="flex gap-1.5">
+                        <div className="h-6 w-16 rounded-lg bg-border/20" />
+                        <div className="h-6 w-16 rounded-lg bg-border/20" />
+                        <div className="h-6 w-16 rounded-lg bg-border/20" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {!calendarLoading && calendarError && (
+              <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 flex items-center justify-between gap-3">
+                <p className="text-sm font-inter text-red-400">{calendarError}</p>
+                <button type="button"
+                  onClick={() => {
+                    setCalendarError('')
+                    setCalendarLoading(true)
+                    fetchClaudeJson(buildSocialCalendarPrompt(form, profile), { maxTokens: 4000 })
+                      .then(calData => setResults(prev => ({ ...prev, calendar: calData.calendar ?? [] })))
+                      .catch(err => setCalendarError(err.message || 'Calendar failed to load.'))
+                      .finally(() => setCalendarLoading(false))
+                  }}
+                  className="text-xs font-inter font-semibold text-red-400 border border-red-500/30 rounded-lg px-3 py-1.5 hover:bg-red-500/10 transition-colors whitespace-nowrap">
+                  Retry →
+                </button>
+              </div>
+            )}
+
+            {!calendarLoading && calendar.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filtered.map((entry, i) => (
+                  <CalendarDayCard key={i} entry={entry} />
                 ))}
               </div>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filtered.map((entry, i) => (
-                <CalendarDayCard key={i} entry={entry} />
-              ))}
-            </div>
+            )}
           </section>
 
           {/* Content Bank */}
