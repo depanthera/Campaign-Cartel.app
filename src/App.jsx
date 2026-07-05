@@ -2212,8 +2212,27 @@ function SocialStrategyView({ profile, initialSong = null, onBack, onSaveCampaig
 
 
 
+// ─── NavBar ───────────────────────────────────────────────────────────────────
+function NavBar({ profile, onDashboard }) {
+  return (
+    <header className="sticky top-0 z-10 bg-bg/80 backdrop-blur-md border-b border-border">
+      <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+        <button type="button" onClick={onDashboard}
+          className="font-syne font-black text-lg text-text tracking-tight hover:text-accent transition-colors">
+          Campaign Cartel
+        </button>
+        {profile && (
+          <span className="text-xs font-inter text-muted hidden sm:block">
+            {profile.artistName}
+          </span>
+        )}
+      </div>
+    </header>
+  )
+}
+
 // ─── Dashboard ────────────────────────────────────────────────────────────────
-function Dashboard({ profile, campaigns, songs, onLaunchCampaign, onLaunchPress, onEditProfile, onViewCampaign, onDeleteCampaign, onAddSong, onSelectSong }) {
+function Dashboard({ profile, campaigns, songs, onLaunchCampaign, onLaunchPress, onLaunchSocial, onEditProfile, onViewCampaign, onDeleteCampaign, onAddSong, onSelectSong }) {
   return (
     <div className="min-h-screen bg-bg font-inter">
       <NavBar profile={profile} onDashboard={() => {}} />
@@ -2274,7 +2293,7 @@ function Dashboard({ profile, campaigns, songs, onLaunchCampaign, onLaunchPress,
             <ToolCard id="social" title="Social Strategy"
               description="Get TikTok and Instagram tips plus 5 content ideas tailored to your song."
               available={true}
-              onLaunch={() => { setSocialViewCampaign(null); setCampaignSong(null); setView('social') }} />
+              onLaunch={onLaunchSocial} />
           </div>
         </div>
 
@@ -2822,6 +2841,7 @@ export default function App() {
           songs={songs}
           onLaunchCampaign={enterCampaign}
           onLaunchPress={() => { setPressViewCampaign(null); setCampaignSong(null); setView('press') }}
+          onLaunchSocial={() => { setSocialViewCampaign(null); setCampaignSong(null); setView('social') }}
           onEditProfile={() => setEditingProfile(true)}
           onViewCampaign={loadCampaignResults}
           onDeleteCampaign={deleteCampaign}
