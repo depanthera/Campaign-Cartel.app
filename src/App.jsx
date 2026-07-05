@@ -1405,17 +1405,67 @@ const PRESS_LOADING_MESSAGES = [
 
 const PRESS_GOALS = ['Blog Feature', 'Interview', 'Review', 'Premiere']
 
-const PRESS_URLS = {
-  'Ones To Watch':     'https://www.onestowatch.com/submit',
-  'Earmilk':           'https://www.earmilk.com/submit',
-  'Pigeons & Planes':  'https://pigeonsandplanes.com/submit',
-  'ArtistRack':        'https://artistrack.com/submit-music',
-  'ThisSongIsSick':    'https://www.thissongsick.com/submit',
-  'Indie Shuffle':     'https://www.indieshuffle.com/submit',
-  'Stereogum':         'https://www.stereogum.com/contact',
-  'Two Story Melody':  'https://twostorymelody.com/submit',
-  'Hype Index':        'https://hype-index.com/submit',
-  'DJBooth':           'https://djbooth.net/contact',
+const BLOG_MAP = {
+  'Earmilk': {
+    url: 'https://www.submithub.com/blog/earmilk',
+    genre: ['hip-hop', 'electronic', 'indie', 'pop'],
+    reach: '2.1M monthly readers',
+    beat: 'emerging artists across all genres',
+  },
+  'Ones To Watch': {
+    url: 'https://www.submithub.com/blog/ones-to-watch',
+    genre: ['pop', 'indie', 'hip-hop', 'r&b'],
+    reach: '850K monthly readers',
+    beat: 'breaking independent artists',
+  },
+  'Pigeons & Planes': {
+    url: 'https://www.submithub.com/blog/pigeons-and-planes',
+    genre: ['hip-hop', 'r&b', 'indie', 'alternative'],
+    reach: '1.2M monthly readers',
+    beat: 'underground and emerging hip-hop',
+  },
+  'Lyrical Lemonade': {
+    url: 'https://www.submithub.com/blog/lyrical-lemonade',
+    genre: ['hip-hop', 'rap'],
+    reach: '4M monthly readers',
+    beat: 'underground to mainstream hip-hop pipeline',
+  },
+  'The Word Is Bond': {
+    url: 'https://www.submithub.com/blog/the-word-is-bond',
+    genre: ['hip-hop', 'boom bap', 'conscious rap'],
+    reach: '320K monthly readers',
+    beat: 'lyrical and conscious hip-hop',
+  },
+  'Indie Shuffle': {
+    url: 'https://www.submithub.com/blog/indie-shuffle',
+    genre: ['indie', 'alternative', 'electronic', 'pop'],
+    reach: '780K monthly readers',
+    beat: 'indie and alternative discovery',
+  },
+  'Hype Index': {
+    url: 'https://www.submithub.com/blog/hype-index',
+    genre: ['hip-hop', 'r&b', 'pop', 'electronic'],
+    reach: '410K monthly readers',
+    beat: 'emerging artists with industry traction',
+  },
+  'ArtistRack': {
+    url: 'https://artistrack.com/submit-music',
+    genre: ['hip-hop', 'indie', 'pop', 'r&b', 'electronic'],
+    reach: '500K monthly readers',
+    beat: 'independent artists across all genres',
+  },
+  'Sphere of Hip-Hop': {
+    url: 'https://www.submithub.com/playlister/sphere-of-hip-hop',
+    genre: ['hip-hop', 'rap'],
+    reach: '280K monthly readers',
+    beat: 'hip-hop culture and emerging rap artists',
+  },
+  'This Song Is Sick': {
+    url: 'https://www.submithub.com/blog/this-song-is-sick',
+    genre: ['electronic', 'hip-hop', 'indie', 'alternative'],
+    reach: '1.5M monthly readers',
+    beat: 'artists just before they break',
+  },
 }
 
 function buildPressPrompt(form, profile) {
@@ -1432,17 +1482,15 @@ Return ONLY valid JSON (no markdown):
   "pitches": [
     {
       "publicationName": "string",
-      "journalistName": "string",
-      "beat": "string e.g. Hip-Hop & R&B",
-      "reach": "string e.g. 2.1M monthly readers",
       "matchScore": number 70-99,
+      "whyItFits": "string — one sentence explaining why this blog is the right fit for this specific artist and song",
       "subject": "string — compelling subject line under 10 words",
       "pitch": "string — professional, story-driven, under 200 words. Lead with the song narrative not the artist bio."
     }
   ]
 }
 
-Target publications — only use these exact names: Ones To Watch, Earmilk, Pigeons & Planes, ArtistRack, ThisSongIsSick, Indie Shuffle, Stereogum, Two Story Melody, Hype Index, DJBooth. Pick the 4 best matches for this artist from that list only. Match genre and vibe appropriately. Generate exactly 4 pitches.`
+Pick the 4 best matching blogs from this exact list only based on the artist's genre and song description: Earmilk, Ones To Watch, Pigeons & Planes, Lyrical Lemonade, The Word Is Bond, Indie Shuffle, Hype Index, ArtistRack, Sphere of Hip-Hop, This Song Is Sick. Return their exact names as publicationName — do not create any other blog names. Generate exactly 4 pitches.`
 }
 
 async function runPressSearch(form, profile) {
@@ -1479,69 +1527,92 @@ async function runPressSearch(form, profile) {
 // ─── Press pitch card ─────────────────────────────────────────────────────────
 function PressPitchCard({ pitch }) {
   const [open, setOpen] = useState(false)
-  const url = PRESS_URLS[pitch.publicationName]
+  const blog = BLOG_MAP[pitch.publicationName]
+  const url = blog?.url
+  const reach = blog?.reach ?? pitch.reach
+  const beat = blog?.beat ?? pitch.beat
   const score = pitch.matchScore ?? 85
   const scoreColor = score >= 90 ? 'text-accent' : score >= 80 ? 'text-yellow-400' : 'text-orange-400'
 
   return (
-    <div className="bg-surface border border-border rounded-2xl overflow-hidden hover:border-accent/30 transition-colors duration-200">
-      <div className="p-4 flex items-start justify-between gap-3">
+    <div className="bg-surface border border-border rounded-2xl overflow-hidden hover:border-accent/30 transition-colors duration-200 flex flex-col">
+      {/* Header */}
+      <div className="p-5 flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5 mb-1.5">
+          <div className="flex items-center gap-1.5 mb-2">
             <div className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-inter font-semibold border border-accent/30 bg-accent/10 text-accent">
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
               <span>Press</span>
             </div>
-          </div>
-          <p className="font-syne font-bold text-sm text-text">{pitch.journalistName}</p>
-          <p className="font-syne font-semibold text-base text-text leading-snug truncate">{pitch.publicationName}</p>
-          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-            <span className="text-xs font-inter text-muted">{pitch.beat}</span>
-            {pitch.reach && (
-              <span className="text-[10px] font-inter px-1.5 py-0.5 rounded-full bg-accent/10 text-accent border border-accent/20 whitespace-nowrap">
-                {pitch.reach}
+            {reach && (
+              <span className="text-[10px] font-inter px-1.5 py-0.5 rounded-full bg-accent/8 text-accent/70 border border-accent/15 whitespace-nowrap">
+                {reach}
               </span>
             )}
           </div>
+          <p className="font-syne font-bold text-lg text-text leading-tight">{pitch.publicationName}</p>
+          {beat && (
+            <p className="text-xs font-inter text-muted mt-0.5">{beat}</p>
+          )}
         </div>
         <div className="flex-shrink-0 text-right">
-          <div className={`font-syne font-bold text-xl ${scoreColor}`}>{score}</div>
+          <div className={`font-syne font-bold text-2xl ${scoreColor}`}>{score}</div>
           <div className="text-[10px] font-inter text-muted uppercase tracking-wide">match</div>
         </div>
       </div>
 
-      <div className="px-4 pb-3 border-t border-border/50 pt-3 space-y-2.5">
-        <p className="text-xs font-inter text-text/70 leading-snug bg-bg/40 rounded-lg px-3 py-2 border border-border/40">
-          {pitch.subject}
-        </p>
-        <div className="flex items-center justify-between gap-2 flex-wrap">
-          <button type="button" onClick={() => setOpen(v => !v)}
-            className="text-xs font-inter text-muted hover:text-accent transition-colors duration-150 flex items-center gap-1">
-            <span>{open ? 'Hide Pitch' : 'Show Pitch'}</span>
-            <span className={`transition-transform duration-200 ${open ? 'rotate-180' : ''}`}>▾</span>
-          </button>
-          <div className="flex gap-1.5 flex-wrap justify-end">
-            <CopyButton text={pitch.subject} label="Copy Subject" />
-            <CopyButton text={pitch.pitch} label="Copy Body" />
-            {url ? (
-              <a href={url} target="_blank" rel="noopener noreferrer"
-                className="px-3 py-1.5 text-xs font-inter font-bold rounded border flex items-center gap-1"
-                style={{ background: '#C8FF57', borderColor: '#C8FF57', color: '#050505' }}>
-                Open Page →
-              </a>
-            ) : (
-              <button type="button" disabled
-                className="px-3 py-1.5 text-xs font-inter font-medium rounded border border-border text-muted/40 cursor-not-allowed">
-                No URL
-              </button>
-            )}
-          </div>
+      {/* Why it fits */}
+      {pitch.whyItFits && (
+        <div className="px-5 pb-3">
+          <p className="text-xs font-inter text-muted/70 leading-relaxed italic">"{pitch.whyItFits}"</p>
         </div>
+      )}
+
+      {/* Subject line + pitch */}
+      <div className="px-5 pb-4 border-t border-border/50 pt-4 space-y-3 flex-1 flex flex-col">
+        {/* Subject line in accent */}
+        <div className="rounded-lg bg-accent/5 border border-accent/15 px-3 py-2.5">
+          <p className="text-[10px] font-inter text-muted/50 uppercase tracking-wider mb-1">Subject Line</p>
+          <p className="text-sm font-inter font-semibold text-accent leading-snug">{pitch.subject}</p>
+        </div>
+
+        {/* Expandable pitch body */}
+        <button type="button" onClick={() => setOpen(v => !v)}
+          className="text-xs font-inter text-muted hover:text-accent transition-colors duration-150 flex items-center gap-1 self-start">
+          <span>{open ? 'Hide Pitch' : 'Read Pitch'}</span>
+          <span className={`transition-transform duration-200 inline-block ${open ? 'rotate-180' : ''}`}>▾</span>
+        </button>
+
         {open && (
-          <div className="bg-bg/40 rounded-lg px-3 py-3 border border-border/40 max-h-40 overflow-y-auto">
+          <div className="bg-bg/50 rounded-xl px-4 py-3 border border-border/40 max-h-44 overflow-y-auto">
             <p className="text-xs font-inter text-text/70 leading-relaxed whitespace-pre-wrap">{pitch.pitch}</p>
           </div>
         )}
+
+        {/* Action row */}
+        <div className="flex items-center gap-2 flex-wrap mt-auto pt-1">
+          <CopyButton text={pitch.subject} label="Copy Subject" />
+          <CopyButton text={pitch.pitch} label="Copy Body" />
+        </div>
+
+        {/* Submit button */}
+        <div className="space-y-1.5 pt-1">
+          {url ? (
+            <a href={url} target="_blank" rel="noopener noreferrer"
+              className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl font-syne font-bold text-sm transition-all duration-150 active:scale-[0.99]"
+              style={{ background: '#C8FF57', color: '#050505' }}>
+              Submit on SubmitHub →
+            </a>
+          ) : (
+            <button type="button" disabled
+              className="w-full py-2.5 rounded-xl font-syne font-bold text-sm text-muted/40 border border-border/40 cursor-not-allowed">
+              No submission URL
+            </button>
+          )}
+          <p className="text-[10px] font-inter text-muted/40 text-center">
+            You'll need a free SubmitHub account to submit
+          </p>
+        </div>
       </div>
     </div>
   )
