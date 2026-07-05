@@ -1727,10 +1727,14 @@ function QuickConfirmScreen({ song, profile, toolLabel, onLaunch, onEditSong, on
 }
 
 // ─── Press Blog View ──────────────────────────────────────────────────────────
-function PressBlogView({ profile, initialSong = null, onBack, onEditSong = null }) {
-  const [phase, setPhase] = useState(() => initialSong ? 'confirm' : 'form')
+function PressBlogView({ profile, initialSong = null, onBack, onEditSong = null, onSaveCampaign = null, initialResults = null, initialSongTitle = '' }) {
+  const [phase, setPhase] = useState(() => {
+    if (initialResults) return 'results'
+    if (initialSong) return 'confirm'
+    return 'form'
+  })
   const [form, setForm] = useState({
-    songTitle: initialSong?.title || '',
+    songTitle: initialSongTitle || initialSong?.title || '',
     songDescription: initialSong?.description || '',
     vibes: initialSong?.vibes || [],
     storyAngle: '',
@@ -1738,7 +1742,7 @@ function PressBlogView({ profile, initialSong = null, onBack, onEditSong = null 
   })
   const [loading, setLoading] = useState(false)
   const [msgIndex, setMsgIndex] = useState(0)
-  const [results, setResults] = useState(null)
+  const [results, setResults] = useState(initialResults)
   const [error, setError] = useState('')
   const intervalRef = useRef(null)
 
@@ -1770,6 +1774,17 @@ function PressBlogView({ profile, initialSong = null, onBack, onEditSong = null 
       const data = await runPressSearch(form, profile)
       setResults(data)
       setPhase('results')
+      if (onSaveCampaign) {
+        onSaveCampaign({
+          date: new Date().toISOString(),
+          artistName: profile.artistName,
+          songTitle: form.songTitle,
+          genre: profile.genre,
+          pitchCount: data.pitches?.length || 0,
+          results: data,
+          tool: 'press',
+        })
+      }
     } catch (err) {
       setError(err.message || 'Something went wrong. Try again.')
     } finally {
@@ -2981,6 +2996,7 @@ export default function App() {
   const [selectedSong, setSelectedSong] = useState(null)
   const [editingSong, setEditingSong] = useState(null)
   const [campaignSong, setCampaignSong] = useState(null)
+  const [pressViewCampaign, setPressViewCampaign] = useState(null)
 
   const [form, setForm] = useState({
     artistName: '', songTitle: '', genre: '',
@@ -3036,6 +3052,7 @@ export default function App() {
 
   const enterCampaignFromSong = (song, tool = 'playlist') => {
     setCampaignSong(song)
+    setPressViewCampaign(null)
     setForm({
       artistName: artistProfile?.artistName || '',
       monthlyListeners: song.monthlyListeners || artistProfile?.monthlyListeners || '',
@@ -3125,6 +3142,11 @@ export default function App() {
 
   const loadCampaignResults = (campaign) => {
     if (!campaign.results) return
+    if (campaign.tool === 'press') {
+      setPressViewCampaign(campaign)
+      setView('press')
+      return
+    }
     setForm({
       artistName: campaign.artistName || '',
       songTitle: campaign.songTitle || '',
@@ -3169,6 +3191,7 @@ export default function App() {
           onRunPlaylistPitch={() => enterCampaignFromSong(selectedSong, 'playlist')}
           onRunPressCampaign={() => {
             setCampaignSong(selectedSong)
+            setPressViewCampaign(null)
             setSelectedSong(null)
             setView('press')
           }}
@@ -3196,7 +3219,7 @@ export default function App() {
           campaigns={campaigns}
           songs={songs}
           onLaunchCampaign={enterCampaign}
-          onLaunchPress={() => setView('press')}
+          onLaunchPress={() => { setPressViewCampaign(null); setCampaignSong(null); setView('press') }}
           onEditProfile={() => setEditingProfile(true)}
           onViewCampaign={loadCampaignResults}
           onDeleteCampaign={deleteCampaign}
@@ -3215,13 +3238,17 @@ export default function App() {
   }
 
   if (view === 'press') {
+    const viewingCampaign = pressViewCampaign
     return (
       <PressBlogView
         profile={artistProfile}
         initialSong={campaignSong}
+        initialResults={viewingCampaign?.results ?? null}
+        initialSongTitle={viewingCampaign?.songTitle ?? ''}
         onBack={() => {
           const s = campaignSong
           setCampaignSong(null)
+          setPressViewCampaign(null)
           if (s) setSelectedSong(s)
           setView('dashboard')
         }}
@@ -3232,6 +3259,12 @@ export default function App() {
           setEditingSong(s)
           setView('dashboard')
         } : null}
+        onSaveCampaign={(entry) => {
+          const withSongId = { ...entry, songId: campaignSong?.id ?? null }
+          const updated = [withSongId, ...campaigns]
+          setCampaigns(updated)
+          try { localStorage.setItem('cc_campaigns', JSON.stringify(updated)) } catch {}
+        }}
       />
     )
   }
