@@ -1406,14 +1406,16 @@ const PRESS_LOADING_MESSAGES = [
 const PRESS_GOALS = ['Blog Feature', 'Interview', 'Review', 'Premiere']
 
 const PRESS_URLS = {
-  'Two Story Melody':  'https://twostorymelody.com/submit',
-  'Earmilk':           'https://earmilk.com/submit',
   'Ones To Watch':     'https://www.onestowatch.com/submit',
+  'Earmilk':           'https://www.earmilk.com/submit',
   'Pigeons & Planes':  'https://pigeonsandplanes.com/submit',
-  'DJBooth':           'https://djbooth.net/submit',
-  'Lyrical Lemonade':  'https://lyricallemondade.com/submit',
-  'The FADER':         'https://thefader.com/submit',
-  'Audiomack':         'https://audiomack.com/submit',
+  'ArtistRack':        'https://artistrack.com/submit-music',
+  'ThisSongIsSick':    'https://www.thissongsick.com/submit',
+  'Indie Shuffle':     'https://www.indieshuffle.com/submit',
+  'Stereogum':         'https://www.stereogum.com/contact',
+  'Two Story Melody':  'https://twostorymelody.com/submit',
+  'Hype Index':        'https://hype-index.com/submit',
+  'DJBooth':           'https://djbooth.net/contact',
 }
 
 function buildPressPrompt(form, profile) {
@@ -1440,7 +1442,7 @@ Return ONLY valid JSON (no markdown):
   ]
 }
 
-Target publications from: Two Story Melody, Earmilk, Ones To Watch, Pigeons & Planes, DJBooth, Lyrical Lemonade, The FADER, Audiomack. Match genre and vibe appropriately. Generate exactly 4 pitches.`
+Target publications — only use these exact names: Ones To Watch, Earmilk, Pigeons & Planes, ArtistRack, ThisSongIsSick, Indie Shuffle, Stereogum, Two Story Melody, Hype Index, DJBooth. Pick the 4 best matches for this artist from that list only. Match genre and vibe appropriately. Generate exactly 4 pitches.`
 }
 
 async function runPressSearch(form, profile) {
